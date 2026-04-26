@@ -5,8 +5,7 @@ import api.db_master
 from api.cashier import list_cashiers, create_cashier, delete_cashier
 from api.customer import list_customers, create_customer, delete_customer
 from api.product import list_products, create_product, delete_product
-from api.sales import list_sales, delete_sale, create_sale
-from api.sales_detail import list_sales_details, delete_sales_detail
+from gui.sales_page import SalesPage
 
 class DataTable(ttk.Frame):
     def __init__(self, parent, columns, list_func, delete_func, add_fields=None, add_func=None):
@@ -129,24 +128,8 @@ class App(tk.Tk):
         )
         notebook.add(tab_cashier, text='Cashiers')
 
-        # Input Penjualan
-        tab_sales = DataTable(
-            notebook,
-            columns=('ID', 'Customer ID', 'Cashier ID', 'Time', 'Payment', 'Paid Amount'),
-            list_func=list_sales,
-            delete_func=delete_sale,
-            add_fields=['Customer ID', 'Cashier ID', 'Time', 'Payment', 'Paid Amount'],
-            add_func=create_sale
-        )
-        notebook.add(tab_sales, text='Sales')
-
-        tab_sales_detail = DataTable(
-            notebook,
-            columns=('ID', 'Sales ID', 'Product ID', 'Quantity', 'Discount'),
-            list_func=list_sales_details,
-            delete_func=delete_sales_detail
-        )
-        notebook.add(tab_sales_detail, text='Sales Details')
+        tab_sales_input = SalesPage(notebook)
+        notebook.add(tab_sales_input, text='Input Penjualan')
 
 if __name__ == "__main__":
     app = App()

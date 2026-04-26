@@ -18,6 +18,23 @@ def create_sale(
     conn.commit()
 
 
+def create_sale_return_id(
+    customer_id: int | None,
+    cashier_id: int,
+    time: str,
+    payment: str | None,
+    paid_amount: float | None,
+) -> int:
+    conn, cursor = db_master.require_connection()
+    cursor.execute(
+        "INSERT INTO Sales (CustomerID, CashierID, Time, Payment, PaidAmount) VALUES (?, ?, ?, ?, ?)",
+        (customer_id, cashier_id, time, payment, paid_amount),
+    )
+    sale_id = cursor.lastrowid
+    conn.commit()
+    return int(sale_id)
+
+
 def read_sale(sale_id: int) -> tuple | None:
     _, cursor = db_master.require_connection()
     cursor.execute("SELECT * FROM Sales WHERE ID = ?", (sale_id,))
