@@ -196,7 +196,9 @@ class App(tk.Tk):
         self.geometry("800x500")
 
         # Initialize the database connection for the API
-        api.db_master.init()
+        if api.db_master.conn is None:
+            api.db_master.connect_db("appdata.db")
+            api.db_master.init_db("appdata.db", r"sql\init.sql")
 
         notebook = ttk.Notebook(self)
         notebook.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
