@@ -1,0 +1,2 @@
+ID,CustomerID,CashierID,Time,Payment,PaidAmount
+1,1,1,2026-04-26 14:46:02,QRIS,50000.0
