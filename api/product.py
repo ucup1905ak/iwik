@@ -1,6 +1,6 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
-from api.db_master import conn, cursor
+import api.db_master as db_master
 
 
 def create_product(
@@ -9,9 +9,7 @@ def create_product(
     stock: int,
     price: float,
 ) -> None:
-    if cursor is None or conn is None:
-        raise RuntimeError("Database connection was not initialized")
-
+    conn, cursor = db_master.require_connection()
     cursor.execute(
         "INSERT INTO Product (Name, Brand, Stock, Price) VALUES (?, ?, ?, ?)",
         (name, brand, stock, price),
@@ -20,9 +18,7 @@ def create_product(
 
 
 def read_product(product_id: int) -> tuple | None:
-    if cursor is None:
-        raise RuntimeError("Database connection was not initialized")
-
+    _, cursor = db_master.require_connection()
     cursor.execute("SELECT * FROM Product WHERE ID = ?", (product_id,))
     return cursor.fetchone()
 
@@ -34,9 +30,7 @@ def update_product(
     stock: int,
     price: float,
 ) -> None:
-    if cursor is None or conn is None:
-        raise RuntimeError("Database connection was not initialized")
-
+    conn, cursor = db_master.require_connection()
     cursor.execute(
         "UPDATE Product SET Name = ?, Brand = ?, Stock = ?, Price = ? WHERE ID = ?",
         (name, brand, stock, price, product_id),
@@ -45,16 +39,12 @@ def update_product(
 
 
 def delete_product(product_id: int) -> None:
-    if cursor is None or conn is None:
-        raise RuntimeError("Database connection was not initialized")
-
+    conn, cursor = db_master.require_connection()
     cursor.execute("DELETE FROM Product WHERE ID = ?", (product_id,))
     conn.commit()
 
 
 def list_products() -> list:
-    if cursor is None:
-        raise RuntimeError("Database connection was not initialized")
-
+    _, cursor = db_master.require_connection()
     cursor.execute("SELECT * FROM Product")
     return cursor.fetchall()

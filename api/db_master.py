@@ -1,40 +1,38 @@
-import sqlite3
-#| None = None
+﻿import sqlite3
+
 cursor: sqlite3.Cursor | None = None
 conn: sqlite3.Connection | None = None
 
 
-# module Create Database Backend
 def connect_db(databaseFile: str) -> None:
-    print("CREATING DATABASE")
     global conn, cursor
     conn = sqlite3.connect(databaseFile)
     cursor = conn.cursor()
+
+
+def require_connection() -> tuple[sqlite3.Connection, sqlite3.Cursor]:
+    if conn is None or cursor is None:
+        raise RuntimeError("Database connection was not initialized")
+    return conn, cursor
 
 
 def init_db(databaseFile: str, sqlFile: str) -> None:
     if cursor is None or conn is None:
         connect_db(databaseFile)
 
-    if cursor is None or conn is None:
-        raise RuntimeError("Database connection was not initialized")
-    
+    _conn, _cursor = require_connection()
+
     with open(sqlFile, "r", encoding="utf-8") as f:
         sql = f.read()
 
-    # Use executescript for multi-statement SQL (CREATE TABLE, PRAGMA, etc.)
-    conn.executescript(sql)
-    conn.commit()
-    
+    _conn.executescript(sql)
+    _conn.commit()
 
 
-def init():
+def init() -> None:
     connect_db("abc.db")
     init_db("abc.db", "sql/init.sql")
 
 
-    
-    
-    
 if __name__ == "__main__":
     init()
