@@ -28,15 +28,13 @@ def init_db(databaseFile: str, sqlFile: str) -> None:
     
 
 
-def main():
+def init():
     connect_db("abc.db")
     init_db("abc.db", "sql/init.sql")
 
-    result = list_cashiers()
-    print(result)
 
     
     
     
 if __name__ == "__main__":
-    main()
+    init()
