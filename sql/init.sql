@@ -1,0 +1,50 @@
+PRAGMA foreign_keys = ON;
+
+-- Cashier Table
+CREATE TABLE IF NOT EXISTS Cashier (
+    ID INTEGER PRIMARY KEY AUTOINCREMENT,
+    FirstName TEXT NOT NULL,
+    LastName TEXT NOT NULL,
+    Salary REAL
+);
+
+-- Customer Table
+CREATE TABLE IF NOT EXISTS Customer (
+    ID INTEGER PRIMARY KEY AUTOINCREMENT,
+    Name TEXT NOT NULL,
+    Phone TEXT
+);
+
+-- Product Table
+CREATE TABLE IF NOT EXISTS Product (
+    ID INTEGER PRIMARY KEY AUTOINCREMENT,
+    Name TEXT NOT NULL,
+    Brand TEXT,
+    Stock INTEGER NOT NULL DEFAULT 0,
+    Price REAL NOT NULL
+);
+
+-- Sales Table
+CREATE TABLE IF NOT EXISTS Sales (
+    ID INTEGER PRIMARY KEY AUTOINCREMENT,
+    CustomerID INTEGER,
+    CashierID INTEGER NOT NULL,
+    Time TEXT NOT NULL,
+    Payment TEXT,
+    PaidAmount REAL,
+
+    FOREIGN KEY (CustomerID) REFERENCES Customer(ID),
+    FOREIGN KEY (CashierID) REFERENCES Cashier(ID)
+);
+
+-- SalesDetail Table
+CREATE TABLE IF NOT EXISTS SalesDetail (
+    ID INTEGER PRIMARY KEY AUTOINCREMENT,
+    SalesID INTEGER NOT NULL,
+    ProductID INTEGER NOT NULL,
+    Quantity INTEGER NOT NULL,
+    Discount REAL DEFAULT 0,
+
+    FOREIGN KEY (SalesID) REFERENCES Sales(ID) ON DELETE CASCADE,
+    FOREIGN KEY (ProductID) REFERENCES Product(ID)
+);
