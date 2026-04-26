@@ -5,7 +5,110 @@ import api.db_master
 from api.cashier import list_cashiers, create_cashier, delete_cashier
 from api.customer import list_customers, create_customer, delete_customer
 from api.product import list_products, create_product, delete_product
+from api.sales import list_sales
+from api.sales_detail import list_sales_details
 from gui.sales_page import SalesPage
+from utils.export_csv import export_to_csv
+from utils.generate_pdf import generate_pdf_report
+
+class ReportsPage(ttk.Frame):
+    def __init__(self, parent):
+        super().__init__(parent)
+        
+        main = ttk.Frame(self)
+        main.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        
+        # Title
+        title_label = ttk.Label(main, text="Laporan & Ekspor Data", font=("Arial", 14, "bold"))
+        title_label.pack(pady=(0, 20))
+        
+        # Sales Report Section
+        sales_frame = ttk.LabelFrame(main, text="Laporan Penjualan")
+        sales_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        
+        # Sales Treeview
+        self.sales_tree = ttk.Treeview(
+            sales_frame,
+            columns=('ID', 'CustomerID', 'CashierID', 'Time', 'Payment', 'PaidAmount'),
+            show='headings',
+            height=10
+        )
+        for col in ('ID', 'CustomerID', 'CashierID', 'Time', 'Payment', 'PaidAmount'):
+            self.sales_tree.heading(col, text=col)
+            self.sales_tree.column(col, width=100)
+        
+        scrollbar_sales = ttk.Scrollbar(sales_frame, orient=tk.VERTICAL, command=self.sales_tree.yview)
+        self.sales_tree.configure(yscroll=scrollbar_sales.set)
+        
+        self.sales_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        scrollbar_sales.pack(side=tk.RIGHT, fill=tk.Y)
+        
+        # Export buttons
+        button_frame = ttk.Frame(main)
+        button_frame.pack(fill=tk.X, pady=(10, 0))
+        
+        ttk.Button(button_frame, text="Muat Data", command=self.load_reports).pack(side=tk.LEFT, padx=5)
+        ttk.Button(button_frame, text="Ekspor ke CSV", command=self.export_sales_csv).pack(side=tk.LEFT, padx=5)
+        ttk.Button(button_frame, text="Ekspor ke PDF", command=self.export_sales_pdf).pack(side=tk.LEFT, padx=5)
+        
+        self.load_reports()
+    
+    def load_reports(self):
+        """Load sales data into the tree"""
+        for item in self.sales_tree.get_children():
+            self.sales_tree.delete(item)
+        
+        try:
+            sales = list_sales()
+            for sale in sales:
+                self.sales_tree.insert('', tk.END, values=sale)
+        except Exception as e:
+            messagebox.showerror("Error", f"Gagal memuat data: {e}")
+    
+    def export_sales_csv(self):
+        """Export sales data to CSV"""
+        try:
+            sales = list_sales()
+            if not sales:
+                messagebox.showwarning("Warning", "Tidak ada data penjualan untuk diekspor")
+                return
+            
+            # Add header
+            headers = ['ID', 'CustomerID', 'CashierID', 'Time', 'Payment', 'PaidAmount']
+            data = [headers] + list(sales)
+            
+            success, message = export_to_csv(data, 'sales_report.csv')
+            if success:
+                messagebox.showinfo("Sukses", message)
+            else:
+                messagebox.showerror("Error", message)
+        except Exception as e:
+            messagebox.showerror("Error", f"Gagal mengekspor CSV: {e}")
+    
+    def export_sales_pdf(self):
+        """Export sales data to PDF"""
+        try:
+            sales = list_sales()
+            if not sales:
+                messagebox.showwarning("Warning", "Tidak ada data penjualan untuk diekspor")
+                return
+            
+            # Add header
+            headers = [['ID', 'CustomerID', 'CashierID', 'Time', 'Payment', 'PaidAmount']]
+            data = headers + [[str(val) if val is not None else '' for val in row] for row in sales]
+            
+            success, message = generate_pdf_report(
+                data, 
+                filename='assets/pdf/sales_report.pdf',
+                title='Laporan Penjualan'
+            )
+            if success:
+                messagebox.showinfo("Sukses", message)
+            else:
+                messagebox.showerror("Error", message)
+        except Exception as e:
+            messagebox.showerror("Error", f"Gagal mengekspor PDF: {e}")
+
 
 class DataTable(ttk.Frame):
     def __init__(self, parent, columns, list_func, delete_func, add_fields=None, add_func=None):
@@ -130,6 +233,9 @@ class App(tk.Tk):
 
         tab_sales_input = SalesPage(notebook)
         notebook.add(tab_sales_input, text='Input Penjualan')
+
+        tab_reports = ReportsPage(notebook)
+        notebook.add(tab_reports, text='Laporan & Ekspor')
 
 if __name__ == "__main__":
     app = App()

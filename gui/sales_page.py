@@ -4,6 +4,8 @@ from tkinter import messagebox, ttk
 
 from api.sales import create_sale_return_id
 from api.sales_detail import create_sales_detail, list_sales_details
+from utils.export_csv import export_to_csv
+from utils.generate_pdf import generate_pdf_report
 
 
 class SalesPage(ttk.Frame):
@@ -82,6 +84,13 @@ class SalesPage(ttk.Frame):
         self.saved_tree.pack(fill=tk.BOTH, expand=True, padx=8, pady=8)
 
         ttk.Button(main, text="Refresh Riwayat Detail", command=self.load_saved_details).pack(anchor=tk.E, pady=(6, 0))
+        
+        # Export buttons for Sales Details
+        export_frame = ttk.Frame(main)
+        export_frame.pack(fill=tk.X, pady=(10, 0))
+        ttk.Button(export_frame, text="Ekspor Detail ke CSV", command=self.export_details_csv).pack(side=tk.LEFT, padx=5)
+        ttk.Button(export_frame, text="Ekspor Detail ke PDF", command=self.export_details_pdf).pack(side=tk.LEFT, padx=5)
+        
         self.load_saved_details()
 
     def _build_labeled_entry(self, parent, label_text: str, var: tk.StringVar, row: int, col: int) -> None:
@@ -148,6 +157,75 @@ class SalesPage(ttk.Frame):
             messagebox.showerror("Input Error", str(exc))
         except Exception as exc:
             messagebox.showerror("Save Error", str(exc))
+    
+    def _clear_form_after_save(self) -> None:
+        """Clear the form after saving a sale"""
+        self.customer_id_var.set("")
+        self.cashier_id_var.set("")
+        self.time_var.set(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        self.payment_var.set("")
+        self.paid_amount_var.set("")
+        self.product_id_var.set("")
+        self.quantity_var.set("")
+        self.discount_var.set("0")
+        self._detail_rows.clear()
+        for item in self.detail_tree.get_children():
+            self.detail_tree.delete(item)
+    
+    def load_saved_details(self) -> None:
+        """Load saved sales details into the tree"""
+        for item in self.saved_tree.get_children():
+            self.saved_tree.delete(item)
+        try:
+            details = list_sales_details()
+            for detail in details:
+                self.saved_tree.insert('', tk.END, values=detail)
+        except Exception as e:
+            messagebox.showerror("Error", f"Gagal memuat data: {e}")
+    
+    def export_details_csv(self) -> None:
+        """Export sales details to CSV"""
+        try:
+            details = list_sales_details()
+            if not details:
+                messagebox.showwarning("Warning", "Tidak ada data detail penjualan untuk diekspor")
+                return
+            
+            # Add header
+            headers = ['ID', 'SalesID', 'ProductID', 'Quantity', 'Discount']
+            data = [headers] + list(details)
+            
+            success, message = export_to_csv(data, 'sales_details.csv')
+            if success:
+                messagebox.showinfo("Sukses", message)
+            else:
+                messagebox.showerror("Error", message)
+        except Exception as e:
+            messagebox.showerror("Error", f"Gagal mengekspor CSV: {e}")
+    
+    def export_details_pdf(self) -> None:
+        """Export sales details to PDF"""
+        try:
+            details = list_sales_details()
+            if not details:
+                messagebox.showwarning("Warning", "Tidak ada data detail penjualan untuk diekspor")
+                return
+            
+            # Add header
+            headers = [['ID', 'SalesID', 'ProductID', 'Quantity', 'Discount']]
+            data = headers + [[str(val) if val is not None else '' for val in row] for row in details]
+            
+            success, message = generate_pdf_report(
+                data,
+                filename='assets/pdf/sales_details.pdf',
+                title='Laporan Detail Penjualan'
+            )
+            if success:
+                messagebox.showinfo("Sukses", message)
+            else:
+                messagebox.showerror("Error", message)
+        except Exception as e:
+            messagebox.showerror("Error", f"Gagal mengekspor PDF: {e}")
 
     def _clear_form_after_save(self) -> None:
         self.customer_id_var.set("")
