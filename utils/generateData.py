@@ -3,7 +3,7 @@ import sqlite3
 import random
 from datetime import datetime, timedelta
 
-from api import db_master
+from database import db_master
 
 def generate_data():
     conn, cursor = db_master.require_connection()

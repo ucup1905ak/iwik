@@ -1,6 +1,6 @@
 ﻿from __future__ import annotations
 
-import api.db_master as db_master
+import database.db_master as db_master
 
 
 def create_product(

@@ -29,10 +29,3 @@ def init_db(databaseFile: str, sqlFile: str) -> None:
     _conn.commit()
 
 
-def init() -> None:
-    connect_db("abc.db")
-    init_db("abc.db", "sql/init.sql")
-
-
-if __name__ == "__main__":
-    init()

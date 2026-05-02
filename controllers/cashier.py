@@ -1,4 +1,4 @@
-﻿import api.db_master as db_master
+﻿import database.db_master as db_master
 
 def create_cashier(first_name: str, last_name: str, salary: float) -> None:
     conn, cursor = db_master.require_connection()

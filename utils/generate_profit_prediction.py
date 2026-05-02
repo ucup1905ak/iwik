@@ -1,4 +1,4 @@
-from api import db_master
+from database import db_master
 
 
 def get_sales_data():
