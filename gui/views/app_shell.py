@@ -36,7 +36,7 @@ class AppShell(QWidget):
         super().__init__()
 
         self.setWindowTitle("Warung+")
-        self.setMinimumSize(1024, 720)
+        self.setMinimumSize(1080, 720)
         self.setStyleSheet("AppShell { font-family: 'Segoe UI'; }")
 
         self._bg_pixmap = QPixmap("assets/bg_auth.png")
@@ -76,10 +76,33 @@ class AppShell(QWidget):
     # Splash
     # ────────────────────────────────────────────────────────────────────────
     def _show_splash(self):
+        # self._on_splash_finished() # langsung ke on_splash_finished
         self._splash = SplashScreen()
         self._splash.finished.connect(self._on_splash_finished)
         self._stack.addWidget(self._splash)
         self._stack.setCurrentWidget(self._splash)
+        
+    # def _on_splash_finished(self): # langsung ke product tanpa splash
+    #     self.users = self._load_users_from_db()
+
+    #     # Jika ada user, pakai user pertama otomatis
+    #     if len(self.users) > 0:
+    #         auto_user = self.users[0]
+
+    #     else:
+    #         # Fallback guest sementara kalau DB kosong
+    #         auto_user = {
+    #             "id": 0,
+    #             "initials": "GU",
+    #             "name": "Guest User",
+    #             "role": "Admin",
+    #             "badge_bg": "#EEF0FD",
+    #             "badge_color": "#3B52C4",
+    #             "avatar_bg": "#EEF0FD",
+    #             "avatar_color": "#3B52C4",
+    #         }
+
+    #     self._go_main(auto_user)
 
     def _on_splash_finished(self):
         self.users = self._load_users_from_db()

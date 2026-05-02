@@ -53,7 +53,7 @@ class DatabaseManager:
             self.connect(databaseFile)
 
         _conn, _cursor = DatabaseManager.require_connection()
-
+                                                                        
         with open(sqlFile, "r", encoding="utf-8") as f:
             sql = f.read()
 
