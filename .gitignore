@@ -12,5 +12,5 @@ utils/__pycache__/*
 *.so
 .Python
 *.pyc
-*.pyc
 */__pycache__/*
+assets/
