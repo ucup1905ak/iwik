@@ -1,6 +1,6 @@
-﻿from typing import NamedTuple
+﻿from __future__ import annotations
+from typing import NamedTuple
 import database.db_master as db_master
-from __future__ import annotations
 from database.db_master import DatabaseManager
 
 

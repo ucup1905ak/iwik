@@ -3,8 +3,6 @@
 import hashlib
 from database.db_master import DatabaseManager
 
-
-
 def hash_pin(pin: str) -> str:
     return hashlib.sha256(pin.encode()).hexdigest()
 
@@ -27,8 +25,6 @@ def create_user(name: str, pin: str, role: int):
 
     conn.commit()
     
-
-
 def get_all_users():
     conn, _ = DatabaseManager.require_connection()
     cursor = conn.cursor()
