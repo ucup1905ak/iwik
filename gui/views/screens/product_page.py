@@ -1,5 +1,5 @@
 # views/screens/product_page.py
-from controllers.product import ProductController
+from controllers.product import ProductController, Product
 from PyQt6.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -41,18 +41,18 @@ ENABLE_CARD_SHADOWS = False
 SAMPLE_CATEGORIES = ["Semua", "Makanan", "Minuman", "Snack", "Sembako", "Lainnya"]
 
 SAMPLE_PRODUCTS = [
-    {"id": 1,  "name": "Nasi Goreng Spesial", "category": "Makanan", "price": 25000, "stock": 50,  "sku": "MKN-001"},
-    {"id": 2,  "name": "Es Teh Manis",         "category": "Minuman", "price": 5000,  "stock": 120, "sku": "MNM-001"},
-    {"id": 3,  "name": "Keripik Singkong",     "category": "Snack",   "price": 8000,  "stock": 75,  "sku": "SNK-001"},
-    {"id": 4,  "name": "Mie Goreng",           "category": "Makanan", "price": 20000, "stock": 30,  "sku": "MKN-002"},
-    {"id": 5,  "name": "Kopi Hitam",           "category": "Minuman", "price": 7000,  "stock": 90,  "sku": "MNM-002"},
-    {"id": 6,  "name": "Beras 5kg",            "category": "Sembako", "price": 65000, "stock": 20,  "sku": "SMB-001"},
-    {"id": 7,  "name": "Teh Botol",            "category": "Minuman", "price": 6000,  "stock": 200, "sku": "MNM-003"},
-    {"id": 8,  "name": "Chiki Snack",          "category": "Snack",   "price": 3000,  "stock": 150, "sku": "SNK-002"},
-    {"id": 9,  "name": "Ayam Bakar",           "category": "Makanan", "price": 30000, "stock": 15,  "sku": "MKN-003"},
-    {"id": 10, "name": "Gula Pasir 1kg",       "category": "Sembako", "price": 14000, "stock": 40,  "sku": "SMB-002"},
-    {"id": 11, "name": "Jus Jeruk",            "category": "Minuman", "price": 12000, "stock": 35,  "sku": "MNM-004"},
-    {"id": 12, "name": "Pisang Goreng",        "category": "Snack",   "price": 2000,  "stock": 0,   "sku": "SNK-003"},
+    Product(id=1,  name="Nasi Goreng Spesial", brand=None, sku="MKN-001", category="Makanan", stock=50,  price=25000),
+    Product(id=2,  name="Es Teh Manis",         brand=None, sku="MNM-001", category="Minuman", stock=120, price=5000),
+    Product(id=3,  name="Keripik Singkong",     brand=None, sku="SNK-001", category="Snack",   stock=75,  price=8000),
+    Product(id=4,  name="Mie Goreng",           brand=None, sku="MKN-002", category="Makanan", stock=30,  price=20000),
+    Product(id=5,  name="Kopi Hitam",           brand=None, sku="MNM-002", category="Minuman", stock=90,  price=7000),
+    Product(id=6,  name="Beras 5kg",            brand=None, sku="SMB-001", category="Sembako", stock=20,  price=65000),
+    Product(id=7,  name="Teh Botol",            brand=None, sku="MNM-003", category="Minuman", stock=200, price=6000),
+    Product(id=8,  name="Chiki Snack",          brand=None, sku="SNK-002", category="Snack",   stock=150, price=3000),
+    Product(id=9,  name="Ayam Bakar",           brand=None, sku="MKN-003", category="Makanan", stock=15,  price=30000),
+    Product(id=10, name="Gula Pasir 1kg",       brand=None, sku="SMB-002", category="Sembako", stock=40,  price=14000),
+    Product(id=11, name="Jus Jeruk",            brand=None, sku="MNM-004", category="Minuman", stock=35,  price=12000),
+    Product(id=12, name="Pisang Goreng",        brand=None, sku="SNK-003", category="Snack",   stock=0,   price=2000),
 ]
 
 
@@ -89,17 +89,17 @@ def _apply_card_shadow(widget: QWidget):
 # Product Card
 # ═════════════════════════════════════════════════════════════════════════════
 class ProductCard(QFrame):
-    edit_clicked   = pyqtSignal(dict)
-    delete_clicked = pyqtSignal(dict)
+    edit_clicked   = pyqtSignal(Product)
+    delete_clicked = pyqtSignal(Product)
 
-    def __init__(self, product: dict, parent=None):
+    def __init__(self, product: Product, parent=None):
         super().__init__(parent)
         self._product = product
         self._build()
 
     def _build(self):
         product = self._product
-        stock = product["stock"]
+        stock = product.stock
 
         self.setObjectName("ProductCard")
         self.setStyleSheet(f"""
@@ -118,7 +118,7 @@ class ProductCard(QFrame):
 
         top = QHBoxLayout()
 
-        cat_tag = QLabel(f"{CAT_EMOJI.get(product['category'], '📦')} {product['category']}")
+        cat_tag = QLabel(f"{CAT_EMOJI.get(product.category, '📦')} {product.category}")
         cat_tag.setStyleSheet(f"""
             background: {C_TAG_BG};
             color: {C_TAG_TEXT};
@@ -154,7 +154,7 @@ class ProductCard(QFrame):
         top.addWidget(stock_badge)
         layout.addLayout(top)
 
-        name_lbl = QLabel(product["name"])
+        name_lbl = QLabel(product.name)
         name_lbl.setWordWrap(True)
         name_lbl.setStyleSheet(f"""
             font-family: 'Segoe UI';
@@ -166,7 +166,7 @@ class ProductCard(QFrame):
         """)
         layout.addWidget(name_lbl)
 
-        brand_text = product.get('brand')
+        brand_text = product.brand
         if brand_text:
             brand_lbl = QLabel(f"Merek: {brand_text}")
             brand_lbl.setStyleSheet(f"""
@@ -178,7 +178,7 @@ class ProductCard(QFrame):
             """)
             layout.addWidget(brand_lbl)
 
-        sku_lbl = QLabel(f"SKU: {product['sku']}")
+        sku_lbl = QLabel(f"SKU: {product.sku}")
         sku_lbl.setStyleSheet(f"""
             font-family: 'Segoe UI';
             font-size: 10px;
@@ -193,7 +193,7 @@ class ProductCard(QFrame):
         bottom = QHBoxLayout()
         bottom.setSpacing(8)
 
-        price_lbl = QLabel(_format_price(product["price"]))
+        price_lbl = QLabel(_format_price(product.price))
         price_lbl.setStyleSheet(f"""
             font-family: 'Segoe UI';
             font-size: 15px;
@@ -259,7 +259,7 @@ class ProductCard(QFrame):
 class ProductDialog(QDialog):
     saved = pyqtSignal(dict)
 
-    def __init__(self, product: dict = None, parent=None):
+    def __init__(self, product: Product = None, parent=None):
         super().__init__(parent)
         self._product = product
         self._edit_mode = product is not None
@@ -364,13 +364,13 @@ class ProductDialog(QDialog):
 
         if self._edit_mode:
             product = self._product
-            self._name_field.setText(product["name"])
-            self._brand_field.setText(product.get("brand", "") or "")
-            self._sku_field.setText(product["sku"])
-            self._price_field.setText(str(product["price"]))
-            self._stock_field.setText(str(product["stock"]))
+            self._name_field.setText(product.name)
+            self._brand_field.setText(product.brand or "")
+            self._sku_field.setText(product.sku or "")
+            self._price_field.setText(str(product.price))
+            self._stock_field.setText(str(product.stock))
 
-            idx = self._cat_combo.findText(product["category"])
+            idx = self._cat_combo.findText(product.category or "")
             if idx >= 0:
                 self._cat_combo.setCurrentIndex(idx)
 
@@ -428,7 +428,7 @@ class ProductDialog(QDialog):
             return
 
         data = {
-            "id":       self._product["id"] if self._edit_mode else None,
+            "id":       self._product.id if self._edit_mode else None,
             "name":     name,
             "brand":    brand,
             "sku":      sku,
@@ -461,20 +461,8 @@ class ProductPage(QWidget):
         self.setStyleSheet(f"background: {C_BG};")
         self._build_ui()
 
-    def _load_products(self) -> list[dict]:
-        products_data = ProductController.fetch()
-        return [
-            {
-                "id": p[0],
-                "name": p[1],
-                "brand": p[2],
-                "sku": p[3],
-                "category": p[4],
-                "stock": p[5],
-                "price": p[6],
-            }
-            for p in products_data
-        ]
+    def _load_products(self) -> list[Product]:
+        return ProductController.fetch()
 
         # Jangan render grid di constructor.
         # Render pertama dilakukan di showEvent agar widget sudah visible di QStackedWidget.
@@ -558,9 +546,9 @@ class ProductPage(QWidget):
 
     def _calc_stats(self) -> dict[str, str]:
         total = len(self._products)
-        out_stock = sum(1 for p in self._products if p["stock"] == 0)
-        low_stock = sum(1 for p in self._products if 0 < p["stock"] < 20)
-        categories = len(set(p["category"] for p in self._products))
+        out_stock = sum(1 for p in self._products if p.stock == 0)
+        low_stock = sum(1 for p in self._products if 0 < p.stock < 20)
+        categories = len(set(p.category for p in self._products if p.category))
 
         return {
             "total": str(total),
@@ -732,17 +720,17 @@ class ProductPage(QWidget):
             """)
 
     # ── Data / filter logic ───────────────────────────────────────────────────
-    def _filtered_products(self) -> list[dict]:
+    def _filtered_products(self) -> list[Product]:
         result = self._products
 
         if self._active_category != "Semua":
-            result = [p for p in result if p["category"] == self._active_category]
+            result = [p for p in result if p.category == self._active_category]
 
         if self._search_query:
             query = self._search_query.lower()
             result = [
                 p for p in result
-                if query in p["name"].lower() or query in p["sku"].lower()
+                if query in p.name.lower() or (p.sku and query in p.sku.lower())
             ]
 
         return result
@@ -790,7 +778,7 @@ class ProductPage(QWidget):
         else:
             self._render_batch_cards(products, 0, batch_size=12, token=token)
 
-    def _render_all_cards(self, products: list[dict], token: int):
+    def _render_all_cards(self, products: list[Product], token: int):
         if token != self._render_token:
             return
         if not self.isVisible():
@@ -812,7 +800,7 @@ class ProductPage(QWidget):
 
     def _render_batch_cards(
         self,
-        products: list[dict],
+        products: list[Product],
         start_idx: int,
         batch_size: int = 12,
         token: int | None = None,
@@ -891,7 +879,7 @@ class ProductPage(QWidget):
         dlg.saved.connect(self._add_product)
         dlg.exec()
 
-    def _open_edit_dialog(self, product: dict):
+    def _open_edit_dialog(self, product: Product):
         dlg = ProductDialog(product=product, parent=self)
         dlg.saved.connect(self._update_product)
         dlg.exec()
@@ -929,10 +917,10 @@ class ProductPage(QWidget):
         except TypeError as e:
             QMessageBox.critical(self, "Error", str(e))
 
-    def _delete_product(self, product: dict):
+    def _delete_product(self, product: Product):
         confirm = QMessageBox(self)
         confirm.setWindowTitle("Hapus Produk")
-        confirm.setText(f"Hapus <b>{product['name']}</b>?")
+        confirm.setText(f"Hapus <b>{product.name}</b>?")
         confirm.setInformativeText("Tindakan ini tidak dapat dibatalkan.")
         confirm.setStandardButtons(
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.Cancel
@@ -956,7 +944,7 @@ class ProductPage(QWidget):
 
         if confirm.exec() == QMessageBox.StandardButton.Yes:
             try:
-                ProductController.remove(product["id"])
+                ProductController.remove(product.id)
                 self._products = self._load_products()
                 self._refresh_stats()
                 self._refresh_grid()
