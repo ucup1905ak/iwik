@@ -1,7 +1,8 @@
 # models/user_model.py
 
 import hashlib
-from database.db_master import require_connection
+from database.db_master import DatabaseManager
+
 
 
 def hash_pin(pin: str) -> str:
@@ -14,7 +15,7 @@ def create_user(name: str, pin: str, role: int):
     1 = Admin
     2 = Cashier
     """
-    conn, _ = require_connection()
+    conn, _ = DatabaseManager.require_connection()
     cursor = conn.cursor()
 
     encrypted_pin = hash_pin(pin)
@@ -29,7 +30,7 @@ def create_user(name: str, pin: str, role: int):
 
 
 def get_all_users():
-    conn, _ = require_connection()
+    conn, _ = DatabaseManager.require_connection()
     cursor = conn.cursor()
 
     cursor.execute("SELECT id, name, role FROM users")
@@ -40,7 +41,7 @@ def get_all_users():
 
 
 def verify_user_pin(name: str, input_pin: str):
-    conn, _ = require_connection()
+    conn, _ = DatabaseManager.require_connection()
     cursor = conn.cursor()
 
     encrypted_pin = hash_pin(input_pin)

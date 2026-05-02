@@ -4,7 +4,7 @@ import sys
 from PyQt6.QtWidgets import QApplication
 from PyQt6.QtCore import QtMsgType, qInstallMessageHandler
 
-from database.db_master import connect_db, init_db
+from database.db_master import DatabaseManager
 from utils.generateData import generate_data
 from utils.generate_profit_prediction import generate_sales_insight, calculate_moving_average
 from gui.views.app_shell import AppShell
@@ -24,9 +24,9 @@ if __name__ == "__main__":
 
 
     db_file = "database/appdata.db"
-    connect_db(db_file)
-    
-    init_db(db_file, r"database\sql\init.sql")
+    sql_init = r"database\sql\init.sql"
+    db = DatabaseManager(database_files=db_file, sql_script_file=sql_init)
+  
 
     app = QApplication(sys.argv)
     app.setApplicationName("Warung+")
@@ -36,3 +36,5 @@ if __name__ == "__main__":
     shell.showMaximized()
 
     sys.exit(app.exec())
+
+    db.close()

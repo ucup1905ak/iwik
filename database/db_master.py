@@ -1,31 +1,67 @@
 ﻿import sqlite3
-
-cursor: sqlite3.Cursor | None = None
-conn: sqlite3.Connection | None = None
+import os
 
 
-def connect_db(databaseFile: str) -> None:
-    global conn, cursor
-    conn = sqlite3.connect(databaseFile)
-    cursor = conn.cursor()
+class DatabaseManager:
+    cursor: sqlite3.Cursor | None = None
+    conn: sqlite3.Connection | None = None
+    database_files: str | None = None
+
+    def __init__(self):
+        cursor: sqlite3.Cursor | None = None
+        conn: sqlite3.Connection | None = None
+        if self.database_files == None:
+            raise RuntimeError("Database Not Connected/Initialized")
+        self.connect(DatabaseManager.database_files)
+
+    def __init__(self, database_files:str):
+        cursor: sqlite3.Cursor | None = None
+        conn: sqlite3.Connection | None = None
+        DatabaseManager.database_files = database_files
+        self.connect(DatabaseManager.database_files)
+  
+
+    def __init__(self, database_files:str, sql_script_file:str):
+        cursor: sqlite3.Cursor | None = None
+        conn: sqlite3.Connection | None = None
+        self.connect(database_files)
+        # initialize database 
+        self.init_db(databaseFile=database_files, sqlFile=sql_script_file)        
 
 
-def require_connection() -> tuple[sqlite3.Connection, sqlite3.Cursor]:
-    if conn is None or cursor is None:
-        raise RuntimeError("Database connection was not initialized")
-    return conn, cursor
+    def isConected() -> int:
+        if DatabaseManager.conn is None or DatabaseManager.cursor is None:
+            return 0
+        else:
+            return 1
+        
+    def connect(self, databaseFile: str) -> None:
+        DatabaseManager.conn = sqlite3.connect(databaseFile)
+        DatabaseManager.cursor = self.conn.cursor()
 
 
-def init_db(databaseFile: str, sqlFile: str) -> None:
-    if cursor is None or conn is None:
-        connect_db(databaseFile)
+    def require_connection() -> tuple[sqlite3.Connection, sqlite3.Cursor]:
+        if not DatabaseManager.isConected():
+            raise RuntimeError("Database Is Not Connected")
+        return DatabaseManager.conn, DatabaseManager.cursor
 
-    _conn, _cursor = require_connection()
 
-    with open(sqlFile, "r", encoding="utf-8") as f:
-        sql = f.read()
+    def init_db(self, databaseFile: str, sqlFile: str) -> None:
+        if not DatabaseManager.isConected():
+            self.connect(databaseFile)
 
-    _conn.executescript(sql)
-    _conn.commit()
+        _conn, _cursor = DatabaseManager.require_connection()
+
+        with open(sqlFile, "r", encoding="utf-8") as f:
+            sql = f.read()
+
+        _conn.executescript(sql)
+        _conn.commit()
+    
+    def close():
+        if DatabaseManager.isConected:
+            DatabaseManager.conn.close()
+            DatabaseManager.conn = None
+            DatabaseManager.cursor = None
 
 
