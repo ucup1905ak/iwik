@@ -13,4 +13,3 @@ utils/__pycache__/*
 .Python
 *.pyc
 */__pycache__/*
-assets/
