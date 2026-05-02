@@ -1,11 +1,16 @@
-# views/widgets/sidebar_widget.py
+# views/components/sidebar.py
 
 from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame,
+    QWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+    QLabel,
+    QFrame,
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QByteArray
-from PyQt6.QtGui import QColor, QPainter, QPixmap, QPalette, QImage
+from PyQt6.QtGui import QColor, QPainter, QPixmap, QPalette
 from PyQt6.QtSvg import QSvgRenderer
+
 
 # ── Nav items ─────────────────────────────────────────────────────────────────
 NAV_ITEMS = [
@@ -16,6 +21,9 @@ NAV_ITEMS = [
     {"key": "reports",    "label": "Laporan",     "icon": "bar-chart-2"},
     {"key": "users",      "label": "Pengguna",    "icon": "users"},
 ]
+
+VALID_NAV_KEYS = {item["key"] for item in NAV_ITEMS}
+
 
 # ── SVG icons ─────────────────────────────────────────────────────────────────
 ICONS = {
@@ -28,13 +36,14 @@ ICONS = {
     "log-out":       """<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>""",
 }
 
+
 # ── Palette ───────────────────────────────────────────────────────────────────
 COLOR_BG         = "#FAFAF8"
 COLOR_ACTIVE_BG  = "#EEF0FD"
 COLOR_HOVER_BG   = "#F1EFE8"
 COLOR_ACCENT     = "#4F6EF7"
 COLOR_TEXT       = "#888780"
-COLOR_TEXT_ACT   = "#4F6EF7"   # biru sama dengan accent — sesuai screenshot
+COLOR_TEXT_ACT   = "#4F6EF7"
 COLOR_TEXT_HOVER = "#5F5E5A"
 COLOR_DIVIDER    = "#DDD9D2"
 COLOR_AVATAR_BG  = "#F1EFE8"
@@ -44,20 +53,20 @@ COLOR_LOGOUT_HOV = "#962d22"
 
 # ── Helper ────────────────────────────────────────────────────────────────────
 def _make_pixmap(key: str, color: str, size: int = 18) -> QPixmap:
-    """Render SVG to pixmap."""
+    """Render SVG icon ke QPixmap dengan warna tertentu."""
     svg = ICONS.get(key, "").replace('stroke="currentColor"', f'stroke="{color}"')
-    
+
     px = QPixmap(size, size)
     px.fill(Qt.GlobalColor.transparent)
-    
+
     painter = QPainter(px)
     try:
-        r = QSvgRenderer(QByteArray(svg.encode()))
-        r.render(painter)
+        renderer = QSvgRenderer(QByteArray(svg.encode("utf-8")))
+        renderer.render(painter)
     finally:
         if painter.isActive():
             painter.end()
-    
+
     return px
 
 
@@ -71,40 +80,38 @@ class NavItem(QWidget):
         self._active   = active
         self._hovered  = False
         self._icon_key = icon
-        self._pixmap_cache: dict[str, QPixmap] = {}  # Cache pixmaps by color
+        self._pixmap_cache: dict[str, QPixmap] = {}
 
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.setFixedHeight(42)
         self.setAttribute(Qt.WidgetAttribute.WA_Hover, True)
 
         lay = QHBoxLayout(self)
-        # ── Margin kiri 8px untuk indicator bar 3px + gap 8px = total 19px ke icon
         lay.setContentsMargins(8, 0, 12, 0)
         lay.setSpacing(0)
 
-        # Indicator bar 3px di kiri (hanya active)
         self._bar = QFrame()
         self._bar.setFixedSize(3, 20)
+        self._bar.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
         lay.addWidget(self._bar)
         lay.addSpacing(10)
 
-        # Icon
         self._icon_lbl = QLabel()
         self._icon_lbl.setFixedSize(18, 18)
         self._icon_lbl.setStyleSheet("background: transparent; border: none;")
+        self._icon_lbl.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
         lay.addWidget(self._icon_lbl)
         lay.addSpacing(10)
 
-        # Label
         self._lbl = QLabel(label)
         self._lbl.setStyleSheet("background: transparent; border: none;")
+        self._lbl.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
         lay.addWidget(self._lbl)
         lay.addStretch()
 
         self._refresh()
 
     def _get_pixmap(self, color: str) -> QPixmap:
-        """Get cached pixmap or create new one"""
         if color not in self._pixmap_cache:
             self._pixmap_cache[color] = _make_pixmap(self._icon_key, color)
         return self._pixmap_cache[color]
@@ -135,23 +142,29 @@ class NavItem(QWidget):
                 color: {COLOR_TEXT}; background: transparent; border: none;
             """)
 
-    def set_active(self, v: bool):
-        self._active = v
+        self.update()
+
+    def set_active(self, value: bool):
+        self._active = value
+        if value:
+            self._hovered = False
         self._refresh()
 
-    def enterEvent(self, e):
+    def enterEvent(self, event):
         if not self._active:
             self._hovered = True
             self._refresh()
-        super().enterEvent(e)
+        super().enterEvent(event)
 
-    def leaveEvent(self, e):
+    def leaveEvent(self, event):
         self._hovered = False
         self._refresh()
-        super().leaveEvent(e)
+        super().leaveEvent(event)
 
-    def mousePressEvent(self, e):
-        self.clicked.emit(self.key)
+    def mousePressEvent(self, event):
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.clicked.emit(self.key)
+        super().mousePressEvent(event)
 
 
 # ── LogoutButton ──────────────────────────────────────────────────────────────
@@ -164,47 +177,55 @@ class LogoutButton(QWidget):
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.setAttribute(Qt.WidgetAttribute.WA_Hover, True)
         self._hovered = False
-        self._pixmap_cache: dict[str, QPixmap] = {}  # Cache pixmaps by color
+        self._pixmap_cache: dict[str, QPixmap] = {}
 
         lay = QHBoxLayout(self)
-        lay.setContentsMargins(21, 0, 12, 0)   # sejajar dengan icon nav (8+3+10=21)
+        lay.setContentsMargins(21, 0, 12, 0)
         lay.setSpacing(10)
 
         self._icon_lbl = QLabel()
         self._icon_lbl.setFixedSize(18, 18)
         self._icon_lbl.setStyleSheet("background: transparent; border: none;")
+        self._icon_lbl.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
         lay.addWidget(self._icon_lbl)
 
         self._lbl = QLabel("Keluar")
+        self._lbl.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
         lay.addWidget(self._lbl)
         lay.addStretch()
 
         self._refresh()
 
     def _get_pixmap(self, color: str) -> QPixmap:
-        """Get cached pixmap or create new one"""
         if color not in self._pixmap_cache:
             self._pixmap_cache[color] = _make_pixmap("log-out", color)
         return self._pixmap_cache[color]
 
     def _refresh(self):
-        c  = COLOR_LOGOUT_HOV if self._hovered else COLOR_LOGOUT
-        bg = "#FDF0EC"        if self._hovered else "transparent"
+        color = COLOR_LOGOUT_HOV if self._hovered else COLOR_LOGOUT
+        bg = "#FDF0EC" if self._hovered else "transparent"
         self.setStyleSheet(f"background: {bg}; border-radius: 8px;")
-        self._icon_lbl.setPixmap(self._get_pixmap(c))
+        self._icon_lbl.setPixmap(self._get_pixmap(color))
         self._lbl.setStyleSheet(f"""
             font-family: 'Segoe UI'; font-size: 13px; font-weight: 500;
-            color: {c}; background: transparent; border: none;
+            color: {color}; background: transparent; border: none;
         """)
+        self.update()
 
-    def enterEvent(self, e):
-        self._hovered = True;  self._refresh(); super().enterEvent(e)
+    def enterEvent(self, event):
+        self._hovered = True
+        self._refresh()
+        super().enterEvent(event)
 
-    def leaveEvent(self, e):
-        self._hovered = False; self._refresh(); super().leaveEvent(e)
+    def leaveEvent(self, event):
+        self._hovered = False
+        self._refresh()
+        super().leaveEvent(event)
 
-    def mousePressEvent(self, e):
-        self.clicked.emit()
+    def mousePressEvent(self, event):
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.clicked.emit()
+        super().mousePressEvent(event)
 
 
 # ── SidebarWidget ─────────────────────────────────────────────────────────────
@@ -212,15 +233,14 @@ class SidebarWidget(QWidget):
     nav_changed      = pyqtSignal(str)
     logout_requested = pyqtSignal()
 
-    def __init__(self, user: dict, parent=None):
+    def __init__(self, user: dict, active_key: str = "dashboard", parent=None):
         super().__init__(parent)
-        self._user       = user
-        self._active_key = "dashboard"
+        self._user = user
+        self._active_key = active_key if active_key in VALID_NAV_KEYS else "dashboard"
         self._nav_items: dict[str, NavItem] = {}
 
         self.setFixedWidth(220)
 
-        # Background reliable via QPalette
         self.setAutoFillBackground(True)
         pal = self.palette()
         pal.setColor(QPalette.ColorRole.Window, QColor(COLOR_BG))
@@ -229,62 +249,55 @@ class SidebarWidget(QWidget):
         self._build_ui()
 
     def paintEvent(self, event):
-        p = QPainter(self)
-        p.fillRect(self.rect(), QColor(COLOR_BG))
-        p.setPen(QColor(COLOR_DIVIDER))
-        p.drawLine(self.width() - 1, 0, self.width() - 1, self.height())
-        p.end()
+        painter = QPainter(self)
+        painter.fillRect(self.rect(), QColor(COLOR_BG))
+        painter.setPen(QColor(COLOR_DIVIDER))
+        painter.drawLine(self.width() - 1, 0, self.width() - 1, self.height())
+        painter.end()
 
     def _build_ui(self):
         root = QVBoxLayout(self)
         root.setContentsMargins(12, 0, 12, 16)
         root.setSpacing(0)
 
-        # ── Logo ──────────────────────────────────────────────────────────────
         logo_wrap = QWidget()
         logo_wrap.setFixedHeight(64)
         logo_wrap.setStyleSheet("background: transparent;")
-        ll = QHBoxLayout(logo_wrap)
-        ll.setContentsMargins(8, 0, 0, 0)
+        logo_layout = QHBoxLayout(logo_wrap)
+        logo_layout.setContentsMargins(8, 0, 0, 0)
 
-        logo = QLabel()
-        logo.setText("Warung<span style='color:#4F6EF7'>+</span>")
+        logo = QLabel("Warung<span style='color:#4F6EF7'>+</span>")
         logo.setTextFormat(Qt.TextFormat.RichText)
         logo.setStyleSheet("""
             font-family: 'Segoe UI'; font-size: 20px; font-weight: 700;
             letter-spacing: 1px; color: #1B1B1B;
             background: transparent; border: none;
         """)
-        ll.addWidget(logo)
-        ll.addStretch()
+        logo_layout.addWidget(logo)
+        logo_layout.addStretch()
         root.addWidget(logo_wrap)
 
-        # Divider bawah logo
         root.addWidget(self._divider())
         root.addSpacing(10)
 
-        # ── Nav items ─────────────────────────────────────────────────────────
         for item in NAV_ITEMS:
             is_active = item["key"] == self._active_key
             nav = NavItem(item["key"], item["label"], item["icon"], active=is_active)
             nav.clicked.connect(self._on_nav_clicked)
             self._nav_items[item["key"]] = nav
             root.addWidget(nav)
-            root.addSpacing(4)   # jarak antar item sesuai screenshot
+            root.addSpacing(4)
 
         root.addStretch()
 
-        # Divider atas user card
         root.addWidget(self._divider())
         root.addSpacing(12)
 
-        # ── User card ─────────────────────────────────────────────────────────
         root.addWidget(self._build_user_card())
         root.addSpacing(6)
 
-        # ── Logout ────────────────────────────────────────────────────────────
         logout = LogoutButton()
-        logout.clicked.connect(self.logout_requested)
+        logout.clicked.connect(self.logout_requested.emit)
         root.addWidget(logout)
 
     def _divider(self) -> QFrame:
@@ -303,9 +316,8 @@ class SidebarWidget(QWidget):
         lay.setContentsMargins(12, 8, 12, 8)
         lay.setSpacing(10)
 
-        # Avatar circle
         initials = self._user.get("initials", "??")
-        avatar   = QLabel(initials)
+        avatar = QLabel(initials)
         avatar.setFixedSize(34, 34)
         avatar.setAlignment(Qt.AlignmentFlag.AlignCenter)
         avatar.setStyleSheet(f"""
@@ -314,7 +326,6 @@ class SidebarWidget(QWidget):
             border-radius: 17px; border: none;
         """)
 
-        # Text info
         info = QVBoxLayout()
         info.setSpacing(0)
         info.setContentsMargins(0, 0, 0, 0)
@@ -344,14 +355,31 @@ class SidebarWidget(QWidget):
 
         return card
 
-    def _on_nav_clicked(self, key: str):
-        if key == self._active_key:
+    def _set_active_visual(self, key: str):
+        """Ubah active state sidebar tanpa emit signal navigasi."""
+        if key not in self._nav_items:
             return
+
         if self._active_key in self._nav_items:
             self._nav_items[self._active_key].set_active(False)
+
         self._active_key = key
         self._nav_items[key].set_active(True)
+
+    def _on_nav_clicked(self, key: str):
+        if key not in self._nav_items:
+            return
+
+        # Tetap emit walaupun item yang sama diklik.
+        # Ini membuat MainShell bisa recovery jika state sidebar dan stack sempat tidak sinkron.
+        if key != self._active_key:
+            self._set_active_visual(key)
+
         self.nav_changed.emit(key)
 
     def set_active(self, key: str):
-        self._on_nav_clicked(key)
+        """Dipanggil dari MainShell untuk menyamakan visual; tidak mengirim signal."""
+        self._set_active_visual(key)
+
+    def current_key(self) -> str:
+        return self._active_key

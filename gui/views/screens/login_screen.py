@@ -14,7 +14,7 @@ from gui.views.components import (
     PinDot,
     GhostButton,
 )
-from gui.models.user_model import verify_user_pin
+from controllers.user_model import verify_user_pin
 
 PIN_LENGTH = 6
 

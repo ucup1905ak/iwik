@@ -1,13 +1,24 @@
 # views/screens/product_page.py
 
 from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QLineEdit, QScrollArea, QFrame, QGridLayout, QSizePolicy,
-    QComboBox, QDialog, QFormLayout, QSpinBox, QDoubleSpinBox,
-    QMessageBox, QStackedWidget, QGraphicsDropShadowEffect,
+    QWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QLineEdit,
+    QScrollArea,
+    QFrame,
+    QGridLayout,
+    QComboBox,
+    QDialog,
+    QFormLayout,
+    QMessageBox,
+    QGraphicsDropShadowEffect,
 )
-from PyQt6.QtCore import Qt, pyqtSignal, QSize, QTimer
-from PyQt6.QtGui import QColor, QFont, QPainter, QPixmap, QIcon
+from PyQt6.QtCore import Qt, pyqtSignal, QTimer
+from PyQt6.QtGui import QColor
+
 
 # ── Color palette ─────────────────────────────────────────────────────────────
 C_BG        = "#F4F5F9"
@@ -18,32 +29,40 @@ C_TEXT_PRI  = "#1A1D2E"
 C_TEXT_SEC  = "#6B6F80"
 C_BORDER    = "#E4E6EE"
 C_DANGER    = "#E05252"
-C_SUCCESS   = "#2ECC71"
 C_TAG_BG    = "#EEF1FE"
 C_TAG_TEXT  = "#4F6EF7"
+
+# Matikan shadow dulu untuk menghindari repaint lambat di scroll/grid.
+# Kalau setelah fix semua stabil dan ingin shadow kembali, ubah ke True.
+ENABLE_CARD_SHADOWS = False
+
 
 # ── Sample data ───────────────────────────────────────────────────────────────
 SAMPLE_CATEGORIES = ["Semua", "Makanan", "Minuman", "Snack", "Sembako", "Lainnya"]
 
 SAMPLE_PRODUCTS = [
-    {"id": 1, "name": "Nasi Goreng Spesial",  "category": "Makanan",  "price": 25000, "stock": 50,  "sku": "MKN-001"},
-    {"id": 2, "name": "Es Teh Manis",          "category": "Minuman",  "price": 5000,  "stock": 120, "sku": "MNM-001"},
-    {"id": 3, "name": "Keripik Singkong",       "category": "Snack",    "price": 8000,  "stock": 75,  "sku": "SNK-001"},
-    {"id": 4, "name": "Mie Goreng",             "category": "Makanan",  "price": 20000, "stock": 30,  "sku": "MKN-002"},
-    {"id": 5, "name": "Kopi Hitam",             "category": "Minuman",  "price": 7000,  "stock": 90,  "sku": "MNM-002"},
-    {"id": 6, "name": "Beras 5kg",              "category": "Sembako",  "price": 65000, "stock": 20,  "sku": "SMB-001"},
-    {"id": 7, "name": "Teh Botol",              "category": "Minuman",  "price": 6000,  "stock": 200, "sku": "MNM-003"},
-    {"id": 8, "name": "Chiki Snack",            "category": "Snack",    "price": 3000,  "stock": 150, "sku": "SNK-002"},
-    {"id": 9, "name": "Ayam Bakar",             "category": "Makanan",  "price": 30000, "stock": 15,  "sku": "MKN-003"},
-    {"id": 10,"name": "Gula Pasir 1kg",         "category": "Sembako",  "price": 14000, "stock": 40,  "sku": "SMB-002"},
-    {"id": 11,"name": "Jus Jeruk",              "category": "Minuman",  "price": 12000, "stock": 35,  "sku": "MNM-004"},
-    {"id": 12,"name": "Pisang Goreng",          "category": "Snack",    "price": 2000,  "stock": 0,   "sku": "SNK-003"},
+    {"id": 1,  "name": "Nasi Goreng Spesial", "category": "Makanan", "price": 25000, "stock": 50,  "sku": "MKN-001"},
+    {"id": 2,  "name": "Es Teh Manis",         "category": "Minuman", "price": 5000,  "stock": 120, "sku": "MNM-001"},
+    {"id": 3,  "name": "Keripik Singkong",     "category": "Snack",   "price": 8000,  "stock": 75,  "sku": "SNK-001"},
+    {"id": 4,  "name": "Mie Goreng",           "category": "Makanan", "price": 20000, "stock": 30,  "sku": "MKN-002"},
+    {"id": 5,  "name": "Kopi Hitam",           "category": "Minuman", "price": 7000,  "stock": 90,  "sku": "MNM-002"},
+    {"id": 6,  "name": "Beras 5kg",            "category": "Sembako", "price": 65000, "stock": 20,  "sku": "SMB-001"},
+    {"id": 7,  "name": "Teh Botol",            "category": "Minuman", "price": 6000,  "stock": 200, "sku": "MNM-003"},
+    {"id": 8,  "name": "Chiki Snack",          "category": "Snack",   "price": 3000,  "stock": 150, "sku": "SNK-002"},
+    {"id": 9,  "name": "Ayam Bakar",           "category": "Makanan", "price": 30000, "stock": 15,  "sku": "MKN-003"},
+    {"id": 10, "name": "Gula Pasir 1kg",       "category": "Sembako", "price": 14000, "stock": 40,  "sku": "SMB-002"},
+    {"id": 11, "name": "Jus Jeruk",            "category": "Minuman", "price": 12000, "stock": 35,  "sku": "MNM-004"},
+    {"id": 12, "name": "Pisang Goreng",        "category": "Snack",   "price": 2000,  "stock": 0,   "sku": "SNK-003"},
 ]
+
 
 # ── Category emoji ────────────────────────────────────────────────────────────
 CAT_EMOJI = {
-    "Makanan": "🍽️", "Minuman": "🥤", "Snack": "🍿",
-    "Sembako": "🛒", "Lainnya": "📦",
+    "Makanan": "🍽️",
+    "Minuman": "🥤",
+    "Snack": "🍿",
+    "Sembako": "🛒",
+    "Lainnya": "📦",
 }
 
 
@@ -59,6 +78,13 @@ def _card_shadow() -> QGraphicsDropShadowEffect:
     return shadow
 
 
+def _apply_card_shadow(widget: QWidget):
+    if ENABLE_CARD_SHADOWS:
+        widget.setGraphicsEffect(_card_shadow())
+    else:
+        widget.setGraphicsEffect(None)
+
+
 # ═════════════════════════════════════════════════════════════════════════════
 # Product Card
 # ═════════════════════════════════════════════════════════════════════════════
@@ -72,8 +98,8 @@ class ProductCard(QFrame):
         self._build()
 
     def _build(self):
-        p = self._product
-        stock = p["stock"]
+        product = self._product
+        stock = product["stock"]
 
         self.setObjectName("ProductCard")
         self.setStyleSheet(f"""
@@ -83,16 +109,16 @@ class ProductCard(QFrame):
                 border: 1px solid {C_BORDER};
             }}
         """)
-        self.setGraphicsEffect(_card_shadow())
+        _apply_card_shadow(self)
         self.setFixedHeight(170)
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(16, 14, 16, 14)
         layout.setSpacing(6)
 
-        # ── Top row: category tag + stock badge ──────────────────────────────
         top = QHBoxLayout()
-        cat_tag = QLabel(f"{CAT_EMOJI.get(p['category'], '📦')} {p['category']}")
+
+        cat_tag = QLabel(f"{CAT_EMOJI.get(product['category'], '📦')} {product['category']}")
         cat_tag.setStyleSheet(f"""
             background: {C_TAG_BG};
             color: {C_TAG_TEXT};
@@ -128,8 +154,7 @@ class ProductCard(QFrame):
         top.addWidget(stock_badge)
         layout.addLayout(top)
 
-        # ── Product name ──────────────────────────────────────────────────────
-        name_lbl = QLabel(p["name"])
+        name_lbl = QLabel(product["name"])
         name_lbl.setWordWrap(True)
         name_lbl.setStyleSheet(f"""
             font-family: 'Segoe UI';
@@ -141,8 +166,7 @@ class ProductCard(QFrame):
         """)
         layout.addWidget(name_lbl)
 
-        # ── SKU ───────────────────────────────────────────────────────────────
-        sku_lbl = QLabel(f"SKU: {p['sku']}")
+        sku_lbl = QLabel(f"SKU: {product['sku']}")
         sku_lbl.setStyleSheet(f"""
             font-family: 'Segoe UI';
             font-size: 10px;
@@ -154,11 +178,10 @@ class ProductCard(QFrame):
 
         layout.addStretch()
 
-        # ── Bottom row: price + actions ───────────────────────────────────────
         bottom = QHBoxLayout()
         bottom.setSpacing(8)
 
-        price_lbl = QLabel(_format_price(p["price"]))
+        price_lbl = QLabel(_format_price(product["price"]))
         price_lbl.setStyleSheet(f"""
             font-family: 'Segoe UI';
             font-size: 15px;
@@ -246,7 +269,6 @@ class ProductDialog(QDialog):
         layout.setContentsMargins(28, 24, 28, 24)
         layout.setSpacing(0)
 
-        # Title
         title = QLabel("Edit Produk" if self._edit_mode else "Tambah Produk Baru")
         title.setStyleSheet(f"""
             font-family: 'Segoe UI';
@@ -262,16 +284,15 @@ class ProductDialog(QDialog):
         layout.addWidget(sub)
         layout.addSpacing(20)
 
-        # Form
         form = QFormLayout()
         form.setSpacing(12)
         form.setLabelAlignment(Qt.AlignmentFlag.AlignLeft)
 
         def _field(placeholder=""):
-            f = QLineEdit()
-            f.setPlaceholderText(placeholder)
-            f.setFixedHeight(38)
-            f.setStyleSheet(f"""
+            field = QLineEdit()
+            field.setPlaceholderText(placeholder)
+            field.setFixedHeight(38)
+            field.setStyleSheet(f"""
                 QLineEdit {{
                     background: {C_BG};
                     border: 1px solid {C_BORDER};
@@ -286,15 +307,17 @@ class ProductDialog(QDialog):
                     background: {C_WHITE};
                 }}
             """)
-            return f
+            return field
 
         def _label(text):
-            l = QLabel(text)
-            l.setStyleSheet(f"font-size: 12px; font-weight: 600; color: {C_TEXT_PRI}; font-family: 'Segoe UI';")
-            return l
+            label = QLabel(text)
+            label.setStyleSheet(
+                f"font-size: 12px; font-weight: 600; color: {C_TEXT_PRI}; font-family: 'Segoe UI';"
+            )
+            return label
 
-        self._name_field = _field("Nama produk")
-        self._sku_field  = _field("SKU-001")
+        self._name_field  = _field("Nama produk")
+        self._sku_field   = _field("SKU-001")
         self._price_field = _field("0")
         self._stock_field = _field("0")
 
@@ -313,7 +336,7 @@ class ProductDialog(QDialog):
             QComboBox:focus {{ border: 1.5px solid {C_ACCENT}; }}
             QComboBox::drop-down {{ border: none; width: 24px; }}
         """)
-        for cat in SAMPLE_CATEGORIES[1:]:  # skip "Semua"
+        for cat in SAMPLE_CATEGORIES[1:]:
             self._cat_combo.addItem(cat)
 
         form.addRow(_label("Nama Produk"), self._name_field)
@@ -325,18 +348,17 @@ class ProductDialog(QDialog):
         layout.addLayout(form)
         layout.addStretch()
 
-        # If edit mode, populate
         if self._edit_mode:
-            p = self._product
-            self._name_field.setText(p["name"])
-            self._sku_field.setText(p["sku"])
-            self._price_field.setText(str(p["price"]))
-            self._stock_field.setText(str(p["stock"]))
-            idx = self._cat_combo.findText(p["category"])
+            product = self._product
+            self._name_field.setText(product["name"])
+            self._sku_field.setText(product["sku"])
+            self._price_field.setText(str(product["price"]))
+            self._stock_field.setText(str(product["stock"]))
+
+            idx = self._cat_combo.findText(product["category"])
             if idx >= 0:
                 self._cat_combo.setCurrentIndex(idx)
 
-        # Buttons
         btn_row = QHBoxLayout()
         btn_row.setSpacing(10)
 
@@ -379,9 +401,9 @@ class ProductDialog(QDialog):
         layout.addLayout(btn_row)
 
     def _on_save(self):
-        name  = self._name_field.text().strip()
-        sku   = self._sku_field.text().strip()
-        cat   = self._cat_combo.currentText()
+        name = self._name_field.text().strip()
+        sku = self._sku_field.text().strip()
+        category = self._cat_combo.currentText()
 
         try:
             price = int(self._price_field.text().replace(".", "").replace(",", ""))
@@ -401,7 +423,7 @@ class ProductDialog(QDialog):
             "id":       self._product["id"] if self._edit_mode else None,
             "name":     name,
             "sku":      sku,
-            "category": cat,
+            "category": category,
             "price":    price,
             "stock":    stock,
         }
@@ -420,9 +442,17 @@ class ProductPage(QWidget):
         self._active_category = "Semua"
         self._search_query = ""
 
+        self._grid_initialized = False
+        self._render_token = 0
+        self._pending_refresh = False
+        self._stat_value_labels: dict[str, tuple[QLabel, QLabel]] = {}
+
+        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
         self.setStyleSheet(f"background: {C_BG};")
         self._build_ui()
-        self._refresh_grid()
+
+        # Jangan render grid di constructor.
+        # Render pertama dilakukan di showEvent agar widget sudah visible di QStackedWidget.
 
     # ── Build UI ──────────────────────────────────────────────────────────────
     def _build_ui(self):
@@ -430,7 +460,6 @@ class ProductPage(QWidget):
         layout.setContentsMargins(32, 28, 32, 28)
         layout.setSpacing(0)
 
-        # ── Header ────────────────────────────────────────────────────────────
         header = QHBoxLayout()
 
         title_col = QVBoxLayout()
@@ -481,15 +510,12 @@ class ProductPage(QWidget):
         layout.addLayout(header)
         layout.addSpacing(20)
 
-        # ── Stats row ─────────────────────────────────────────────────────────
         layout.addLayout(self._build_stats_row())
         layout.addSpacing(20)
 
-        # ── Filter bar ────────────────────────────────────────────────────────
         layout.addLayout(self._build_filter_bar())
         layout.addSpacing(16)
 
-        # ── Product grid (scrollable) ─────────────────────────────────────────
         self._scroll = QScrollArea()
         self._scroll.setWidgetResizable(True)
         self._scroll.setFrameShape(QFrame.Shape.NoFrame)
@@ -505,31 +531,38 @@ class ProductPage(QWidget):
         self._scroll.setWidget(self._grid_container)
         layout.addWidget(self._scroll, stretch=1)
 
+    def _calc_stats(self) -> dict[str, str]:
+        total = len(self._products)
+        out_stock = sum(1 for p in self._products if p["stock"] == 0)
+        low_stock = sum(1 for p in self._products if 0 < p["stock"] < 20)
+        categories = len(set(p["category"] for p in self._products))
+
+        return {
+            "total": str(total),
+            "out_stock": str(out_stock),
+            "low_stock": str(low_stock),
+            "categories": str(categories),
+        }
+
     def _build_stats_row(self) -> QHBoxLayout:
         row = QHBoxLayout()
         row.setSpacing(14)
 
-        total     = len(self._products)
-        out_stock = sum(1 for p in self._products if p["stock"] == 0)
-        low_stock = sum(1 for p in self._products if 0 < p["stock"] < 20)
-        cats      = len(set(p["category"] for p in self._products))
+        values = self._calc_stats()
 
         stats = [
-            ("Total Produk",   str(total),     "#4F6EF7", "#EEF1FE"),
-            ("Stok Habis",     str(out_stock), "#E05252", "#FDEAEA"),
-            ("Stok Menipis",   str(low_stock), "#E07D2A", "#FDF3EA"),
-            ("Kategori",       str(cats),      "#27AE60", "#E8F8F0"),
+            ("total",      "Total Produk", values["total"],      "#4F6EF7", "#EEF1FE"),
+            ("out_stock",  "Stok Habis",   values["out_stock"],  "#E05252", "#FDEAEA"),
+            ("low_stock",  "Stok Menipis", values["low_stock"],  "#E07D2A", "#FDF3EA"),
+            ("categories", "Kategori",     values["categories"], "#27AE60", "#E8F8F0"),
         ]
 
-        self._stat_cards = []
-        for label, value, color, bg in stats:
-            card = self._stat_card(label, value, color, bg)
-            self._stat_cards.append(card)
-            row.addWidget(card)
+        for key, label, value, color, bg in stats:
+            row.addWidget(self._stat_card(key, label, value, color, bg))
 
         return row
 
-    def _stat_card(self, label: str, value: str, color: str, bg: str) -> QFrame:
+    def _stat_card(self, key: str, label: str, value: str, color: str, bg: str) -> QFrame:
         card = QFrame()
         card.setStyleSheet(f"""
             QFrame {{
@@ -539,7 +572,7 @@ class ProductPage(QWidget):
             }}
         """)
         card.setFixedHeight(76)
-        card.setGraphicsEffect(_card_shadow())
+        _apply_card_shadow(card)
 
         layout = QHBoxLayout(card)
         layout.setContentsMargins(16, 0, 16, 0)
@@ -584,6 +617,8 @@ class ProductPage(QWidget):
             border: none;
         """)
 
+        self._stat_value_labels[key] = (dot, val_lbl)
+
         text_col.addWidget(val_lbl)
         text_col.addWidget(lbl_lbl)
 
@@ -597,7 +632,6 @@ class ProductPage(QWidget):
         bar = QHBoxLayout()
         bar.setSpacing(10)
 
-        # Search
         search = QLineEdit()
         search.setPlaceholderText("🔍  Cari produk...")
         search.setFixedHeight(38)
@@ -621,7 +655,6 @@ class ProductPage(QWidget):
         bar.addWidget(search)
         bar.addSpacing(6)
 
-        # Category filters
         self._cat_buttons: dict[str, QPushButton] = {}
         for cat in SAMPLE_CATEGORIES:
             btn = self._cat_btn(cat)
@@ -637,7 +670,7 @@ class ProductPage(QWidget):
         btn.setFixedHeight(36)
         btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self._style_cat_btn(btn, is_active)
-        btn.clicked.connect(lambda checked, c=cat: self._on_cat_changed(c))
+        btn.clicked.connect(lambda checked, selected=cat: self._on_cat_changed(selected))
         return btn
 
     def _style_cat_btn(self, btn: QPushButton, active: bool):
@@ -676,19 +709,37 @@ class ProductPage(QWidget):
     # ── Data / filter logic ───────────────────────────────────────────────────
     def _filtered_products(self) -> list[dict]:
         result = self._products
+
         if self._active_category != "Semua":
             result = [p for p in result if p["category"] == self._active_category]
+
         if self._search_query:
-            q = self._search_query.lower()
-            result = [p for p in result if q in p["name"].lower() or q in p["sku"].lower()]
+            query = self._search_query.lower()
+            result = [
+                p for p in result
+                if query in p["name"].lower() or query in p["sku"].lower()
+            ]
+
         return result
 
-    def _refresh_grid(self):
-        # Clear old cards
+    def _clear_grid(self):
         while self._grid_layout.count():
             item = self._grid_layout.takeAt(0)
-            if item.widget():
-                item.widget().deleteLater()
+            widget = item.widget()
+            if widget:
+                widget.setParent(None)
+                widget.deleteLater()
+
+    def _refresh_grid(self):
+        self._render_token += 1
+        token = self._render_token
+
+        if not self.isVisible():
+            self._pending_refresh = True
+            return
+
+        self._pending_refresh = False
+        self._clear_grid()
 
         products = self._filtered_products()
 
@@ -702,30 +753,99 @@ class ProductPage(QWidget):
                 padding: 60px;
             """)
             self._grid_layout.addWidget(empty, 0, 0, 1, 3)
+            self._grid_container.adjustSize()
+            self._grid_container.update()
+            self._scroll.viewport().update()
+            return
+
+        # Dataset sample kecil: render langsung agar tidak terasa muncul bertahap.
+        # Jika nanti data besar, batch rendering tetap tersedia.
+        if len(products) <= 60:
+            self._render_all_cards(products, token)
+        else:
+            self._render_batch_cards(products, 0, batch_size=12, token=token)
+
+    def _render_all_cards(self, products: list[dict], token: int):
+        if token != self._render_token:
+            return
+        if not self.isVisible():
+            self._pending_refresh = True
             return
 
         cols = 3
+
         for i, product in enumerate(products):
             card = ProductCard(product)
             card.edit_clicked.connect(self._open_edit_dialog)
             card.delete_clicked.connect(self._delete_product)
             self._grid_layout.addWidget(card, i // cols, i % cols)
 
-        # Fill empty cells
-        remainder = len(products) % cols
-        if remainder:
-            for j in range(cols - remainder):
-                spacer = QWidget()
-                spacer.setStyleSheet("background: transparent;")
-                self._grid_layout.addWidget(spacer, len(products) // cols, remainder + j)
+        self._fill_grid_remainder(len(products), cols)
+        self._grid_container.adjustSize()
+        self._grid_container.update()
+        self._scroll.viewport().update()
+
+    def _render_batch_cards(
+        self,
+        products: list[dict],
+        start_idx: int,
+        batch_size: int = 12,
+        token: int | None = None,
+    ):
+        if token is None:
+            token = self._render_token
+        if token != self._render_token:
+            return
+        if not self.isVisible():
+            self._pending_refresh = True
+            return
+
+        end_idx = min(start_idx + batch_size, len(products))
+        cols = 3
+
+        for i in range(start_idx, end_idx):
+            product = products[i]
+            card = ProductCard(product)
+            card.edit_clicked.connect(self._open_edit_dialog)
+            card.delete_clicked.connect(self._delete_product)
+            self._grid_layout.addWidget(card, i // cols, i % cols)
+
+        self._grid_container.adjustSize()
+        self._grid_container.update()
+        self._scroll.viewport().update()
+
+        if end_idx < len(products):
+            QTimer.singleShot(
+                0,
+                lambda idx=end_idx, t=token: self._render_batch_cards(products, idx, batch_size, t),
+            )
+        else:
+            self._fill_grid_remainder(len(products), cols)
+
+    def _fill_grid_remainder(self, item_count: int, cols: int):
+        remainder = item_count % cols
+        if not remainder:
+            return
+
+        row = item_count // cols
+        for j in range(cols - remainder):
+            spacer = QWidget()
+            spacer.setStyleSheet("background: transparent;")
+            self._grid_layout.addWidget(spacer, row, remainder + j)
 
     def _refresh_stats(self):
-        # Re-build stats (simple rebuild)
-        pass  # Could update individual labels; for now full rebuild on dialog close
+        values = self._calc_stats()
+
+        for key, value in values.items():
+            labels = self._stat_value_labels.get(key)
+            if labels:
+                dot, val_lbl = labels
+                dot.setText(value)
+                val_lbl.setText(value)
 
     # ── Events ────────────────────────────────────────────────────────────────
     def _on_search_changed(self, text: str):
-        self._search_query = text
+        self._search_query = text.strip()
         self._refresh_grid()
 
     def _on_cat_changed(self, cat: str):
@@ -734,6 +854,7 @@ class ProductPage(QWidget):
             self._style_cat_btn(old_btn, False)
 
         self._active_category = cat
+
         new_btn = self._cat_buttons.get(cat)
         if new_btn:
             self._style_cat_btn(new_btn, True)
@@ -754,13 +875,16 @@ class ProductPage(QWidget):
         new_id = max((p["id"] for p in self._products), default=0) + 1
         data["id"] = new_id
         self._products.append(data)
+        self._refresh_stats()
         self._refresh_grid()
 
     def _update_product(self, data: dict):
-        for i, p in enumerate(self._products):
-            if p["id"] == data["id"]:
+        for i, product in enumerate(self._products):
+            if product["id"] == data["id"]:
                 self._products[i] = data
                 break
+
+        self._refresh_stats()
         self._refresh_grid()
 
     def _delete_product(self, product: dict):
@@ -787,6 +911,16 @@ class ProductPage(QWidget):
                 border: none;
             }}
         """)
+
         if confirm.exec() == QMessageBox.StandardButton.Yes:
             self._products = [p for p in self._products if p["id"] != product["id"]]
+            self._refresh_stats()
             self._refresh_grid()
+
+    def showEvent(self, event):
+        super().showEvent(event)
+
+        if not self._grid_initialized or self._pending_refresh:
+            self._grid_initialized = True
+            self._pending_refresh = False
+            QTimer.singleShot(0, self._refresh_grid)

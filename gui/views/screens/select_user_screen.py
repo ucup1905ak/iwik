@@ -25,24 +25,20 @@ class SelectUserScreen(QWidget):
     def __init__(self, users: list[dict], on_select=None, on_add=None):
         super().__init__()
 
-        # Data user dikirim dari AppShell (hasil SQLite)
         self.users = users
         self.on_select = on_select
         self.on_add = on_add
 
-        # ── Root Layout ──────────────────────────────────────────────────────
         root = QVBoxLayout(self)
         root.setAlignment(Qt.AlignmentFlag.AlignCenter)
         root.setContentsMargins(0, 0, 0, 0)
 
-        # ── Main Card ────────────────────────────────────────────────────────
         card = QFrame()
         card.setFixedWidth(440)
         card.setSizePolicy(
             QSizePolicy.Policy.Fixed,
-            QSizePolicy.Policy.Minimum
+            QSizePolicy.Policy.Minimum,
         )
-
         card.setStyleSheet("""
             QFrame {
                 background-color: #FAFAF8;
@@ -55,7 +51,6 @@ class SelectUserScreen(QWidget):
         cl.setContentsMargins(36, 30, 36, 30)
         cl.setSpacing(0)
 
-        # ── Logo ─────────────────────────────────────────────────────────────
         logo = QLabel("Warung<span style='color:#4F6EF7'>+</span>")
         logo.setTextFormat(Qt.TextFormat.RichText)
         logo.setStyleSheet("""
@@ -68,7 +63,6 @@ class SelectUserScreen(QWidget):
         cl.addWidget(logo)
         cl.addSpacing(10)
 
-        # ── Title ────────────────────────────────────────────────────────────
         title = QLabel("Pilih akun")
         title.setStyleSheet("""
             font-size:20px;
@@ -90,7 +84,6 @@ class SelectUserScreen(QWidget):
         cl.addWidget(Divider())
         cl.addSpacing(10)
 
-        # ── Dynamic Users dari SQLite ───────────────────────────────────────
         for user in self.users:
             acc = AccountOption(
                 user["initials"],
@@ -102,18 +95,24 @@ class SelectUserScreen(QWidget):
                 avatar_color=user["avatar_color"],
                 on_click=lambda u=user: self.on_select(u) if self.on_select else None,
             )
-
             cl.addWidget(acc)
             cl.addSpacing(4)
 
-        # ── Add Account ──────────────────────────────────────────────────────
         cl.addSpacing(8)
         cl.addWidget(Divider())
         cl.addSpacing(10)
 
+        # Tombol ini sebelumnya belum dibuat, padahal AppShell sudah mengirim on_add.
+        if self.on_add:
+            add_acc = AccountOption(
+                "+",
+                "Tambah admin",
+                is_add=True,
+                on_click=self.on_add,
+            )
+            cl.addWidget(add_acc)
 
-        # ── Final Render ─────────────────────────────────────────────────────
         root.addWidget(
             card,
-            alignment=Qt.AlignmentFlag.AlignCenter
+            alignment=Qt.AlignmentFlag.AlignCenter,
         )
