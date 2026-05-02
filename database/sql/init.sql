@@ -17,11 +17,13 @@ CREATE TABLE IF NOT EXISTS Customer (
 
 -- Product Table
 CREATE TABLE IF NOT EXISTS Product (
-    ID INTEGER PRIMARY KEY AUTOINCREMENT,
-    Name TEXT NOT NULL,
-    Brand TEXT,
-    Stock INTEGER NOT NULL DEFAULT 0,
-    Price REAL NOT NULL
+    ID          INTEGER PRIMARY KEY AUTOINCREMENT,
+    Name        TEXT    NOT NULL,
+    Brand       TEXT,
+    SKU         TEXT    UNIQUE,
+    Category    TEXT,
+    Stock       INTEGER NOT NULL DEFAULT 0,
+    Price       REAL    NOT NULL
 );
 
 -- Sales Table

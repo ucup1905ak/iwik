@@ -1,5 +1,5 @@
 # views/screens/product_page.py
-
+from controllers.product import ProductController
 from PyQt6.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -166,6 +166,18 @@ class ProductCard(QFrame):
         """)
         layout.addWidget(name_lbl)
 
+        brand_text = product.get('brand')
+        if brand_text:
+            brand_lbl = QLabel(f"Merek: {brand_text}")
+            brand_lbl.setStyleSheet(f"""
+                font-family: 'Segoe UI';
+                font-size: 11px;
+                color: {C_TEXT_SEC};
+                background: transparent;
+                border: none;
+            """)
+            layout.addWidget(brand_lbl)
+
         sku_lbl = QLabel(f"SKU: {product['sku']}")
         sku_lbl.setStyleSheet(f"""
             font-family: 'Segoe UI';
@@ -254,7 +266,7 @@ class ProductDialog(QDialog):
 
         self.setWindowTitle("Edit Produk" if self._edit_mode else "Tambah Produk")
         self.setModal(True)
-        self.setFixedSize(440, 420)
+        self.setFixedSize(440, 470)
         self.setStyleSheet(f"""
             QDialog {{
                 background: {C_WHITE};
@@ -317,6 +329,7 @@ class ProductDialog(QDialog):
             return label
 
         self._name_field  = _field("Nama produk")
+        self._brand_field = _field("Merek produk")
         self._sku_field   = _field("SKU-001")
         self._price_field = _field("0")
         self._stock_field = _field("0")
@@ -340,6 +353,7 @@ class ProductDialog(QDialog):
             self._cat_combo.addItem(cat)
 
         form.addRow(_label("Nama Produk"), self._name_field)
+        form.addRow(_label("Merek"),       self._brand_field)
         form.addRow(_label("SKU"),         self._sku_field)
         form.addRow(_label("Kategori"),    self._cat_combo)
         form.addRow(_label("Harga (Rp)"),  self._price_field)
@@ -351,6 +365,7 @@ class ProductDialog(QDialog):
         if self._edit_mode:
             product = self._product
             self._name_field.setText(product["name"])
+            self._brand_field.setText(product.get("brand", "") or "")
             self._sku_field.setText(product["sku"])
             self._price_field.setText(str(product["price"]))
             self._stock_field.setText(str(product["stock"]))
@@ -402,18 +417,11 @@ class ProductDialog(QDialog):
 
     def _on_save(self):
         name = self._name_field.text().strip()
+        brand = self._brand_field.text().strip()
         sku = self._sku_field.text().strip()
         category = self._cat_combo.currentText()
-
-        try:
-            price = int(self._price_field.text().replace(".", "").replace(",", ""))
-        except ValueError:
-            price = 0
-
-        try:
-            stock = int(self._stock_field.text())
-        except ValueError:
-            stock = 0
+        price = self._price_field.text().replace(".", "").replace(",", "")
+        stock = self._stock_field.text()
 
         if not name:
             self._name_field.setStyleSheet(self._name_field.styleSheet() + "border: 1.5px solid #E05252;")
@@ -422,6 +430,7 @@ class ProductDialog(QDialog):
         data = {
             "id":       self._product["id"] if self._edit_mode else None,
             "name":     name,
+            "brand":    brand,
             "sku":      sku,
             "category": category,
             "price":    price,
@@ -438,7 +447,8 @@ class ProductPage(QWidget):
     def __init__(self, user: dict = None, parent=None):
         super().__init__(parent)
         self._user = user or {}
-        self._products = list(SAMPLE_PRODUCTS)
+
+        self._products = self._load_products()
         self._active_category = "Semua"
         self._search_query = ""
 
@@ -450,6 +460,21 @@ class ProductPage(QWidget):
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
         self.setStyleSheet(f"background: {C_BG};")
         self._build_ui()
+
+    def _load_products(self) -> list[dict]:
+        products_data = ProductController.fetch()
+        return [
+            {
+                "id": p[0],
+                "name": p[1],
+                "brand": p[2],
+                "sku": p[3],
+                "category": p[4],
+                "stock": p[5],
+                "price": p[6],
+            }
+            for p in products_data
+        ]
 
         # Jangan render grid di constructor.
         # Render pertama dilakukan di showEvent agar widget sudah visible di QStackedWidget.
@@ -872,20 +897,37 @@ class ProductPage(QWidget):
         dlg.exec()
 
     def _add_product(self, data: dict):
-        new_id = max((p["id"] for p in self._products), default=0) + 1
-        data["id"] = new_id
-        self._products.append(data)
-        self._refresh_stats()
-        self._refresh_grid()
+        try:
+            ProductController.add(
+                name=data["name"],
+                price=data["price"],
+                stock=data["stock"],
+                brand=data.get("brand"),
+                sku=data["sku"],
+                category=data["category"]
+            )
+            self._products = self._load_products()
+            self._refresh_stats()
+            self._refresh_grid()
+        except TypeError as e:
+            QMessageBox.critical(self, "Error", str(e))
 
     def _update_product(self, data: dict):
-        for i, product in enumerate(self._products):
-            if product["id"] == data["id"]:
-                self._products[i] = data
-                break
-
-        self._refresh_stats()
-        self._refresh_grid()
+        try:
+            ProductController.edit(
+                product_id=data["id"],
+                name=data["name"],
+                brand=data.get("brand"),
+                stock=data["stock"],
+                price=data["price"],
+                sku=data["sku"],
+                category=data["category"]
+            )
+            self._products = self._load_products()
+            self._refresh_stats()
+            self._refresh_grid()
+        except TypeError as e:
+            QMessageBox.critical(self, "Error", str(e))
 
     def _delete_product(self, product: dict):
         confirm = QMessageBox(self)
@@ -913,9 +955,13 @@ class ProductPage(QWidget):
         """)
 
         if confirm.exec() == QMessageBox.StandardButton.Yes:
-            self._products = [p for p in self._products if p["id"] != product["id"]]
-            self._refresh_stats()
-            self._refresh_grid()
+            try:
+                ProductController.remove(product["id"])
+                self._products = self._load_products()
+                self._refresh_stats()
+                self._refresh_grid()
+            except TypeError as e:
+                QMessageBox.critical(self, "Error", str(e))
 
     def showEvent(self, event):
         super().showEvent(event)
