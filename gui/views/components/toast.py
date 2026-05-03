@@ -98,12 +98,10 @@ class Toast(QFrame):
         x = parent.width()  - toast.width()  - margin
         y = parent.height() - toast.height() - margin
 
-        # Mulai dari bawah layar, lalu slide up
         toast.move(x, y + 30)
         toast.raise_()
         toast.show()
 
-        # Animasi slide up
         anim = QPropertyAnimation(toast, b"pos", toast)
         anim.setDuration(250)
         anim.setStartValue(QPoint(x, y + 30))
@@ -112,7 +110,12 @@ class Toast(QFrame):
         anim.start()
 
         def _remove():
-            # Animasi slide down sebelum hilang
+            try:
+                # Guard: cek apakah toast masih valid
+                toast.objectName()  # akan raise RuntimeError jika sudah deleted
+            except RuntimeError:
+                return
+
             anim_out = QPropertyAnimation(toast, b"pos", toast)
             anim_out.setDuration(200)
             anim_out.setStartValue(QPoint(x, y))

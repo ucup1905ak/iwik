@@ -51,3 +51,36 @@ def verify_user_pin(name: str, input_pin: str):
 
     
     return user
+
+def update_user(user_id: int, name: str, role: int, pin: str = None):
+    """
+    Update user data. PIN hanya diupdate jika pin tidak None.
+    """
+    conn, _ = DatabaseManager.require_connection()
+    cursor = conn.cursor()
+
+    if pin is not None:
+        cursor.execute(
+            "UPDATE users SET name = ?, pin = ?, role = ? WHERE id = ?",
+            (name, hash_pin(pin), role, user_id)
+        )
+    else:
+        cursor.execute(
+            "UPDATE users SET name = ?, role = ? WHERE id = ?",
+            (name, role, user_id)
+        )
+
+    conn.commit()
+    
+def delete_user(user_id: int):
+    conn, _ = DatabaseManager.require_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM users WHERE id = ?", (user_id,))
+    conn.commit()
+    
+def get_first_admin_id() -> int | None:
+    conn, _ = DatabaseManager.require_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT MIN(id) FROM users WHERE role = 1")
+    row = cursor.fetchone()
+    return row[0] if row and row[0] is not None else None
