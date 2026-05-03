@@ -14,7 +14,7 @@ from gui.views.components import (
     PinDot,
     GhostButton,
 )
-from controllers.user_model import verify_user_pin
+from controllers.user import verify_user_pin
 
 PIN_LENGTH = 6
 
@@ -167,7 +167,7 @@ class LoginScreen(QWidget):
         user = verify_user_pin(self.user["name"], entered_pin)
 
         if user:
-            self._set_status("Autentikasi berhasil — menyiapkan dashboard...", "#3B8A3E")
+            self._set_status("Autentikasi berhasil, menyiapkan dashboard", "#3B8A3E")
             self.locked = True
             self._success_timer.start(700)
         else:
