@@ -23,7 +23,8 @@ CREATE TABLE IF NOT EXISTS Product (
     SKU         TEXT    UNIQUE,
     Category    TEXT,
     Stock       INTEGER NOT NULL DEFAULT 0,
-    Price       REAL    NOT NULL
+    Price       REAL    NOT NULL,
+    ImagePath   TEXT
 );
 
 -- Sales Table

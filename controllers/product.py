@@ -11,6 +11,7 @@ class Product(NamedTuple):
     category: Optional[str]
     stock: int
     price: float
+    image_path: Optional[str] = None
 
 class ProductController: 
     """Pembungkus Data Product 
@@ -22,7 +23,8 @@ class ProductController:
             stock: int, 
             brand: str | None = None, 
             sku: str | None = None, 
-            category: str | None = None
+            category: str | None = None,
+            image_path: str | None = None
             ) -> None:
         """Ada Error Handling type nya, nanti dia bakal raise TypeError kalau salah.
         """
@@ -34,8 +36,8 @@ class ProductController:
 
         conn, cursor = DatabaseManager.require_connection()
         cursor.execute(
-            "INSERT INTO Product (Name, Brand, SKU, Category, Stock, Price) VALUES (?, ?, ?, ?, ?, ?)",
-            (name, brand, sku, category, stock, price),
+            "INSERT INTO Product (Name, Brand, SKU, Category, Stock, Price, ImagePath) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (name, brand, sku, category, stock, price, image_path),
         )
         conn.commit()
 
@@ -58,7 +60,8 @@ class ProductController:
              stock: int, 
              price: float, 
              sku: str | None = None, 
-             category: str | None = None
+             category: str | None = None,
+             image_path: str | None = None
             ) -> None:
         """Ada Error Handling type nya, nanti dia bakal raise TypeError kalau salah.
         """
@@ -71,8 +74,8 @@ class ProductController:
 
         conn, cursor = DatabaseManager.require_connection()
         cursor.execute(
-            "UPDATE Product SET Name = ?, Brand = ?, SKU = ?, Category = ?, Stock = ?, Price = ? WHERE ID = ?",
-            (name, brand, sku, category, stock, price, product_id),
+            "UPDATE Product SET Name = ?, Brand = ?, SKU = ?, Category = ?, Stock = ?, Price = ?, ImagePath = ? WHERE ID = ?",
+            (name, brand, sku, category, stock, price, image_path, product_id),
         )
         conn.commit()
     

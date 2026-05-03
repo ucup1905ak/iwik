@@ -25,8 +25,9 @@ class DatabaseManager:
 
 
     #Bisa langsung Panggil     DatabaseManager.close()
+    @staticmethod
     def close():
-        if DatabaseManager.isConected:
+        if DatabaseManager.isConected():
             DatabaseManager.conn.close()
             DatabaseManager.conn = None
             DatabaseManager.cursor = None
