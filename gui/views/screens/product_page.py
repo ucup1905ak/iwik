@@ -18,11 +18,14 @@ from PyQt6.QtWidgets import (
     QTableWidgetItem,
     QHeaderView,
     QAbstractItemView,
-    QStackedWidget, QSizePolicy
+    QStackedWidget, QSizePolicy,
+    QFileDialog
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QTimer
 from PyQt6.QtGui import QColor, QFont, QPainter, QPainterPath, QRegion
 from gui.views.components.toast import Toast
+from utils.generate_xlsx import export_to_xlsx, import_from_xlsx
+import os
 
 # ── Color palette ──────────────────────────────────────────────────────────────
 C_BG       = "#F4F5F9"
@@ -1559,9 +1562,57 @@ class ProductPage(QWidget):
         """)
         add_btn.clicked.connect(self._open_add_dialog)
 
+        # ── Import/Export buttons ─────────────────────────────────────────────
+        import_btn = QPushButton("📥  Import")
+        import_btn.setFixedHeight(42)
+        import_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        import_btn.setStyleSheet(f"""
+            QPushButton {{
+                background:    {C_WHITE};
+                color:         {C_ACCENT};
+                font-family:   'Segoe UI';
+                font-size:     12px;
+                font-weight:   600;
+                border-radius: 10px;
+                padding:       0 16px;
+                border:        1.5px solid {C_ACCENT};
+            }}
+            QPushButton:hover {{
+                background: {C_TAG_BG};
+            }}
+        """)
+        import_btn.clicked.connect(self._on_import_clicked)
+
+        export_btn = QPushButton("📤  Export")
+        export_btn.setFixedHeight(42)
+        export_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        export_btn.setStyleSheet(f"""
+            QPushButton {{
+                background:    {C_WHITE};
+                color:         #27AE60;
+                font-family:   'Segoe UI';
+                font-size:     12px;
+                font-weight:   600;
+                border-radius: 10px;
+                padding:       0 16px;
+                border:        1.5px solid #27AE60;
+            }}
+            QPushButton:hover {{
+                background:    #E8F8F0;
+            }}
+        """)
+        export_btn.clicked.connect(self._on_export_clicked)
+
+        # ── Button group ──────────────────────────────────────────────────────
+        btn_group = QHBoxLayout()
+        btn_group.setSpacing(8)
+        btn_group.addWidget(import_btn)
+        btn_group.addWidget(export_btn)
+        btn_group.addWidget(add_btn)
+
         header.addLayout(title_col)
         header.addStretch()
-        header.addWidget(add_btn)
+        header.addLayout(btn_group)
         layout.addLayout(header)
         layout.addSpacing(20)
 
@@ -2130,6 +2181,134 @@ class ProductPage(QWidget):
         dlg = DeleteProductDialog(product=product, parent=self)
         dlg.confirmed.connect(do_delete)
         dlg.exec()
+
+    def _on_export_clicked(self):
+        """Handle export button click"""
+        if not self._products:
+            QMessageBox.warning(self, "Export", "Tidak ada produk untuk diekspor.")
+            return
+
+        try:
+            # Convert Product namedtuples to dicts for export
+            products_data = [
+                {
+                    'id': p.id,
+                    'name': p.name,
+                    'brand': p.brand,
+                    'sku': p.sku,
+                    'category': p.category,
+                    'price': p.price,
+                    'stock': p.stock,
+                }
+                for p in self._products
+            ]
+            
+            success, message = export_to_xlsx(products_data)
+            
+            if success:
+                Toast.show_toast(message, "success", self)
+                # Optional: open folder
+                base_path = os.path.dirname(os.path.dirname(__file__))
+                xlsx_dir = os.path.join(base_path, '..', 'assets', 'xlsx')
+                xlsx_dir = os.path.abspath(xlsx_dir)
+                if os.path.exists(xlsx_dir):
+                    os.startfile(xlsx_dir)
+            else:
+                QMessageBox.critical(self, "Export Error", message)
+        except Exception as e:
+            QMessageBox.critical(self, "Export Error", f"Terjadi kesalahan: {str(e)}")
+
+    def _on_import_clicked(self):
+        """Handle import button click"""
+        try:
+            file_path, _ = QFileDialog.getOpenFileName(
+                self,
+                "Import Produk dari Excel",
+                "",
+                "Excel Files (*.xlsx);;All Files (*.*)"
+            )
+            
+            if not file_path:
+                return
+            
+            success, products_data, message = import_from_xlsx(file_path)
+            
+            if not success:
+                QMessageBox.critical(self, "Import Error", message)
+                return
+            
+            # Show confirmation dialog
+            msg_box = QMessageBox(self)
+            msg_box.setWindowTitle("Konfirmasi Import")
+            msg_box.setText(f"Siap mengimport {len(products_data)} produk")
+            msg_box.setInformativeText(message)
+            msg_box.setStandardButtons(QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel)
+            msg_box.setDefaultButton(QMessageBox.StandardButton.Cancel)
+            msg_box.setIcon(QMessageBox.Icon.Information)
+            
+            if msg_box.exec() == QMessageBox.StandardButton.Ok:
+                self._import_products(products_data)
+        
+        except Exception as e:
+            QMessageBox.critical(self, "Import Error", f"Terjadi kesalahan: {str(e)}")
+
+    def _import_products(self, products_data: list):
+        """Process imported products"""
+        try:
+            import_count = 0
+            skip_count = 0
+            error_count = 0
+            errors = []
+            
+            for idx, product_dict in enumerate(products_data, 1):
+                try:
+                    # Check if SKU already exists
+                    existing_products = ProductController.fetch()
+                    sku_exists = any(p.sku == product_dict.get('sku') for p in existing_products)
+                    
+                    if sku_exists:
+                        skip_count += 1
+                        errors.append(f"Produk '{product_dict.get('name')}' (SKU: {product_dict.get('sku')}) - SKU sudah ada")
+                        continue
+                    
+                    ProductController.add(
+                        name=product_dict.get('name', '').strip(),
+                        brand=product_dict.get('brand', '').strip(),
+                        sku=product_dict.get('sku', '').strip(),
+                        category=product_dict.get('category', '').strip(),
+                        price=float(product_dict.get('price', 0)),
+                        stock=int(product_dict.get('stock', 0)),
+                    )
+                    import_count += 1
+                except Exception as e:
+                    error_count += 1
+                    errors.append(f"Produk #{idx} - {str(e)}")
+            
+            # Reload products
+            self._products = self._load_products()
+            self._refresh_stats()
+            self._refresh_view()
+            
+            # Show result
+            result_msg = f"✓ Berhasil import: {import_count} produk"
+            if skip_count > 0:
+                result_msg += f"\n⊘ Skip: {skip_count} produk (SKU duplikat)"
+            if error_count > 0:
+                result_msg += f"\n✗ Error: {error_count} produk"
+            
+            if errors:
+                result_msg += f"\n\nDetail:\n" + "\n".join(errors[:10])
+                if len(errors) > 10:
+                    result_msg += f"\n... dan {len(errors) - 10} error lainnya"
+            
+            if import_count > 0:
+                Toast.show_toast(f"Berhasil mengimport <b>{import_count}</b> produk", "success", self)
+                QMessageBox.information(self, "Import Selesai", result_msg)
+            else:
+                QMessageBox.warning(self, "Import Failed", result_msg)
+                
+        except Exception as e:
+            QMessageBox.critical(self, "Import Error", f"Terjadi kesalahan: {str(e)}")
 
     def showEvent(self, event):
         super().showEvent(event)
