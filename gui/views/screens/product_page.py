@@ -27,6 +27,8 @@ from gui.views.components.toast import Toast
 from utils.generate_xlsx import export_to_xlsx, import_from_xlsx
 from utils.image_optimizer import ImageOptimizer
 import os
+import random
+import string
 
 # ── Color palette ──────────────────────────────────────────────────────────────
 C_BG       = "#F4F5F9"
@@ -125,7 +127,7 @@ class ProductCard(QFrame):
         stock   = product.stock
 
         self.setObjectName("ProductCard")
-        self.setFixedHeight(300)
+        self.setFixedHeight(180)  # lebih pendek karena layout horizontal
 
         from PyQt6.QtWidgets import QSizePolicy
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
@@ -139,52 +141,61 @@ class ProductCard(QFrame):
         """)
         _apply_card_shadow(self)
 
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
+        # ── Main Layout ─────────────────────────────────────────────
+        root = QHBoxLayout(self)
+        root.setContentsMargins(14, 14, 14, 14)
+        root.setSpacing(14)
 
-        # ── Image section ────────────────────────────────────────────────────
+        # ============================================================
+        # IMAGE KIRI (DI DALAM CARD)
+        # ============================================================
+        img_container = QFrame()
+        # Hapus setFixedSize, ganti dengan hanya fixed width
+        img_container.setFixedWidth(140)  # ← lebar saja, tinggi mengikuti card
+        img_container.setStyleSheet(f"""
+            QFrame {{
+                background: #FFFFFF;
+                border-radius: 10px;
+                border: none;
+            }}
+        """)
+
+        img_layout = QVBoxLayout(img_container)
+        img_layout.setContentsMargins(4, 4, 4, 4)
+        img_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        img_label = QLabel()
+        img_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
         if product.image_path and os.path.exists(product.image_path):
-            img_container = QWidget()
-            img_container.setFixedHeight(120)
-            img_container.setStyleSheet(f"""
-                QWidget {{
-                    background: #F5F5F5;
-                    border-radius: 14px 14px 0 0;
-                }}
-            """)
-            img_layout = QHBoxLayout(img_container)
-            img_layout.setContentsMargins(0, 0, 0, 0)
-            img_layout.setSpacing(0)
-            img_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            
-            img_label = QLabel()
-            try:
-                pixmap = QPixmap(product.image_path)
-                if not pixmap.isNull():
-                    scaled_pixmap = pixmap.scaledToHeight(
-                        120, 
-                        Qt.TransformationMode.SmoothTransformation
-                    )
-                    img_label.setPixmap(scaled_pixmap)
-                else:
-                    img_label.setText("📦")
-                    img_label.setStyleSheet(f"font-size: 32px; color: {C_TEXT_SEC};")
-            except:
+            pixmap = QPixmap(product.image_path)
+            if not pixmap.isNull():
+                scaled = pixmap.scaled(
+                    130, 150,  # ← lebih besar menyesuaikan container
+                    Qt.AspectRatioMode.KeepAspectRatio,
+                    Qt.TransformationMode.SmoothTransformation
+                )
+                img_label.setPixmap(scaled)
+            else:
                 img_label.setText("📦")
-                img_label.setStyleSheet(f"font-size: 32px; color: {C_TEXT_SEC};")
-            
-            img_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            img_layout.addWidget(img_label)
-            layout.addWidget(img_container)
-        
-        # ── Info section ─────────────────────────────────────────────────────
+                img_label.setStyleSheet(f"font-size: 40px; color: {C_TEXT_SEC};")
+        else:
+            img_label.setText("📦")
+            img_label.setStyleSheet(f"font-size: 40px; color: {C_TEXT_SEC};")
+
+        img_layout.addWidget(img_label)
+        # ↓ Hapus alignment=AlignTop agar gambar full tinggi
+        root.addWidget(img_container)
+
+        # ============================================================
+        # INFO KANAN
+        # ============================================================
         info_container = QWidget()
         info_layout = QVBoxLayout(info_container)
-        info_layout.setContentsMargins(16, 12, 16, 12)
-        info_layout.setSpacing(4)
+        info_layout.setContentsMargins(0, 0, 0, 0)
+        info_layout.setSpacing(2)
 
-        # ── Top row ──────────────────────────────────────────────────────────
+        # ── Top row ────────────────────────────────────────────────
         top = QHBoxLayout()
         cat = _cat_theme(product.category)
 
@@ -224,13 +235,13 @@ class ProductCard(QFrame):
         top.addWidget(stock_badge)
         info_layout.addLayout(top)
 
-        # ── Name ──────────────────────────────────────────────────────────────
+        # ── Name ───────────────────────────────────────────────────
         name_lbl = QLabel(product.name)
         name_lbl.setWordWrap(True)
-        name_lbl.setMaximumHeight(32)
+        name_lbl.setMaximumHeight(36)
         name_lbl.setStyleSheet(f"""
             font-family:  'Segoe UI';
-            font-size:    12px;
+            font-size:    13px;
             font-weight:  700;
             color:        {C_TEXT_PRI};
             background:   transparent;
@@ -238,10 +249,9 @@ class ProductCard(QFrame):
         """)
         info_layout.addWidget(name_lbl)
 
-        # ── Brand ─────────────────────────────────────────────────────────────
+        # ── Brand ──────────────────────────────────────────────────
         if product.brand:
             brand_lbl = QLabel(f"Merek: {product.brand}")
-            brand_lbl.setMaximumHeight(18)
             brand_lbl.setStyleSheet(f"""
                 font-family: 'Segoe UI';
                 font-size:   10px;
@@ -251,7 +261,7 @@ class ProductCard(QFrame):
             """)
             info_layout.addWidget(brand_lbl)
 
-        # ── SKU ───────────────────────────────────────────────────────────────
+        # ── SKU ────────────────────────────────────────────────────
         sku_lbl = QLabel(f"SKU: {product.sku}")
         sku_lbl.setStyleSheet(f"""
             font-family: 'Segoe UI';
@@ -261,9 +271,10 @@ class ProductCard(QFrame):
             border:      none;
         """)
         info_layout.addWidget(sku_lbl)
-        info_layout.addStretch()
 
-        # ── Bottom row ────────────────────────────────────────────────────────
+        info_layout.addStretch(1)
+
+        # ── Bottom row ─────────────────────────────────────────────
         bottom = QHBoxLayout()
         bottom.setSpacing(8)
 
@@ -321,9 +332,10 @@ class ProductCard(QFrame):
         bottom.addStretch()
         bottom.addWidget(edit_btn)
         bottom.addWidget(del_btn)
+
         info_layout.addLayout(bottom)
-        
-        layout.addWidget(info_container)
+
+        root.addWidget(info_container, stretch=1)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -856,11 +868,8 @@ class ProductDialog(QDialog):
             }}
         """)
         self._build_ui()
-        # Set max height ke 85% dari screen height agar scrollable
-        screen_height = self.screen().geometry().height()
-        max_height = int(screen_height * 0.85)
-        self.setMaximumHeight(max_height)
         self.adjustSize()
+        self.setFixedWidth(420)  # hanya kunci width
 
     # ── Field builders ────────────────────────────────────────────────────────
     def _make_field(
@@ -925,7 +934,7 @@ class ProductDialog(QDialog):
         wl.addWidget(err_lbl)
 
         parent_layout.addWidget(wrap)
-        parent_layout.addSpacing(6)
+        parent_layout.addSpacing(10)
 
         return field, err_lbl
 
@@ -1011,6 +1020,17 @@ class ProductDialog(QDialog):
             combo.addItem(cat)
 
         wl.addWidget(combo)
+        
+        arrow_lbl = QLabel("⌄", combo)
+        arrow_lbl.setStyleSheet(f"""
+            font-family: 'Segoe UI'; font-size: 18px; font-weight: 600;
+            color: {C_TEXT_SEC}; background: transparent; border: none;
+        """)
+        arrow_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        arrow_lbl.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+
+        # Posisi setelah layout diset — pakai QTimer agar width sudah terhitung
+        QTimer.singleShot(0, lambda: arrow_lbl.setGeometry(combo.width() - 28, -8, 24, 40))
 
         err_lbl = QLabel("")
         err_lbl.setStyleSheet("""
@@ -1023,7 +1043,7 @@ class ProductDialog(QDialog):
         wl.addWidget(err_lbl)
 
         parent_layout.addWidget(wrap)
-        parent_layout.addSpacing(6)
+        parent_layout.addSpacing(10)
 
         return combo, err_lbl
 
@@ -1071,87 +1091,49 @@ class ProductDialog(QDialog):
         root.setContentsMargins(0, 0, 0, 0)
         root.setSpacing(0)
 
-        # ── Header (Fixed) ────────────────────────────────────────────────────
+        # ── Header ────────────────────────────────────────────────────────────
         header = QFrame()
-        header.setStyleSheet("""
-            QFrame {
-                background-color: #FAFAF8;
-                border-bottom: 1px solid #DDD9D2;
-            }
-        """)
+        header.setStyleSheet("QFrame { background-color: #FAFAF8; }")
         header_lay = QVBoxLayout(header)
-        header_lay.setContentsMargins(20, 12, 20, 12)
+        header_lay.setContentsMargins(36, 30, 36, 0)
         header_lay.setSpacing(0)
 
         logo = QLabel("Warung<span style='color:#4F6EF7'>+</span>")
         logo.setTextFormat(Qt.TextFormat.RichText)
-        logo.setStyleSheet("""
-            font-size:      12px;
-            color:          #5F5E5A;
-            font-weight:    500;
-            letter-spacing: 1px;
-            border:         none;
-        """)
+        logo.setStyleSheet("font-size:14px;color:#5F5E5A;font-weight:500;letter-spacing:1px;border:none;")
         header_lay.addWidget(logo)
+        header_lay.addSpacing(15)
 
         title = QLabel("Edit Produk" if self._edit_mode else "Tambah Produk Baru")
-        title.setStyleSheet("""
-            font-size:   16px;
-            font-weight: 600;
-            color:       #1b1b1b;
-            border:      none;
-        """)
+        title.setStyleSheet("font-size:20px;font-weight:600;color:#1b1b1b;border:none;")
         header_lay.addWidget(title)
+        header_lay.addSpacing(5)
 
         subtitle = QLabel(
-            "Ubah detail produk yang sudah ada."
+            f"Ubah detail untuk produk <b>{self._product.name}</b>."
             if self._edit_mode
             else "Isi informasi produk baru untuk warungmu."
         )
-        subtitle.setStyleSheet("""
-            font-size: 10px;
-            color:     #888780;
-            border:    none;
-        """)
+        subtitle.setStyleSheet("font-size:12px;color:#888780;border:none;")
         header_lay.addWidget(subtitle)
+        header_lay.addSpacing(16)
         root.addWidget(header)
 
-        # ── Scrollable Content ────────────────────────────────────────────────
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll.setStyleSheet("""
-            QScrollArea {
-                background: #FFFFFF;
-                border: none;
-            }
-            QScrollBar:vertical {
-                background: transparent;
-                width: 4px;
-                margin: 0;
-                border-radius: 2px;
-            }
-            QScrollBar::handle:vertical {
-                background: #DDD9D2;
-                border-radius: 2px;
-                min-height: 20px;
-            }
-            QScrollBar::handle:vertical:hover {
-                background: #B8BCCE;
-            }
-            QScrollBar::add-line:vertical,
-            QScrollBar::sub-line:vertical {
-                height: 0;
-            }
-        """)
-
-        scroll_widget = QWidget()
-        scroll_widget.setStyleSheet("background: #FFFFFF;")
-        cl = QVBoxLayout(scroll_widget)
-        cl.setContentsMargins(20, 14, 20, 14)
+        # ── Content ────────────────────────────────────────────────────────────
+        content = QWidget()
+        content.setStyleSheet("background: #FAFAF8;")
+        cl = QVBoxLayout(content)
+        cl.setContentsMargins(36, 0, 36, 30)
         cl.setSpacing(0)
 
+        divider = QFrame()
+        divider.setFixedHeight(1)
+        divider.setStyleSheet("background: #DDD9D2; border: none;")
+        cl.addWidget(divider)
+        cl.addSpacing(18)
+
         # ── Fields ────────────────────────────────────────────────────────────
-        self._name_field,  self._name_err  = self._make_field(cl, "Nama Produk", "Contoh: Kecap")
+        self._name_field,  self._name_err  = self._make_field(cl, "Nama",        "Contoh: Kecap")
         self._brand_field, self._brand_err = self._make_field(cl, "Merek",       "Contoh: Bango")
         self._sku_field,   self._sku_err   = self._make_field(cl, "SKU",         "Contoh: MKN-001")
         self._cat_combo,   self._cat_err   = self._make_combo(cl, "Kategori")
@@ -1159,15 +1141,13 @@ class ProductDialog(QDialog):
         self._stock_field, self._stock_err = self._make_field(cl, "Stok",        "Contoh: 10",    input_type="number")
 
         # ── Image Upload Section ──────────────────────────────────────────────
-        cl.addSpacing(8)
-        
         img_wrap = QWidget()
         img_wrap.setStyleSheet("background: transparent; border: none;")
         img_lay = QVBoxLayout(img_wrap)
         img_lay.setContentsMargins(0, 0, 0, 0)
         img_lay.setSpacing(6)
-        
-        img_label = QLabel("Gambar Produk")
+
+        img_label = QLabel("Gambar")
         img_label.setStyleSheet("""
             font-size:   11px;
             font-weight: 500;
@@ -1175,8 +1155,17 @@ class ProductDialog(QDialog):
             border:      none;
         """)
         img_lay.addWidget(img_label)
-        
-        # Image preview - reduced size
+
+        self._image_err = QLabel("")
+        self._image_err.setStyleSheet("""
+            font-size:   10px;
+            color:       #E05252;
+            font-family: 'Segoe UI';
+            border:      none;
+        """)
+        self._image_err.setVisible(False)
+        img_lay.addWidget(self._image_err)
+
         self._image_preview = QLabel()
         self._image_preview.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self._image_preview.setFixedHeight(80)
@@ -1189,13 +1178,13 @@ class ProductDialog(QDialog):
             }}
         """)
         img_lay.addWidget(self._image_preview)
-        
-        # Button row
+
         img_btn_lay = QHBoxLayout()
         img_btn_lay.setSpacing(6)
-        
+
         upload_btn = QPushButton("Pilih Gambar")
         upload_btn.setFixedHeight(32)
+        upload_btn.setMinimumWidth(110)
         upload_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         upload_btn.setStyleSheet(f"""
             QPushButton {{
@@ -1206,6 +1195,8 @@ class ProductDialog(QDialog):
                 font-weight:   600;
                 border-radius: 6px;
                 border:        none;
+                padding:       0 16px;
+                text-align:    center;
             }}
             QPushButton:hover {{
                 background: {C_ACCENT};
@@ -1213,9 +1204,10 @@ class ProductDialog(QDialog):
             }}
         """)
         upload_btn.clicked.connect(self._on_upload_image)
-        
+
         self._remove_img_btn = QPushButton("Hapus")
         self._remove_img_btn.setFixedHeight(32)
+        self._remove_img_btn.setMinimumWidth(85)
         self._remove_img_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self._remove_img_btn.setStyleSheet("""
             QPushButton {
@@ -1226,6 +1218,8 @@ class ProductDialog(QDialog):
                 font-weight:   600;
                 border-radius: 6px;
                 border:        none;
+                padding:       0 16px;
+                text-align:    center;
             }
             QPushButton:hover {
                 background: #E05252;
@@ -1234,13 +1228,12 @@ class ProductDialog(QDialog):
         """)
         self._remove_img_btn.clicked.connect(self._on_remove_image)
         self._remove_img_btn.setVisible(False)
-        
+
         img_btn_lay.addWidget(upload_btn)
         img_btn_lay.addWidget(self._remove_img_btn)
         img_btn_lay.addStretch()
         img_lay.addLayout(img_btn_lay)
-        
-        # Image info label
+
         self._image_info = QLabel("Ukuran maksimal: 500 KB")
         self._image_info.setStyleSheet(f"""
             font-size:   9px;
@@ -1248,90 +1241,68 @@ class ProductDialog(QDialog):
             border:      none;
         """)
         img_lay.addWidget(self._image_info)
-        
+
         cl.addWidget(img_wrap)
-        cl.addStretch()
-        
+
         # Store image paths
-        self._existing_image_path = None  # Track original image in edit mode
-        self._selected_image_path = None  # Track newly uploaded image
-        self._image_removed = False  # Track if user explicitly clicked remove
+        self._existing_image_path = None
+        self._selected_image_path = None
+        self._image_removed = False
 
-        scroll.setWidget(scroll_widget)
-        root.addWidget(scroll)
+        root.addWidget(content)
 
-        # ── Footer Buttons (Fixed) ────────────────────────────────────────────
+       # ── Footer ────────────────────────────────────────────────────────────
         footer = QFrame()
-        footer.setStyleSheet("""
-            QFrame {
-                background-color: #FFFFFF;
-                border-top: 1px solid #DDD9D2;
-            }
-        """)
+        footer.setStyleSheet("QFrame { background-color: #FAFAF8; }")
         footer_lay = QHBoxLayout(footer)
-        footer_lay.setContentsMargins(16, 10, 16, 10)
-        footer_lay.setSpacing(8)
+        footer_lay.setContentsMargins(36, 0, 36, 30)
+        footer_lay.setSpacing(10)
 
         cancel_btn = QPushButton("Batal")
-        cancel_btn.setFixedHeight(36)
+        cancel_btn.setFixedHeight(40)
         cancel_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         cancel_btn.setStyleSheet("""
             QPushButton {
-                background:    transparent;
-                color:         #5F5E5A;
-                font-family:   'Segoe UI';
-                font-size:     12px;
-                font-weight:   500;
-                border-radius: 8px;
-                border:        1px solid #DDD9D2;
+                background: transparent; color: #5F5E5A;
+                font-family: 'Segoe UI'; font-size: 13px; font-weight: 500;
+                border-radius: 10px; border: 1px solid #DDD9D2;
             }
-            QPushButton:hover {
-                background: #F1EFE8;
-                border:     1px solid #C8C6BF;
-            }
+            QPushButton:hover { background: #F1EFE8; border: 1px solid #C8C6BF; }
         """)
         cancel_btn.clicked.connect(self.reject)
 
         save_btn = QPushButton("Simpan Produk" if self._edit_mode else "Tambah Produk")
-        save_btn.setFixedHeight(36)
+        save_btn.setFixedHeight(40)
         save_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         save_btn.setStyleSheet(f"""
             QPushButton {{
-                background:    {C_ACCENT};
-                color:         #FFFFFF;
-                font-family:   'Segoe UI';
-                font-size:     12px;
-                font-weight:   600;
-                border-radius: 8px;
-                border:        none;
+                background: {C_ACCENT}; color: #FFFFFF;
+                font-family: 'Segoe UI'; font-size: 13px; font-weight: 600;
+                border-radius: 10px; border: none;
             }}
-            QPushButton:hover {{
-                background: {C_ACCENT_H};
-            }}
+            QPushButton:hover {{ background: {C_ACCENT_H}; }}
         """)
         save_btn.clicked.connect(self._on_save)
 
         footer_lay.addWidget(cancel_btn)
         footer_lay.addWidget(save_btn)
         root.addWidget(footer)
-
-        # ── Pre-fill edit mode ─────────────────────────────────────────────────
+        
         if self._edit_mode:
             p = self._product
             self._name_field.setText(p.name)
             self._brand_field.setText(p.brand or "")
             self._sku_field.setText(p.sku or "")
-            self._price_field.setText(str(int(p.price)))   # ← cast ke int dulu
-            self._stock_field.setText(str(int(p.stock))) 
+            self._price_field.setText(str(int(p.price)))
+            self._stock_field.setText(str(int(p.stock)))
             idx = self._cat_combo.findText(p.category or "")
             if idx >= 0:
                 self._cat_combo.setCurrentIndex(idx)
-            
-            # Load existing image (without marking it as "newly selected")
+
             if p.image_path and os.path.exists(p.image_path):
                 self._set_image_preview(p.image_path)
-                self._existing_image_path = p.image_path  # Store existing path separately
-                self._selected_image_path = None  # Keep this None until a NEW image is uploaded
+                self._existing_image_path = p.image_path
+                self._selected_image_path = None
 
     # ── Image handlers ────────────────────────────────────────────────────────
     def _on_upload_image(self):
@@ -1400,6 +1371,7 @@ class ProductDialog(QDialog):
         ]:
             self._clear_error(field, err)
         self._cat_err.setVisible(False)
+        self._image_err.setVisible(False)
 
         valid = True
 
@@ -1434,8 +1406,32 @@ class ProductDialog(QDialog):
         if not stock_text:
             self._show_error(self._stock_field, self._stock_err, "Stok tidak boleh kosong.")
             valid = False
+            
+        if not self._edit_mode:
+            # Mode tambah produk → wajib upload gambar
+            if not self._selected_image_path:
+                self._image_err.setText("Gambar produk wajib diunggah.")
+                self._image_err.setVisible(True)
+                valid = False
+        else:
+            # Mode edit
+            no_existing = not self._existing_image_path
+            removed_without_new = self._image_removed and not self._selected_image_path
+
+            # Produk lama tidak punya gambar & user belum upload
+            if no_existing and not self._selected_image_path:
+                self._image_err.setText("Gambar produk wajib diunggah.")
+                self._image_err.setVisible(True)
+                valid = False
+
+            # User hapus gambar lama tapi tidak upload baru
+            elif removed_without_new:
+                self._image_err.setText("Gambar produk tidak boleh kosong.")
+                self._image_err.setVisible(True)
+                valid = False
 
         if not valid:
+            self.adjustSize()
             return
 
         # ── Handle image compression ─────────────────────────────────────────
@@ -1476,6 +1472,7 @@ class ProductDialog(QDialog):
             "price":    int(price_text.replace(".", "").replace(",", "")),
             "stock":    stock_text,
             "image_path": image_path,
+            "original_image_name": os.path.splitext(os.path.basename(self._selected_image_path))[0] if self._selected_image_path else None,
         }
         self.saved.emit(data)
         self.accept()
@@ -1492,19 +1489,14 @@ class DeleteProductDialog(QDialog):
 
         self.setWindowTitle("Hapus Produk")
         self.setModal(True)
-        self.setFixedWidth(380)
+        self.setFixedWidth(420)  # ← samakan width
         self.setWindowFlag(Qt.WindowType.MSWindowsFixedSizeDialogHint)
         self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Minimum)
         self.setSizeGripEnabled(False)
-        self.setStyleSheet(f"""
-            QDialog {{
-                background:  {C_WHITE};
-                font-family: 'Segoe UI';
-            }}
-        """)
+        self.setStyleSheet(f"QDialog {{ background: {C_WHITE}; font-family: 'Segoe UI'; }}")
         self._build_ui()
         self.adjustSize()
-        self.setMaximumHeight(400)
+        self.setMaximumSize(420, self.height())  # ← samakan
 
     def _build_ui(self):
         root = QVBoxLayout(self)
@@ -1512,39 +1504,20 @@ class DeleteProductDialog(QDialog):
         root.setSpacing(0)
 
         card = QFrame()
-        card.setStyleSheet("""
-            QFrame {
-                background-color: #FAFAF8;
-                border:           1px solid #DDD9D2;
-            }
-        """)
+        card.setStyleSheet("QFrame { background-color: #FAFAF8; border: 1px solid #DDD9D2; }")
 
         cl = QVBoxLayout(card)
-        cl.setContentsMargins(20, 16, 20, 16)
+        cl.setContentsMargins(36, 30, 36, 30)  # ← samakan
         cl.setSpacing(0)
 
-        # ── Logo ──────────────────────────────────────────────────────────────
         logo = QLabel("Warung<span style='color:#4F6EF7'>+</span>")
         logo.setTextFormat(Qt.TextFormat.RichText)
-        logo.setStyleSheet("""
-            font-size:      11px;
-            color:          #5F5E5A;
-            font-weight:    500;
-            letter-spacing: 1px;
-            border:         none;
-        """)
+        logo.setStyleSheet("font-size:14px;color:#5F5E5A;font-weight:500;letter-spacing:1px;border:none;")
         cl.addWidget(logo)
 
-        # ── Title ─────────────────────────────────────────────────────────────
         title = QLabel("Hapus Produk?")
-        title.setStyleSheet("""
-            font-size:   16px;
-            font-weight: 600;
-            color:       #1b1b1b;
-            border:      none;
-        """)
+        title.setStyleSheet("font-size:20px;font-weight:600;color:#1b1b1b;border:none;")
         cl.addWidget(title)
-        cl.addSpacing(4)
 
         subtitle = QLabel(
             f"Anda akan menghapus produk <b>{self._product.name}</b>.<br>"
@@ -1552,116 +1525,78 @@ class DeleteProductDialog(QDialog):
         )
         subtitle.setTextFormat(Qt.TextFormat.RichText)
         subtitle.setWordWrap(True)
-        subtitle.setStyleSheet("""
-            font-size:   11px;
-            color:       #888780;
-            border:      none;
-            line-height: 1.4;
-        """)
+        subtitle.setStyleSheet("font-size:12px;color:#888780;border:none;")
         cl.addWidget(subtitle)
-        cl.addSpacing(12)
+        cl.addSpacing(16)
 
-        # ── Divider ───────────────────────────────────────────────────────────
         divider = QFrame()
         divider.setFixedHeight(1)
         divider.setStyleSheet("background: #DDD9D2; border: none;")
         cl.addWidget(divider)
-        cl.addSpacing(12)
+        cl.addSpacing(16)
 
-        # ── Product info card ─────────────────────────────────────────────────
+        cat = _cat_theme(self._product.category)
         info_card = QFrame()
         info_card.setStyleSheet(f"""
-            QFrame {{
-                background:    {C_WHITE};
-                border:        1px solid #E4E6EE;
-                border-radius: 8px;
-            }}
+            QFrame {{ background: {C_WHITE}; border: 1px solid #E4E6EE; border-radius: 10px; }}
             QLabel {{ background: transparent; border: none; }}
         """)
         info_lay = QHBoxLayout(info_card)
-        info_lay.setContentsMargins(10, 8, 10, 8)
-        info_lay.setSpacing(10)
+        info_lay.setContentsMargins(14, 12, 14, 12)
+        info_lay.setSpacing(12)
 
-        cat = _cat_theme(self._product.category)
         cat_icon = QLabel(cat["emoji"])
-        cat_icon.setFixedSize(32, 32)
+        cat_icon.setFixedSize(36, 36)
         cat_icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        cat_icon.setStyleSheet(f"""
-            font-size:     16px;
-            background:    {cat['bg']};
-            border-radius: 6px;
-        """)
+        cat_icon.setStyleSheet(f"font-size:18px;background:{cat['bg']};border-radius:8px;")
 
-        detail_col = QVBoxLayout()
-        detail_col.setSpacing(1)
+        detail = QVBoxLayout()
+        detail.setSpacing(2)
         name_lbl = QLabel(self._product.name)
-        name_lbl.setStyleSheet(f"""
-            font-size:   12px;
-            font-weight: 600;
-            color:       {C_TEXT_PRI};
-        """)
+        name_lbl.setStyleSheet(f"font-size:13px;font-weight:600;color:{C_TEXT_PRI};")
         meta_lbl = QLabel(f"SKU: {self._product.sku}  ·  {_format_price(self._product.price)}")
-        meta_lbl.setStyleSheet(f"""
-            font-size: 10px;
-            color:     {C_TEXT_SEC};
-        """)
-        detail_col.addWidget(name_lbl)
-        detail_col.addWidget(meta_lbl)
+        meta_lbl.setStyleSheet(f"font-size:11px;color:{C_TEXT_SEC};")
+        detail.addWidget(name_lbl)
+        detail.addWidget(meta_lbl)
 
         info_lay.addWidget(cat_icon)
-        info_lay.addLayout(detail_col)
+        info_lay.addLayout(detail)
         info_lay.addStretch()
-
         cl.addWidget(info_card)
-        cl.addSpacing(14)
+        cl.addSpacing(20)
 
-        # ── Buttons ───────────────────────────────────────────────────────────
         btn_row = QHBoxLayout()
-        btn_row.setSpacing(8)
+        btn_row.setSpacing(10)
 
         cancel_btn = QPushButton("Batal")
-        cancel_btn.setFixedHeight(36)
+        cancel_btn.setFixedHeight(40)
         cancel_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         cancel_btn.setStyleSheet("""
             QPushButton {
-                background:    transparent;
-                color:         #5F5E5A;
-                font-family:   'Segoe UI';
-                font-size:     12px;
-                font-weight:   500;
-                border-radius: 8px;
-                border:        1px solid #DDD9D2;
+                background: transparent; color: #5F5E5A;
+                font-family: 'Segoe UI'; font-size: 13px; font-weight: 500;
+                border-radius: 10px; border: 1px solid #DDD9D2;
             }
-            QPushButton:hover {
-                background: #F1EFE8;
-                border:     1px solid #C8C6BF;
-            }
+            QPushButton:hover { background: #F1EFE8; border: 1px solid #C8C6BF; }
         """)
         cancel_btn.clicked.connect(self.reject)
 
         delete_btn = QPushButton("Ya, Hapus Produk")
-        delete_btn.setFixedHeight(36)
+        delete_btn.setFixedHeight(40)
         delete_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         delete_btn.setStyleSheet(f"""
             QPushButton {{
-                background:    {C_DANGER};
-                color:         #FFFFFF;
-                font-family:   'Segoe UI';
-                font-size:     12px;
-                font-weight:   600;
-                border-radius: 8px;
-                border:        none;
+                background: {C_DANGER}; color: #FFFFFF;
+                font-family: 'Segoe UI'; font-size: 13px; font-weight: 600;
+                border-radius: 10px; border: none;
             }}
-            QPushButton:hover {{
-                background: #C94040;
-            }}
+            QPushButton:hover {{ background: #C94040; }}
         """)
         delete_btn.clicked.connect(self._on_confirm)
 
         btn_row.addWidget(cancel_btn)
         btn_row.addWidget(delete_btn)
         cl.addLayout(btn_row)
-
         root.addWidget(card)
 
     def _on_confirm(self):
@@ -2415,17 +2350,20 @@ class ProductPage(QWidget):
             # If image was added with product_id=0, rename it to the actual ID
             if data.get("image_path"):
                 self._products = self._load_products()
-                # Get last added product to get its real ID
                 if self._products:
                     last_product = self._products[-1]
                     image_path = data.get("image_path")
-                    if "product_0.jpg" in image_path:
+                    if os.path.exists(image_path) and "product_0" in os.path.basename(image_path):
                         old_path = image_path
-                        new_path = os.path.join(os.path.dirname(image_path), f"product_{last_product.id}.jpg")
+                        ext = os.path.splitext(old_path)[1]  # ambil ekstensi asli
+                        original_name = data.get("original_image_name") or os.path.splitext(os.path.basename(old_path))[0]
+                        random_suffix = ''.join(random.choices(string.ascii_lowercase, k=5))
+                        ext = os.path.splitext(old_path)[1]
+                        new_filename = f"{original_name}_{random_suffix}{ext}"
+                        new_path = os.path.join(os.path.dirname(old_path), new_filename)
                         try:
                             if os.path.exists(old_path):
                                 os.rename(old_path, new_path)
-                                # Update product dengan image path yang benar
                                 ProductController.edit(
                                     product_id=last_product.id,
                                     name=last_product.name,
@@ -2458,6 +2396,31 @@ class ProductPage(QWidget):
                 category=data["category"],
                 image_path=data.get("image_path"),
             )
+
+            # Rename gambar baru ke nama asli + random suffix
+            if data.get("image_path") and data.get("original_image_name"):
+                image_path = data["image_path"]
+                if os.path.exists(image_path):
+                    original_name = data["original_image_name"]
+                    random_suffix = ''.join(random.choices(string.ascii_lowercase, k=5))
+                    ext = os.path.splitext(image_path)[1]
+                    new_filename = f"{original_name}_{random_suffix}{ext}"
+                    new_path = os.path.join(os.path.dirname(image_path), new_filename)
+                    try:
+                        os.rename(image_path, new_path)
+                        ProductController.edit(
+                            product_id=data["id"],
+                            name=data["name"],
+                            brand=data.get("brand"),
+                            stock=data["stock"],
+                            price=data["price"],
+                            sku=data["sku"],
+                            category=data["category"],
+                            image_path=new_path,
+                        )
+                    except Exception as e:
+                        print(f"Error renaming image: {e}")
+
             self._products = self._load_products()
             self._refresh_stats()
             self._refresh_view()
@@ -2468,6 +2431,10 @@ class ProductPage(QWidget):
     def _delete_product(self, product: Product):
         def do_delete():
             try:
+                # Hapus file gambar dulu sebelum hapus dari DB
+                if product.image_path and os.path.exists(product.image_path):
+                    ImageOptimizer.delete_image(product.image_path)
+                
                 ProductController.remove(product.id)
                 self._products = self._load_products()
                 self._refresh_stats()

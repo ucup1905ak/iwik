@@ -614,11 +614,12 @@ class UserDialog(QDialog):
         logo.setTextFormat(Qt.TextFormat.RichText)
         logo.setStyleSheet("font-size:14px;color:#5F5E5A;font-weight:500;letter-spacing:1px;border:none;")
         cl.addWidget(logo)
-        cl.addSpacing(10)
+        cl.addSpacing(15)
 
         title = QLabel("Edit Pengguna" if self._is_edit else "Tambah Pengguna Baru")
         title.setStyleSheet("font-size:20px;font-weight:600;color:#1b1b1b;border:none;")
         cl.addWidget(title)
+        cl.addSpacing(5)
 
         subtitle = QLabel(
             f"Ubah informasi untuk pengguna <b>{self._user[1]}</b>."
@@ -796,12 +797,12 @@ class DeleteUserDialog(QDialog):
         logo.setTextFormat(Qt.TextFormat.RichText)
         logo.setStyleSheet("font-size:14px;color:#5F5E5A;font-weight:500;letter-spacing:1px;border:none;")
         cl.addWidget(logo)
-        cl.addSpacing(14)
+        cl.setSpacing(0)
 
         title = QLabel("Hapus Pengguna?")
         title.setStyleSheet("font-size:20px;font-weight:600;color:#1b1b1b;border:none;")
         cl.addWidget(title)
-        cl.addSpacing(6)
+        cl.setSpacing(0)
 
         subtitle = QLabel(
             f"Kamu akan menghapus pengguna <b>{name}</b>.<br>"

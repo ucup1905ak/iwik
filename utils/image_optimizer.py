@@ -100,13 +100,12 @@ class ImageOptimizer:
     
     @staticmethod
     def delete_image(image_path: str) -> bool:
-        """Hapus file gambar"""
         try:
             if image_path and os.path.exists(image_path):
                 os.remove(image_path)
                 return True
         except Exception as e:
-            print(f"Error deleting image: {e}")
+            print(f"Gagal menghapus gambar: {e}")
         return False
     
     @staticmethod
