@@ -1,12 +1,5 @@
 PRAGMA foreign_keys = ON;
 
--- Cashier Table
-CREATE TABLE IF NOT EXISTS Cashier (
-    ID INTEGER PRIMARY KEY AUTOINCREMENT,
-    FirstName TEXT NOT NULL,
-    LastName TEXT NOT NULL,
-    Salary REAL
-);
 
 -- Customer Table
 CREATE TABLE IF NOT EXISTS Customer (
@@ -56,4 +49,36 @@ CREATE TABLE IF NOT EXISTS users (
         name TEXT NOT NULL,
         pin TEXT NOT NULL,
         role INTEGER NOT NULL CHECK(role IN (1, 2))
-)
+);
+
+-- Suppliers Table
+CREATE TABLE IF NOT EXISTS Suppliers (
+    ID          INTEGER     PRIMARY KEY AUTOINCREMENT,
+    Name        TEXT        NOT NULL,
+    Phone       TEXT,
+    Address     TEXT
+);
+
+-- Purchases Table
+CREATE TABLE IF NOT EXISTS Purchases (
+    ID          INTEGER     PRIMARY KEY AUTOINCREMENT,
+    SupplierID  INTEGER     NOT NULL,
+    UserID      INTEGER     NOT NULL,
+    Time        TEXT        NOT NULL,
+    TotalAmount REAL,
+
+    FOREIGN KEY (SupplierID) REFERENCES Suppliers(ID),
+    FOREIGN KEY (UserID) REFERENCES users(id)
+);
+
+-- PurchaseDetail Table
+CREATE TABLE IF NOT EXISTS PurchaseDetail (
+    ID              INTEGER     PRIMARY KEY AUTOINCREMENT,
+    PurchaseID      INTEGER     NOT NULL,
+    ProductID       INTEGER     NOT NULL,
+    Quantity        INTEGER     NOT NULL,
+    PurchasePrice   REAL        NOT NULL,
+
+    FOREIGN KEY (PurchaseID) REFERENCES Purchases(ID) ON DELETE CASCADE,
+    FOREIGN KEY (ProductID) REFERENCES Product(ID)
+);

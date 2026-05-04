@@ -13,3 +13,9 @@ utils/__pycache__/*
 .Python
 *.pyc
 */__pycache__/*
+
+
+#documents
+*.pdf
+*.csv
+*.xlxs

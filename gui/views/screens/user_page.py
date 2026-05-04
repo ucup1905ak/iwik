@@ -1,4 +1,4 @@
-from controllers.user import get_all_users, create_user, update_user, delete_user, get_first_admin_id
+from controllers.user import UserController
 from PyQt6.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -983,7 +983,7 @@ class UserPage(QWidget):
 
     def _load_users(self) -> list:
         # return SAMPLE_USERS.copy()
-        return get_all_users()  # returns list of (id, name, role)
+        return UserController.fetch()  # returns list of (id, name, role)
 
     # ── Build UI ──────────────────────────────────────────────────────────────
     def _build_ui(self):
@@ -1285,7 +1285,7 @@ class UserPage(QWidget):
             self._refresh_table()
 
     def _refresh_table(self):
-        first_admin_id = get_first_admin_id()
+        first_admin_id = UserController.get_first_admin_id()
         self._table_view.populate(self._filtered_users(), first_admin_id=first_admin_id)
 
     def _refresh_grid(self):
@@ -1363,7 +1363,7 @@ class UserPage(QWidget):
             self._scroll.viewport().update()
             return
 
-        first_admin_id = get_first_admin_id()
+        first_admin_id = UserController.get_first_admin_id()
         for i, user in enumerate(users):
             if token != self._render_token:
                 return
@@ -1430,7 +1430,7 @@ class UserPage(QWidget):
 
     def _edit_user(self, data: dict):
         try:
-            update_user(user_id=data["id"], name=data["name"], pin=data["pin"], role=data["role"])
+            UserController.edit(user_id=data["id"], name=data["name"], pin=data["pin"], role=data["role"])
             self._users = self._load_users()
             self._refresh_stats()
             self._refresh_view()
@@ -1440,7 +1440,7 @@ class UserPage(QWidget):
 
     def _add_user(self, data: dict):
         try:
-            create_user(name=data["name"], pin=data["pin"], role=data["role"])
+            UserController.add(name=data["name"], pin=data["pin"], role=data["role"])
             self._users = self._load_users()
             self._refresh_stats()
             self._refresh_view()
@@ -1451,7 +1451,7 @@ class UserPage(QWidget):
     def _delete_user(self, user: tuple):
         def do_delete():
             try:
-                delete_user(user[0])  # ← panggil fungsinya
+                UserController.remove(user[0])  # ← panggil fungsinya
                 self._users = self._load_users()
                 self._refresh_stats()
                 self._refresh_view()

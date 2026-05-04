@@ -22,10 +22,7 @@ from gui.views.screens.splash_screen import SplashScreen
 from gui.views.main_shell import MainShell
 
 # Database
-from controllers.user import (
-    get_all_users,
-    create_user,
-)
+from controllers.user import UserController
 
 
 ANIM_DURATION = 180
@@ -115,7 +112,7 @@ class AppShell(QWidget):
     # Database
     # ────────────────────────────────────────────────────────────────────────
     def _load_users_from_db(self) -> list[dict]:
-        db_users = get_all_users()
+        db_users = UserController.fetch()
         users = []
 
         for user in db_users:
@@ -224,7 +221,7 @@ class AppShell(QWidget):
     # State handling
     # ────────────────────────────────────────────────────────────────────────
     def _handle_admin_saved(self, data: dict):
-        create_user(name=data["name"], pin=data["pin"], role=1)
+        UserController.add(name=data["name"], pin=data["pin"], role=1)
         self.users = self._load_users_from_db()
         print(f"[AppShell] Admin baru: {data['name']}")
         self._go_select()

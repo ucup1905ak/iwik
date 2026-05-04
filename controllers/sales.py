@@ -16,10 +16,10 @@ class Sales(NamedTuple):
 class SalesController:
     """Pembungkus Data Sales
  
-    method : create, create_return_id, read, update, delete, list
+    method : add, add_return_id, get, edit, remove, fetch
     """
  
-    def create(
+    def add(
         customer_id: int | None,
         cashier_id: int,
         time: str,
@@ -35,7 +35,7 @@ class SalesController:
             if paid_amount is not None:
                 paid_amount = float(paid_amount)
         except (ValueError, TypeError):
-            raise TypeError("Failed to create sale: 'cashier_id' and 'customer_id' must be integers, and 'paid_amount' must be a number.")
+            raise TypeError("Failed to add sale: 'cashier_id' and 'customer_id' must be integers, and 'paid_amount' must be a number.")
  
         conn, cursor = DatabaseManager.require_connection()
         cursor.execute(
@@ -44,14 +44,14 @@ class SalesController:
         )
         conn.commit()
  
-    def create_return_id(
+    def add_return_id(
         customer_id: int | None,
         cashier_id: int,
         time: str,
         payment: str | None,
         paid_amount: float | None,
     ) -> int:
-        """Sama seperti create, tapi return ID dari sale yang baru dibuat.
+        """Sama seperti add, tapi return ID dari sale yang baru dibuat.
         """
         try:  # TYPE ERROR HANDLING
             cashier_id = int(cashier_id)
@@ -60,7 +60,7 @@ class SalesController:
             if paid_amount is not None:
                 paid_amount = float(paid_amount)
         except (ValueError, TypeError):
-            raise TypeError("Failed to create sale: 'cashier_id' and 'customer_id' must be integers, and 'paid_amount' must be a number.")
+            raise TypeError("Failed to add sale: 'cashier_id' and 'customer_id' must be integers, and 'paid_amount' must be a number.")
  
         conn, cursor = DatabaseManager.require_connection()
         cursor.execute(
@@ -71,20 +71,20 @@ class SalesController:
         conn.commit()
         return int(sale_id)
  
-    def read(sale_id: int) -> Sales | None:
+    def get(sale_id: int) -> Sales | None:
         """Ada Error Handling type nya, nanti dia bakal raise TypeError kalau salah.
         """
         try:  # TYPE ERROR HANDLING
             sale_id = int(sale_id)
         except (ValueError, TypeError):
-            raise TypeError("Failed to read sale: 'sale_id' must be an integer.")
+            raise TypeError("Failed to get sale: 'sale_id' must be an integer.")
  
         _, cursor = DatabaseManager.require_connection()
         cursor.execute("SELECT * FROM Sales WHERE ID = ?", (sale_id,))
         row = cursor.fetchone()
         return Sales(*row) if row else None
  
-    def update(
+    def edit(
         sale_id: int,
         customer_id: int | None,
         cashier_id: int,
@@ -102,7 +102,7 @@ class SalesController:
             if paid_amount is not None:
                 paid_amount = float(paid_amount)
         except (ValueError, TypeError):
-            raise TypeError("Failed to update sale: 'sale_id' and 'cashier_id' must be integers, and 'paid_amount' must be a number.")
+            raise TypeError("Failed to edit sale: 'sale_id' and 'cashier_id' must be integers, and 'paid_amount' must be a number.")
  
         conn, cursor = DatabaseManager.require_connection()
         cursor.execute(
@@ -111,19 +111,19 @@ class SalesController:
         )
         conn.commit()
  
-    def delete(sale_id: int) -> None:
+    def remove(sale_id: int) -> None:
         """Ada Error Handling type nya, nanti dia bakal raise TypeError kalau salah.
         """
         try:  # TYPE ERROR HANDLING
             sale_id = int(sale_id)
         except (ValueError, TypeError):
-            raise TypeError("Failed to delete sale: 'sale_id' must be an integer.")
+            raise TypeError("Failed to remove sale: 'sale_id' must be an integer.")
  
         conn, cursor = DatabaseManager.require_connection()
         cursor.execute("DELETE FROM Sales WHERE ID = ?", (sale_id,))
         conn.commit()
  
-    def list() -> list[Sales]:
+    def fetch() -> list[Sales]:
         """Bakal return **SEMUA** data sales dalam bentuk list of Sales."""
         _, cursor = DatabaseManager.require_connection()
         cursor.execute("SELECT * FROM Sales")

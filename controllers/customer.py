@@ -13,16 +13,16 @@ class Customer(NamedTuple):
 class CustomerController:
     """Pembungkus Data Customer
 
-    method : create, read, update, delete, list
+    method : add, get, edit, remove, fetch
     """
 
-    def create(name: str, phone: str | None = None) -> None:
+    def add(name: str, phone: str | None = None) -> None:
         """Ada Error Handling type nya, nanti dia bakal raise TypeError kalau salah.
         """
         try:  # TYPE ERROR HANDLING
             name = str(name)
         except (ValueError, TypeError):
-            raise TypeError("Failed to create customer: 'name' must be a string.")
+            raise TypeError("Failed to add customer: 'name' must be a string.")
 
         conn, cursor = DatabaseManager.require_connection()
         cursor.execute(
@@ -31,26 +31,26 @@ class CustomerController:
         )
         conn.commit()
 
-    def read(customer_id: int) -> Customer | None:
+    def get(customer_id: int) -> Customer | None:
         """Ada Error Handling type nya, nanti dia bakal raise TypeError kalau salah.
         """
         try:  # TYPE ERROR HANDLING
             customer_id = int(customer_id)
         except (ValueError, TypeError):
-            raise TypeError("Failed to read customer: 'customer_id' must be an integer.")
+            raise TypeError("Failed to get customer: 'customer_id' must be an integer.")
 
         _, cursor = DatabaseManager.require_connection()
         cursor.execute("SELECT * FROM Customer WHERE ID = ?", (customer_id,))
         row = cursor.fetchone()
         return Customer(*row) if row else None
 
-    def update(customer_id: int, name: str, phone: str | None = None) -> None:
+    def edit(customer_id: int, name: str, phone: str | None = None) -> None:
         """Ada Error Handling type nya, nanti dia bakal raise TypeError kalau salah.
         """
         try:  # TYPE ERROR HANDLING
             customer_id = int(customer_id)
         except (ValueError, TypeError):
-            raise TypeError("Failed to update customer: 'customer_id' must be an integer.")
+            raise TypeError("Failed to edit customer: 'customer_id' must be an integer.")
 
         conn, cursor = DatabaseManager.require_connection()
         cursor.execute(
@@ -59,19 +59,19 @@ class CustomerController:
         )
         conn.commit()
 
-    def delete(customer_id: int) -> None:
+    def remove(customer_id: int) -> None:
         """Ada Error Handling type nya, nanti dia bakal raise TypeError kalau salah.
         """
         try:  # TYPE ERROR HANDLING
             customer_id = int(customer_id)
         except (ValueError, TypeError):
-            raise TypeError("Failed to delete customer: 'customer_id' must be an integer.")
+            raise TypeError("Failed to remove customer: 'customer_id' must be an integer.")
 
         conn, cursor = DatabaseManager.require_connection()
         cursor.execute("DELETE FROM Customer WHERE ID = ?", (customer_id,))
         conn.commit()
 
-    def list() -> list[Customer]:
+    def fetch() -> list[Customer]:
         """Bakal return **SEMUA** data customer dalam bentuk list of Customer."""
         _, cursor = DatabaseManager.require_connection()
         cursor.execute("SELECT * FROM Customer")
