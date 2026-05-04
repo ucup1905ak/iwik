@@ -14,6 +14,8 @@ from gui.views.components.sidebar import SidebarWidget
 from gui.views.screens.product_page import ProductPage
 from gui.views.screens.user_page import UserPage
 from gui.views.screens.sales_page import SalesPage
+from gui.views.screens.supplier_page import SupplierPage
+from gui.views.screens.purchases_page import PurchasePage
 
 
 ANIM_DURATION = 160
@@ -106,6 +108,8 @@ class MainShell(QWidget):
             "cashier":    (None, None, "cashier"),
             "reports":    ("Laporan", "📈", None),
             "users":      (None, None, "users"),
+            "suppliers":  (None, None, "suppliers"),
+            "purchases":  (None, None, "purchases"),
         }
 
         initial_page = self._get_or_create_page(self._current_key)
@@ -137,6 +141,10 @@ class MainShell(QWidget):
             widget = SalesPage(user=self._user)
         elif page_type == "users":
             widget = UserPage(user=self._user)
+        elif page_type == "suppliers":
+            widget = SupplierPage(user=self._user)
+        elif page_type == "purchases":
+            widget = PurchasePage(user=self._user)
         else:
             widget = PlaceholderPage(title, emoji)
 

@@ -98,3 +98,4 @@ class ProductController:
         cursor.execute("SELECT * FROM Product")
         rows = cursor.fetchall()
         return [Product(*row) for row in rows]
+    

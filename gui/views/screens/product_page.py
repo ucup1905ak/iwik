@@ -2581,3 +2581,8 @@ class ProductPage(QWidget):
             self._grid_initialized = True
             self._pending_refresh  = False
             QTimer.singleShot(0, self._refresh_view)
+            
+    def reload_products(self):
+        self._products = self._load_products()
+        self._refresh_stats()
+        self._refresh_view()

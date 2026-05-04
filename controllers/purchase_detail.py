@@ -92,3 +92,26 @@ class PurchaseDetailController:
         cursor.execute("SELECT * FROM PurchaseDetail")
         rows = cursor.fetchall()
         return [PurchaseDetail(*row) for row in rows]
+    
+    @staticmethod
+    def calculate_total(purchase_id: int) -> float:
+        _, cursor = DatabaseManager.require_connection()
+        cursor.execute("""
+            SELECT SUM(Quantity * PurchasePrice)
+            FROM PurchaseDetail
+            WHERE PurchaseID = ?
+        """, (purchase_id,))
+        
+        result = cursor.fetchone()[0]
+        return result or 0.0
+    
+    @staticmethod
+    def update_purchase_total(purchase_id: int):
+        total = PurchaseDetailController.calculate_total(purchase_id)
+
+        conn, cursor = DatabaseManager.require_connection()
+        cursor.execute(
+            "UPDATE Purchases SET TotalAmount = ? WHERE ID = ?",
+            (total, purchase_id),
+        )
+        conn.commit()

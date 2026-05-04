@@ -29,6 +29,22 @@ ANIM_DURATION = 180
 
 
 class AppShell(QWidget):
+    def _skip_to_main(self):
+        """Langsung masuk ke MainShell tanpa auth (DEV MODE)"""
+        self._in_main_shell = True
+
+        # fake user (biar MainShell tetap jalan)
+        user = {
+            "id": 1,
+            "name": "Developer",
+            "role": "Admin"
+        }
+
+        main = MainShell(user=user)
+
+        self._stack.addWidget(main)
+        self._stack.setCurrentWidget(main)
+        
     def __init__(self):
         super().__init__()
 
@@ -47,8 +63,8 @@ class AppShell(QWidget):
 
         self._animating = False
         self._in_main_shell = False
-
-        self._show_splash()
+        self._skip_to_main()
+        # self._show_splash()
 
     # ────────────────────────────────────────────────────────────────────────
     # Background — hanya tampil saat di auth screens
