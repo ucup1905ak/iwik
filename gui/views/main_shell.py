@@ -13,6 +13,7 @@ from PyQt6.QtCore import Qt, QPropertyAnimation, QEasingCurve, pyqtSignal, QTime
 from gui.views.components.sidebar import SidebarWidget
 from gui.views.screens.product_page import ProductPage
 from gui.views.screens.user_page import UserPage
+from gui.views.screens.sales_page import SalesPage
 
 
 ANIM_DURATION = 160
@@ -102,7 +103,7 @@ class MainShell(QWidget):
             "dashboard":  ("Dashboard", "📊", None),
             "products":   (None, None, "products"),
             "categories": ("Kategori", "🏷️", None),
-            "cashier":    ("Kasir", "🛒", None),
+            "cashier":    (None, None, "cashier"),
             "reports":    ("Laporan", "📈", None),
             "users":      (None, None, "users"),
         }
@@ -132,6 +133,8 @@ class MainShell(QWidget):
 
         if page_type == "products":
             widget = ProductPage(user=self._user)
+        elif page_type == "cashier":
+            widget = SalesPage(user=self._user)
         elif page_type == "users":
             widget = UserPage(user=self._user)
         else:

@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS Sales (
     PaidAmount REAL,
 
     FOREIGN KEY (CustomerID) REFERENCES Customer(ID),
-    FOREIGN KEY (CashierID) REFERENCES Cashier(ID)
+    FOREIGN KEY (CashierID) REFERENCES users(id)
 );
 
 -- SalesDetail Table
