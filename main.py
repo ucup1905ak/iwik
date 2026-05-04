@@ -23,7 +23,7 @@ if __name__ == "__main__":
     # CROSS PLATFORM PATH
     # =========================
 
-    # Cara aman otomatis (recommended)
+
     db_file = os.path.join("database", "appdata.db")
     sql_init = os.path.join("database", "sql", "init.sql")
 
@@ -58,5 +58,4 @@ if __name__ == "__main__":
 
     # Tutup DB setelah app selesai
     db.close()
-
     sys.exit(exit_code)
