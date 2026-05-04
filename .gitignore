@@ -19,3 +19,5 @@ utils/__pycache__/*
 *.pdf
 *.csv
 *.xlxs
+
+assets\receipts\*
