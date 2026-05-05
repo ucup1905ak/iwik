@@ -63,8 +63,8 @@ class AppShell(QWidget):
 
         self._animating = False
         self._in_main_shell = False
-        self._skip_to_main()
-        # self._show_splash()
+        # self._skip_to_main()
+        self._show_splash()
 
     # ────────────────────────────────────────────────────────────────────────
     # Background — hanya tampil saat di auth screens
