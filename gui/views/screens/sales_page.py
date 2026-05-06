@@ -28,6 +28,7 @@ from PyQt6.QtCore import Qt, pyqtSignal, QTimer
 from PyQt6.QtGui import QColor, QPixmap, QFont, QIntValidator, QTextDocument
 from PyQt6.QtPrintSupport import QPrinter, QPrintDialog
 from gui.views.components.toast import Toast
+from gui.signals import product_signals, sales_signals
 import os
 from pathlib import Path
 
@@ -155,9 +156,8 @@ class CashierProductCard(QFrame):
         stock = product.stock
 
         self.setObjectName("CashierProductCard")
-        self.setFixedHeight(160)
+        self.setFixedSize(CASHIER_CARD_WIDTH, 160)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
 
         self.setStyleSheet(f"""
             QFrame#CashierProductCard {{
@@ -491,6 +491,13 @@ class SalesPage(QWidget):
 
         self._build_ui()
         self._load_products()
+        
+        # Connect signals untuk sinkronisasi dengan halaman lain
+        product_signals.product_added.connect(self._on_product_added)
+        product_signals.product_edited.connect(self._on_product_edited)
+        product_signals.product_deleted.connect(self._on_product_deleted)
+        product_signals.product_stock_changed.connect(self._on_product_stock_changed)
+        product_signals.products_imported.connect(self._on_products_imported)
 
     def _build_ui(self):
         root = QVBoxLayout(self)
@@ -612,7 +619,8 @@ class SalesPage(QWidget):
         products_widget.setStyleSheet("background: transparent;")
         self._products_grid = QGridLayout(products_widget)
         self._products_grid.setSpacing(CASHIER_CARD_SPACING)
-        self._products_grid.setContentsMargins(0, 0, 0, 0)
+        self._products_grid.setContentsMargins(CASHIER_CARD_SPACING, 0, CASHIER_CARD_SPACING, 0)
+        self._products_grid.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
 
         self._products_scroll.setWidget(products_widget)
         left_layout.addWidget(self._products_scroll, stretch=1)
@@ -919,9 +927,19 @@ class SalesPage(QWidget):
             col = idx % cols
             self._products_grid.addWidget(card, row, col)
 
-        # Add stretch di akhir untuk bottom spacing
-        self._products_grid.addWidget(QWidget(), len(self._filtered_products) // cols + 1, 0)
-        self._products_grid.setRowStretch(len(self._filtered_products) // cols + 1, 1)
+        # Add stretch column di akhir untuk push card ke kiri (tidak center)
+        last_row = (len(self._filtered_products) - 1) // cols if self._filtered_products else 0
+        last_col = (len(self._filtered_products) - 1) % cols if self._filtered_products else 0
+        
+        # Tambah column stretch setelah kolom terakhir yang ada card
+        for col_idx in range(last_col + 1, cols):
+            stretch_widget = QWidget()
+            self._products_grid.addWidget(stretch_widget, last_row, col_idx)
+            self._products_grid.setColumnStretch(col_idx, 1)
+        
+        # Tambah row stretch di bawah untuk bottom spacing
+        self._products_grid.addWidget(QWidget(), last_row + 1, 0)
+        self._products_grid.setRowStretch(last_row + 1, 1)
 
     def _add_to_cart(self, product: Product):
         """Tambah produk ke cart dengan validasi stok"""
@@ -1093,6 +1111,9 @@ class SalesPage(QWidget):
                 paid_amount=paid_amount
             )
 
+            # Track updated stocks untuk signal emit
+            updated_stocks = {}
+
             # Add sales details dan validasi stock deduction
             for product_id, (cart_product, quantity) in self._cart.items():
                 # Ambil produk fresh lagi untuk memastikan stok terbaru
@@ -1112,6 +1133,7 @@ class SalesPage(QWidget):
                 # (Sesuaikan dengan implementasi SalesDetailController)
                 # Untuk sekarang, asumsikan perlu manual update
                 new_stock = fresh_stock - quantity
+                updated_stocks[product_id] = new_stock
                 
                 ProductController.edit(
                     product_id=fresh.id,
@@ -1126,6 +1148,13 @@ class SalesPage(QWidget):
 
             Toast.show_toast("Order berhasil disimpan", "success", self)
 
+            # Emit signal untuk update stok di halaman lain
+            for product_id, new_stock in updated_stocks.items():
+                product_signals.product_stock_changed.emit(product_id, new_stock)
+            
+            # Emit signal untuk notifikasi transaksi selesai
+            sales_signals.sales_completed.emit(sales_id)
+
             # Clear cart dan refresh
             self._cart = {}
             self._discount_input.setText("0")
@@ -1137,6 +1166,56 @@ class SalesPage(QWidget):
 
         except Exception as e:
             Toast.show_toast(f"Error: {str(e)}", "error", self)
+
+    # ── Signal handlers untuk sinkronisasi dengan halaman lain ──────────────────
+    def _on_product_added(self, product: Product):
+        """Handle ketika produk baru ditambahkan dari halaman Produk"""
+        if product not in self._products:
+            self._products.append(product)
+            self._filter_products()
+
+    def _on_product_edited(self, product: Product):
+        """Handle ketika produk diedit dari halaman Produk"""
+        for i, p in enumerate(self._products):
+            if p.id == product.id:
+                self._products[i] = product
+                break
+        self._filter_products()
+
+    def _on_product_deleted(self, product_id: int):
+        """Handle ketika produk dihapus dari halaman Produk"""
+        self._products = [p for p in self._products if p.id != product_id]
+        # Hapus dari cart jika ada
+        if product_id in self._cart:
+            del self._cart[product_id]
+            self._refresh_cart_display()
+        self._filter_products()
+
+    def _on_product_stock_changed(self, product_id: int, new_stock: int):
+        """Handle ketika stok produk berubah"""
+        for i, p in enumerate(self._products):
+            if p.id == product_id:
+                # Update stock
+                from controllers.product import Product as ProductClass
+                self._products[i] = ProductClass(
+                    id=p.id,
+                    name=p.name,
+                    brand=p.brand,
+                    sku=p.sku,
+                    category=p.category,
+                    price=p.price,
+                    stock=new_stock,
+                    image_path=p.image_path
+                )
+                break
+        self._filter_products()
+
+    def _on_products_imported(self, products: list):
+        """Handle ketika produk baru diimport dari halaman Produk"""
+        for product in products:
+            if product not in self._products:
+                self._products.append(product)
+        self._filter_products()
 
 
 # ═══════════════════════════════════════════════════════════════════════════════

@@ -81,6 +81,8 @@ class ProductController:
     
     def remove(product_id: int) -> None:
         """Ada Error Handling type nya, nanti dia bakal raise TypeError kalau salah.
+        
+        Jika produk memiliki referensi di SalesDetail atau PurchaseDetail, akan raise ValueError.
         """
         try:# TYPE ERROR HANDLING
             product_id = int(product_id)
@@ -88,6 +90,21 @@ class ProductController:
             raise TypeError("Failed to remove product: 'product_id' must be an integer.")
 
         conn, cursor = DatabaseManager.require_connection()
+        
+        # Check jika ada SalesDetail yang referensi product ini
+        cursor.execute("SELECT COUNT(*) FROM SalesDetail WHERE ProductID = ?", (product_id,))
+        sales_count = cursor.fetchone()[0]
+        
+        # Check jika ada PurchaseDetail yang referensi product ini
+        cursor.execute("SELECT COUNT(*) FROM PurchaseDetail WHERE ProductID = ?", (product_id,))
+        purchase_count = cursor.fetchone()[0]
+        
+        if sales_count > 0 or purchase_count > 0:
+            raise ValueError(
+                f"Produk tidak bisa dihapus karena sudah memiliki {sales_count} transaksi penjualan "
+                f"dan {purchase_count} transaksi pembelian. Hapus transaksi terkait terlebih dahulu."
+            )
+        
         cursor.execute("DELETE FROM Product WHERE ID = ?", (product_id,))
         conn.commit()
         

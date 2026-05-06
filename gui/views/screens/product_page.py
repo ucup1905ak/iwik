@@ -24,6 +24,8 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt, pyqtSignal, QTimer
 from PyQt6.QtGui import QColor, QFont, QPainter, QPainterPath, QRegion, QPixmap
 from gui.views.components.toast import Toast
+from gui.views.screens.import_export_dialog import ImportExportDialog
+from gui.signals import product_signals
 from utils.generate_xlsx import export_to_xlsx, import_from_xlsx
 from utils.image_optimizer import ImageOptimizer
 import os
@@ -1710,6 +1712,11 @@ class ProductPage(QWidget):
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
         self.setStyleSheet(f"background: {C_BG};")
         self._build_ui()
+        
+        # Connect signals untuk sync stok real-time dari halaman lain
+        product_signals.product_stock_changed.connect(self._on_product_stock_changed_signal)
+        product_signals.product_added.connect(self._on_product_added_signal)
+        product_signals.product_deleted.connect(self._on_product_deleted_signal)
 
     def _load_products(self) -> list[Product]:
         # return SAMPLE_PRODUCTS.copy()
@@ -2378,6 +2385,10 @@ class ProductPage(QWidget):
                             print(f"Error renaming image: {e}")
             
             self._products = self._load_products()
+            # Emit signal untuk notifikasi halaman lain
+            if self._products:
+                product_signals.product_added.emit(self._products[-1])
+            
             self._refresh_stats()
             self._refresh_view()
             Toast.show_toast(f"Produk <b>{data['name']}</b> berhasil ditambahkan.", "success", self)
@@ -2422,6 +2433,11 @@ class ProductPage(QWidget):
                         print(f"Error renaming image: {e}")
 
             self._products = self._load_products()
+            # Emit signal untuk notifikasi halaman lain
+            updated_product = next((p for p in self._products if p.id == data["id"]), None)
+            if updated_product:
+                product_signals.product_edited.emit(updated_product)
+            
             self._refresh_stats()
             self._refresh_view()
             Toast.show_toast(f"Produk <b>{data['name']}</b> berhasil diperbarui.", "success", self)
@@ -2435,11 +2451,18 @@ class ProductPage(QWidget):
                 if product.image_path and os.path.exists(product.image_path):
                     ImageOptimizer.delete_image(product.image_path)
                 
-                ProductController.remove(product.id)
+                product_id = product.id
+                ProductController.remove(product_id)
+                # Emit signal untuk notifikasi halaman lain
+                product_signals.product_deleted.emit(product_id)
+                
                 self._products = self._load_products()
                 self._refresh_stats()
                 self._refresh_view()
                 Toast.show_toast(f"Produk <b>{product.name}</b> berhasil dihapus.", "success", self)
+            except ValueError as e:
+                # Foreign key constraint - produk masih ada referensi
+                QMessageBox.warning(self, "Tidak Bisa Dihapus", str(e))
             except TypeError as e:
                 QMessageBox.critical(self, "Error", str(e))
 
@@ -2448,7 +2471,7 @@ class ProductPage(QWidget):
         dlg.exec()
 
     def _on_export_clicked(self):
-        """Handle export button click"""
+        """Handle export button click dengan custom dialog"""
         if not self._products:
             QMessageBox.warning(self, "Export", "Tidak ada produk untuk diekspor.")
             return
@@ -2468,51 +2491,43 @@ class ProductPage(QWidget):
                 for p in self._products
             ]
             
-            success, message = export_to_xlsx(products_data)
+            # Show custom dialog
+            dialog = ImportExportDialog(dialog_type="export", products_data=products_data, parent=self)
+            result = dialog.exec()
             
-            if success:
-                Toast.show_toast(message, "success", self)
+            if result == QDialog.DialogCode.Accepted:
+                Toast.show_toast(dialog.result_message, "success", self)
                 # Optional: open folder
                 base_path = os.path.dirname(os.path.dirname(__file__))
                 xlsx_dir = os.path.join(base_path, '..', 'assets', 'xlsx')
                 xlsx_dir = os.path.abspath(xlsx_dir)
                 if os.path.exists(xlsx_dir):
-                    os.startfile(xlsx_dir)
-            else:
-                QMessageBox.critical(self, "Export Error", message)
+                    try:
+                        os.startfile(xlsx_dir)
+                    except:
+                        pass
         except Exception as e:
             QMessageBox.critical(self, "Export Error", f"Terjadi kesalahan: {str(e)}")
 
     def _on_import_clicked(self):
-        """Handle import button click"""
+        """Handle import button click dengan custom dialog"""
         try:
-            file_path, _ = QFileDialog.getOpenFileName(
-                self,
-                "Import Produk dari Excel",
-                "",
-                "Excel Files (*.xlsx);;All Files (*.*)"
-            )
+            # Show custom dialog
+            dialog = ImportExportDialog(dialog_type="import", parent=self)
+            result = dialog.exec()
             
-            if not file_path:
-                return
-            
-            success, products_data, message = import_from_xlsx(file_path)
-            
-            if not success:
-                QMessageBox.critical(self, "Import Error", message)
-                return
-            
-            # Show confirmation dialog
-            msg_box = QMessageBox(self)
-            msg_box.setWindowTitle("Konfirmasi Import")
-            msg_box.setText(f"Siap mengimport {len(products_data)} produk")
-            msg_box.setInformativeText(message)
-            msg_box.setStandardButtons(QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel)
-            msg_box.setDefaultButton(QMessageBox.StandardButton.Cancel)
-            msg_box.setIcon(QMessageBox.Icon.Information)
-            
-            if msg_box.exec() == QMessageBox.StandardButton.Ok:
-                self._import_products(products_data)
+            if result == QDialog.DialogCode.Accepted and dialog.imported_data:
+                # Show confirmation
+                msg_box = QMessageBox(self)
+                msg_box.setWindowTitle("Konfirmasi Import")
+                msg_box.setText(f"Siap mengimport {len(dialog.imported_data)} produk")
+                msg_box.setInformativeText(f"File: {dialog.result_message}")
+                msg_box.setStandardButtons(QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel)
+                msg_box.setDefaultButton(QMessageBox.StandardButton.Ok)
+                msg_box.setIcon(QMessageBox.Icon.Information)
+                
+                if msg_box.exec() == QMessageBox.StandardButton.Ok:
+                    self._import_products(dialog.imported_data)
         
         except Exception as e:
             QMessageBox.critical(self, "Import Error", f"Terjadi kesalahan: {str(e)}")
@@ -2524,6 +2539,7 @@ class ProductPage(QWidget):
             skip_count = 0
             error_count = 0
             errors = []
+            imported_products = []
             
             for idx, product_dict in enumerate(products_data, 1):
                 try:
@@ -2551,6 +2567,15 @@ class ProductPage(QWidget):
             
             # Reload products
             self._products = self._load_products()
+            
+            # Emit signal untuk setiap produk yang diimport
+            if import_count > 0:
+                imported_products = [p for p in self._products if any(
+                    p.sku == product_dict.get('sku') for product_dict in products_data
+                )]
+                if imported_products:
+                    product_signals.products_imported.emit(imported_products)
+            
             self._refresh_stats()
             self._refresh_view()
             
@@ -2586,3 +2611,39 @@ class ProductPage(QWidget):
         self._products = self._load_products()
         self._refresh_stats()
         self._refresh_view()
+    
+    # ── Signal handlers untuk sinkronisasi real-time dengan halaman lain ──────
+    def _on_product_stock_changed_signal(self, product_id: int, new_stock: int):
+        """Handle ketika stok produk berubah dari halaman Kasir"""
+        for i, p in enumerate(self._products):
+            if p.id == product_id:
+                # Update stock di list
+                from controllers.product import Product as ProductClass
+                self._products[i] = ProductClass(
+                    id=p.id,
+                    name=p.name,
+                    brand=p.brand,
+                    sku=p.sku,
+                    category=p.category,
+                    price=p.price,
+                    stock=new_stock,
+                    image_path=p.image_path
+                )
+                break
+        self._refresh_stats()
+        self._refresh_view()
+    
+    def _on_product_added_signal(self, product: Product):
+        """Handle ketika produk baru ditambahkan dari halaman lain"""
+        if product not in self._products:
+            self._products.append(product)
+            self._refresh_stats()
+            self._refresh_view()
+    
+    def _on_product_deleted_signal(self, product_id: int):
+        """Handle ketika produk dihapus dari halaman lain"""
+        original_count = len(self._products)
+        self._products = [p for p in self._products if p.id != product_id]
+        if len(self._products) < original_count:
+            self._refresh_stats()
+            self._refresh_view()

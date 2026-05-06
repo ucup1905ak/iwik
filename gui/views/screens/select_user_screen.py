@@ -102,16 +102,6 @@ class SelectUserScreen(QWidget):
         cl.addWidget(Divider())
         cl.addSpacing(10)
 
-        # Tombol ini sebelumnya belum dibuat, padahal AppShell sudah mengirim on_add.
-        if self.on_add:
-            add_acc = AccountOption(
-                "+",
-                "Tambah admin",
-                is_add=True,
-                on_click=self.on_add,
-            )
-            cl.addWidget(add_acc)
-
         root.addWidget(
             card,
             alignment=Qt.AlignmentFlag.AlignCenter,
