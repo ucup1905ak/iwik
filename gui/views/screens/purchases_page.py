@@ -1716,9 +1716,15 @@ class PurchasePage(QWidget):
     def _refresh_stats(self):
         for key, value in self._calc_stats().items():
             labels = self._stat_value_labels.get(key)
+
             if labels:
                 dot, val_lbl = labels
-                dot.setText(value)
+
+                if key == "amount":
+                    dot.setText("🪙")
+                else:
+                    dot.setText(value)
+
                 val_lbl.setText(value)
 
     # ── Data / filter ──────────────────────────────────────────────────────────
