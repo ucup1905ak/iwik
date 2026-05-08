@@ -31,6 +31,7 @@ from gui.views.components.toast import Toast
 from controllers.supplier import SupplierController
 from controllers.product import ProductController
 from controllers.user import UserController
+from gui.views.components import Avatar
 
 # ── Color palette ──────────────────────────────────────────────────────────────
 C_BG       = "#F4F5F9"
@@ -60,7 +61,6 @@ STATUS_THEME = {
 
 FILTER_STATUS = ["Semua", "Lunas", "Pending", "Belum"]
 
-
 # ── Helpers ────────────────────────────────────────────────────────────────────
 def _fmt_currency(value) -> str:
     if value is None:
@@ -75,6 +75,18 @@ def _fmt_date(value: str) -> str:
     if value and len(value) > 10:
         return value[:10]
     return value or "—"
+
+def _supplier_palette(name: str) -> tuple:
+    PALETTES = [
+        ("#E8F4FD", "#2E86AB"), ("#FEF9E7", "#D4AC0D"), ("#EAFAF1", "#27AE60"),
+        ("#FDF2F8", "#A93226"), ("#EEF1FE", "#4F6EF7"), ("#FDF5E6", "#E07D2A"),
+        ("#F4ECF7", "#7D3C98"), ("#E8F8F5", "#17A589"), ("#FDFEFE", "#717D7E"),
+        ("#FEF5E7", "#CA6F1E"),
+    ]
+    idx = hash(name) % len(PALETTES)
+    bg, fg = PALETTES[idx]
+    initials = "".join(w[0].upper() for w in name.split() if w)[:2] or "?"
+    return (bg, fg), initials
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -411,7 +423,7 @@ class PurchaseTableView(QTableWidget):
 
             self.setCellWidget(row, self.COL_SUPPLIER, self._make_text_cell(supplier_name))
             self.setCellWidget(row, self.COL_USER,     self._make_text_cell(user_name))
-            self.setCellWidget(row, self.COL_DATE,     self._make_text_cell(_fmt_date(p.time)))
+            self.setCellWidget(row, self.COL_DATE,     self._make_date_cell(_fmt_date(p.time)))
             self.setCellWidget(row, self.COL_TOTAL,    self._make_total_cell(p.total_amount))
             self.setCellWidget(row, self.COL_ACTION,   self._make_action_buttons(p))
 
@@ -440,8 +452,22 @@ class PurchaseTableView(QTableWidget):
 
     def _make_text_cell(self, text: str) -> QWidget:
         w, lay = self._wrap()
+        
+        (bg, fg), initials = _supplier_palette(text)
+        avatar = Avatar(initials, bg_color=bg, text_color=fg, size=30)
+        lay.addWidget(avatar)
+        lay.setSpacing(8)
+        
         lbl = QLabel(text)
-        lbl.setStyleSheet(f"font-family:'Segoe UI';font-size:13px;color:{C_TEXT_PRI};background:transparent;")
+        lbl.setStyleSheet(f"font-family:'Segoe UI';font-size:13px;font-weight:600;color:{C_TEXT_PRI};background:transparent;")
+        lay.addWidget(lbl)
+        return w
+    
+    def _make_date_cell(self, text: str) -> QWidget:
+        w, lay = self._wrap()
+        
+        lbl = QLabel(text)
+        lbl.setStyleSheet(f"font-family:'Segoe UI';font-size:13px;font-weight:600;color:{C_TEXT_PRI};background:transparent;")
         lay.addWidget(lbl)
         return w
 
@@ -1304,10 +1330,12 @@ class DeletePurchaseDialog(QDialog):
         logo.setTextFormat(Qt.TextFormat.RichText)
         logo.setStyleSheet("font-size:14px;color:#5F5E5A;font-weight:500;letter-spacing:1px;border:none;")
         cl.addWidget(logo)
+        cl.addSpacing(15)
 
         title = QLabel("Hapus Pembelian?")
         title.setStyleSheet("font-size:20px;font-weight:600;color:#1b1b1b;border:none;")
         cl.addWidget(title)
+        cl.addSpacing(5)
 
         subtitle = QLabel(
             f"Kamu akan menghapus pembelian <b>#{p.id:04d}</b>.<br>"

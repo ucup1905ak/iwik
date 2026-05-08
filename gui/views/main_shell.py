@@ -104,7 +104,7 @@ class MainShell(QWidget):
         self._page_config = {
             "dashboard":  ("Dashboard", "📊", None),
             "products":   (None, None, "products"),
-            "categories": ("Kategori", "🏷️", None),
+            "transactions": ("Transaksi", "🏷️", None),
             "cashier":    (None, None, "cashier"),
             "reports":    ("Laporan", "📈", None),
             "users":      (None, None, "users"),

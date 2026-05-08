@@ -14,10 +14,10 @@ from PyQt6.QtSvg import QSvgRenderer
 
 # ── Nav items ─────────────────────────────────────────────────────────────────
 NAV_ITEMS = [
-    {"key": "dashboard",  "label": "Dashboard",  "icon": "grid"},
+    {"key": "dashboard",  "label": "Dashboard",   "icon": "grid"},
     {"key": "products",   "label": "Produk",      "icon": "box"},
-    {"key": "categories", "label": "Kategori",    "icon": "tag"},
     {"key": "cashier",    "label": "Kasir",       "icon": "shopping-cart"},
+    {"key": "transactions", "label": "Transaksi", "icon": "tag"},
     {"key": "suppliers",  "label": "Supplier",    "icon": "truck"},
     {"key": "purchases",  "label": "Pembelian",   "icon": "shopping-bag"},
     {"key": "reports",    "label": "Laporan",     "icon": "bar-chart-2"},

@@ -18,6 +18,7 @@ class Toast(QFrame):
         icon, text_color, bg, border, title = configs.get(kind, configs["success"])
 
         self.setFixedWidth(350)
+        self.setMinimumHeight(56)
         self.setStyleSheet(f"""
             QFrame {{
                 background:    {bg};
@@ -26,9 +27,8 @@ class Toast(QFrame):
             }}
         """)
 
-        # ── Drop shadow efek manual via nested frame ───────────────────────
         lay = QHBoxLayout(self)
-        lay.setContentsMargins(16, 2, 12, 2)
+        lay.setContentsMargins(16, 12, 12, 12)  # ← fix di sini
         lay.setSpacing(12)
         lay.setAlignment(Qt.AlignmentFlag.AlignVCenter)
 
