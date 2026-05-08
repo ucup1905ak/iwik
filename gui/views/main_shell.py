@@ -16,6 +16,7 @@ from gui.views.screens.user_page import UserPage
 from gui.views.screens.sales_page import SalesPage
 from gui.views.screens.supplier_page import SupplierPage
 from gui.views.screens.purchases_page import PurchasePage
+from gui.views.screens.transactions_page import TransactionPage
 
 
 ANIM_DURATION = 160
@@ -104,7 +105,7 @@ class MainShell(QWidget):
         self._page_config = {
             "dashboard":  ("Dashboard", "📊", None),
             "products":   (None, None, "products"),
-            "transactions": ("Transaksi", "🏷️", None),
+            "transactions": (None, None, "transactions"),
             "cashier":    (None, None, "cashier"),
             "reports":    ("Laporan", "📈", None),
             "users":      (None, None, "users"),
@@ -145,6 +146,8 @@ class MainShell(QWidget):
             widget = SupplierPage(user=self._user)
         elif page_type == "purchases":
             widget = PurchasePage(user=self._user)
+        elif page_type == "transactions":
+            widget = TransactionPage(user=self._user)
         else:
             widget = PlaceholderPage(title, emoji)
 

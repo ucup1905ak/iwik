@@ -1239,7 +1239,7 @@ class SalesPage(QWidget):
 
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             sales_id = SalesController.add_return_id(
-                customer_id=None,
+                customer_id=customer_id,  # ← pakai parameter yang diterima
                 cashier_id=self._user["id"],
                 time=timestamp,
                 payment=payment_method,
@@ -1825,7 +1825,7 @@ class OrderConfirmDialog(QDialog):
         self._payment_type_combo.setStyleSheet(self._combo_style())
         self._payment_type_combo.currentIndexChanged.connect(self._on_payment_type_changed)
         cash_layout.addWidget(self._payment_type_combo)
-        cash_layout.addSpacing(10)
+        cash_layout.addSpacing(0)
 
         # Customer fields (hutang) — side by side
         self._customer_name_label = QLabel("Nama Pelanggan")
@@ -2570,7 +2570,16 @@ class OrderConfirmDialog(QDialog):
                 self.cash_given = self._paid_amount
                 self.change = self._total - self._paid_amount  # sisa hutang
             else:  # lunas
-                self.customer_id = None
+                buyer_name = self._buyer_input.text().strip()
+                if buyer_name:
+                    try:
+                        self.customer_id = CustomerController.add(name=buyer_name)
+                    except Exception as e:
+                        Toast.show_toast(f"Error menyimpan pelanggan: {str(e)}", "error", self)
+                        return
+                else:
+                    self.customer_id = None  # Pembeli Umum
+                
                 if self._payment_method == "tunai":
                     self.cash_given = self._paid_amount
                     self.change = self._remaining
