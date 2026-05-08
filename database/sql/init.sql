@@ -82,3 +82,18 @@ CREATE TABLE IF NOT EXISTS PurchaseDetail (
     FOREIGN KEY (PurchaseID) REFERENCES Purchases(ID) ON DELETE CASCADE,
     FOREIGN KEY (ProductID) REFERENCES Product(ID)
 );
+
+
+-- Receivables Table (Piutang)
+CREATE TABLE IF NOT EXISTS Receivables (
+    ID INTEGER PRIMARY KEY AUTOINCREMENT,
+    SalesID INTEGER NOT NULL,
+    CustomerID INTEGER,
+    AmountPaid REAL NOT NULL DEFAULT 0,
+    TotalAmount REAL NOT NULL,
+    DueDate TEXT,
+    Status TEXT NOT NULL DEFAULT 'unpaid' CHECK(Status IN ('unpaid', 'paid', 'partial')),
+
+    FOREIGN KEY (SalesID) REFERENCES Sales(ID) ON DELETE CASCADE,
+    FOREIGN KEY (CustomerID) REFERENCES Customer(ID)
+);

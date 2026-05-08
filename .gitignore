@@ -20,4 +20,4 @@ utils/__pycache__/*
 *.csv
 *.xlxs
 
-assets\receipts\*
+assets/receipts/*
