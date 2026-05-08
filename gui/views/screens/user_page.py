@@ -638,7 +638,7 @@ class UserDialog(QDialog):
         cl.addSpacing(18)
 
         self._role_combo = self._make_combo(cl, "Role")
-        self._name_field, self._name_err = self._make_field(cl, "Nama", "Contoh: Budi")
+        self._name_field, self._name_err = self._make_field(cl, "Nama", "Budi Santoso")
 
         self._pin_input = PinRow("PIN Baru" if self._is_edit else "PIN")
         cl.addWidget(self._pin_input)
