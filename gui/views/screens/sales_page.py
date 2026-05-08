@@ -4,6 +4,8 @@ from datetime import datetime
 from controllers.product import ProductController, Product
 from controllers.sales import SalesController
 from controllers.sales_detail import SalesDetailController
+from controllers.customer import CustomerController
+from controllers.receivables import ReceivablesController
 from PyQt6.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -1212,11 +1214,14 @@ class SalesPage(QWidget):
                 payment_method=dialog.payment_method,
                 paid_amount=dialog.cash_given if dialog.payment_method == "tunai" else total,
                 buyer_name=dialog.buyer_name,
-                receipt_path=dialog.receipt_path
+                receipt_path=dialog.receipt_path,
+                payment_type=dialog._payment_type if dialog.payment_method == "tunai" else None,
+                customer_id=dialog.customer_id
             )
 
     def _process_order(self, total: int, discount: int, payment_method: str,
-                       paid_amount: int, buyer_name: str = None, receipt_path: str = None):
+                       paid_amount: int, buyer_name: str = None, receipt_path: str = None,
+                       payment_type: str = None, customer_id: int = None):
         try:
             fresh_products = {p.id: p for p in ProductController.fetch()}
 
@@ -1263,6 +1268,17 @@ class SalesPage(QWidget):
                     sku=fresh.sku,
                     category=fresh.category,
                     image_path=fresh.image_path
+                )
+
+            # Save to Receivables if payment is hutang (credit)
+            if payment_method == "tunai" and payment_type == "hutang" and customer_id:
+                ReceivablesController.add(
+                    sales_id=sales_id,
+                    customer_id=customer_id,
+                    total_amount=total,
+                    due_date=None,
+                    amount_paid=paid_amount,
+                    status='unpaid'
                 )
 
             Toast.show_toast("Order berhasil disimpan", "success", self)
@@ -1539,9 +1555,10 @@ class OrderConfirmDialog(QDialog):
         self._total = total
         self._user = user
         self._payment_method = "tunai"
-        self._buyer_name = ""
-        self._cash_given = 0
-        self._change = 0
+        self._payment_type = "lunas"  # tunai payment type: lunas or hutang
+        self._selected_customer_id = None
+        self._paid_amount = 0
+        self._remaining = total
 
         self.receipt_action = "cancel"
         self.receipt_path = None
@@ -1549,13 +1566,14 @@ class OrderConfirmDialog(QDialog):
         self.payment_method = "tunai"
         self.cash_given = 0
         self.change = 0
+        self.customer_id = None
 
         self.setWindowTitle("Konfirmasi Order")
         self.setModal(True)
         self.setFixedWidth(520)
         self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Preferred)
         screen_h = QApplication.primaryScreen().availableGeometry().height()
-        self.setMaximumHeight(min(700, screen_h - 80))
+        self.setMaximumHeight(min(850, screen_h - 80))
         self.setStyleSheet(f"""
             QDialog {{
                 background: {C_WHITE};
@@ -1680,10 +1698,7 @@ class OrderConfirmDialog(QDialog):
 
         payment_methods = [
             ("tunai",  "💵 Tunai"),
-            ("debit",  "💳 Debit"),
-            ("kredit", "💳 Kredit"),
             ("qris",   "📱 QRIS"),
-            ("hutang", "📋 Hutang"),
         ]
         for idx, (value, label) in enumerate(payment_methods):
             radio = QRadioButton(label)
@@ -1696,20 +1711,88 @@ class OrderConfirmDialog(QDialog):
                 lambda checked, v=value: self._on_payment_method_changed(v) if checked else None
             )
             self._payment_group.addButton(radio, idx)
-            payment_grid.addWidget(radio, idx // 3, idx % 3)
+            payment_grid.addWidget(radio, idx // 2, idx % 2)
 
         cl.addLayout(payment_grid)
         cl.addSpacing(12)
 
-        # Cash fields
+        # Cash payment fields (Tunai)
         self._cash_fields_frame = QFrame()
         self._cash_fields_frame.setStyleSheet("background: transparent;")
         cash_layout = QVBoxLayout(self._cash_fields_frame)
         cash_layout.setContentsMargins(0, 0, 0, 0)
         cash_layout.setSpacing(10)
 
-        self._add_field_label(cash_layout, "Uang yang Diberikan")
-        cash_layout.addSpacing(2)
+        # Payment type dropdown (Lunas / Hutang)
+        self._add_field_label(cash_layout, "Jenis Pembayaran")
+        cash_layout.addSpacing(4)
+        
+        self._payment_type_combo = QComboBox()
+        self._payment_type_combo.addItem("Lunas", "lunas")
+        self._payment_type_combo.addItem("Hutang", "hutang")
+        self._payment_type_combo.setFixedHeight(36)
+        self._payment_type_combo.setStyleSheet(self._combo_style())
+        self._payment_type_combo.currentIndexChanged.connect(self._on_payment_type_changed)
+        cash_layout.addWidget(self._payment_type_combo)
+        cash_layout.addSpacing(10)
+
+        # Customer fields (shown when Hutang is selected)
+        # Nama input
+        self._customer_name_label = QLabel("Nama Pelanggan")
+        self._customer_name_label.setStyleSheet(f"""
+            font-family: 'Segoe UI';
+            font-size: 11px;
+            font-weight: 600;
+            color: {C_TEXT_PRI};
+            background: transparent;
+            border: none;
+        """)
+        self._customer_name_label.hide()
+        cash_layout.addWidget(self._customer_name_label)
+        cash_layout.addSpacing(4)
+
+        self._customer_name_input = QLineEdit()
+        self._customer_name_input.setPlaceholderText("Masukkan nama pelanggan")
+        self._customer_name_input.setFixedHeight(36)
+        self._customer_name_input.setStyleSheet(self._input_style())
+        self._customer_name_input.hide()
+        cash_layout.addWidget(self._customer_name_input)
+        cash_layout.addSpacing(8)
+
+        # No Telepon input
+        self._customer_phone_label = QLabel("No Telepon")
+        self._customer_phone_label.setStyleSheet(f"""
+            font-family: 'Segoe UI';
+            font-size: 11px;
+            font-weight: 600;
+            color: {C_TEXT_PRI};
+            background: transparent;
+            border: none;
+        """)
+        self._customer_phone_label.hide()
+        cash_layout.addWidget(self._customer_phone_label)
+        cash_layout.addSpacing(4)
+
+        self._customer_phone_input = QLineEdit()
+        self._customer_phone_input.setPlaceholderText("Masukkan nomor telepon")
+        self._customer_phone_input.setFixedHeight(36)
+        self._customer_phone_input.setStyleSheet(self._input_style())
+        self._customer_phone_input.hide()
+        cash_layout.addWidget(self._customer_phone_input)
+        cash_layout.addSpacing(10)
+
+        # Cash input for Lunas
+        self._cash_label = QLabel("Uang yang Diberikan")
+        self._cash_label.setStyleSheet(f"""
+            font-family: 'Segoe UI';
+            font-size: 11px;
+            font-weight: 600;
+            color: {C_TEXT_PRI};
+            background: transparent;
+            border: none;
+        """)
+        cash_layout.addWidget(self._cash_label)
+        cash_layout.addSpacing(4)
 
         self._cash_input = QLineEdit()
         self._cash_input.setPlaceholderText("0")
@@ -1718,17 +1801,19 @@ class OrderConfirmDialog(QDialog):
         self._cash_input.setStyleSheet(self._input_style())
         self._cash_input.textChanged.connect(self._on_cash_changed)
         cash_layout.addWidget(self._cash_input)
+        cash_layout.addSpacing(8)
 
-        change_row = QHBoxLayout()
-        change_row.setContentsMargins(0, 0, 0, 0)
-        change_lbl = QLabel("Kembalian")
-        change_lbl.setStyleSheet(f"font-size:12px;color:{C_TEXT_SEC};border:none;")
-        change_row.addWidget(change_lbl)
-        change_row.addStretch()
-        self._change_value = QLabel(_format_price(0))
-        self._change_value.setStyleSheet(f"font-size:12px;font-weight:600;color:{C_SUCCESS};border:none;")
-        change_row.addWidget(self._change_value)
-        cash_layout.addLayout(change_row)
+        # Remaining/Change display
+        remaining_row = QHBoxLayout()
+        remaining_row.setContentsMargins(0, 0, 0, 0)
+        self._remaining_label = QLabel("Kembalian")
+        self._remaining_label.setStyleSheet(f"font-size:12px;color:{C_TEXT_SEC};border:none;")
+        remaining_row.addWidget(self._remaining_label)
+        remaining_row.addStretch()
+        self._remaining_value = QLabel(_format_price(0))
+        self._remaining_value.setStyleSheet(f"font-size:12px;font-weight:600;color:{C_SUCCESS};border:none;")
+        remaining_row.addWidget(self._remaining_value)
+        cash_layout.addLayout(remaining_row)
 
         cl.addWidget(self._cash_fields_frame)
         root.addWidget(content)
@@ -1770,6 +1855,9 @@ class OrderConfirmDialog(QDialog):
         footer_lay.addWidget(cancel_btn)
         footer_lay.addWidget(confirm_btn)
         root.addWidget(footer)
+        
+        # Initialize UI state based on current payment type
+        self._on_payment_type_changed(0)
 
     # ── Dialog helpers ─────────────────────────────────────────────────────────
     def _make_divider(self) -> QFrame:
@@ -1852,6 +1940,30 @@ class OrderConfirmDialog(QDialog):
             }}
         """
 
+    def _combo_style(self) -> str:
+        return f"""
+            QComboBox {{
+                background: {C_WHITE};
+                border: 1px solid {C_BORDER};
+                border-radius: 6px;
+                font-family: 'Segoe UI';
+                font-size: 11px;
+                padding: 0 12px;
+                color: {C_TEXT_PRI};
+            }}
+            QComboBox:focus {{
+                border: 1px solid {C_ACCENT};
+            }}
+            QComboBox::drop-down {{
+                border: none;
+                background: transparent;
+            }}
+            QComboBox::down-arrow {{
+                image: none;
+                width: 0px;
+            }}
+        """
+
     def _make_confirm_item_row(self, product: Product, quantity: int) -> QFrame:
         row_frame = QFrame()
         row_frame.setFixedHeight(52)
@@ -1918,6 +2030,9 @@ class OrderConfirmDialog(QDialog):
         return row_frame
 
     # ── Payment logic ──────────────────────────────────────────────────────────
+    def _load_customers(self):
+        pass  # No need to load customers, user will input manually
+
     def _on_payment_method_changed(self, method: str):
         self._payment_method = method
         if method == "tunai":
@@ -1926,31 +2041,89 @@ class OrderConfirmDialog(QDialog):
             self._cash_fields_frame.hide()
         QTimer.singleShot(0, self.adjustSize)
 
+    def _on_payment_type_changed(self, index: int):
+        self._payment_type = self._payment_type_combo.currentData()
+        if self._payment_type == "hutang":
+            # Hutang mode: show customer fields, show cash input for partial payment
+            self._cash_label.setText("Uang yang Dibayarkan")
+            self._cash_label.show()
+            self._cash_input.show()
+            self._customer_name_label.show()
+            self._customer_name_input.show()
+            self._customer_phone_label.show()
+            self._customer_phone_input.show()
+            self._remaining_label.setText("Sisa Bayar")
+            self._remaining_value.setStyleSheet(f"font-size:12px;font-weight:600;color:{C_DANGER};border:none;")
+        else:  # lunas
+            # Lunas mode: show cash input, hide customer fields
+            self._cash_label.setText("Uang yang Diberikan")
+            self._cash_label.show()
+            self._cash_input.show()
+            self._customer_name_label.hide()
+            self._customer_name_input.hide()
+            self._customer_phone_label.hide()
+            self._customer_phone_input.hide()
+            self._remaining_label.setText("Kembalian")
+            self._remaining_value.setStyleSheet(f"font-size:12px;font-weight:600;color:{C_SUCCESS};border:none;")
+        self._on_cash_changed()
+        QTimer.singleShot(0, self.adjustSize)
+
     def _on_cash_changed(self):
         try:
-            cash_str = self._cash_input.text().strip()
-            self._cash_given = int(cash_str) if cash_str else 0
-            self._change = self._cash_given - self._total
+            if self._payment_type == "hutang":
+                # Hutang: Sisa Bayar = Total - Uang yang dibayarkan (boleh parsial)
+                cash_str = self._cash_input.text().strip()
+                self._paid_amount = int(cash_str) if cash_str else 0
+                self._remaining = self._total - self._paid_amount
 
-            if self._change < 0:
-                self._change_value.setText(f"Kurang {_format_price(abs(self._change))}")
-                self._change_value.setStyleSheet(f"font-size:12px;font-weight:600;color:{C_DANGER};border:none;")
-            else:
-                self._change_value.setText(_format_price(self._change))
-                self._change_value.setStyleSheet(f"font-size:12px;font-weight:600;color:{C_SUCCESS};border:none;")
+                if self._remaining > 0:
+                    self._remaining_value.setText(_format_price(self._remaining))
+                    self._remaining_value.setStyleSheet(f"font-size:12px;font-weight:600;color:{C_DANGER};border:none;")
+                elif self._remaining == 0:
+                    self._remaining_value.setText(_format_price(0))
+                    self._remaining_value.setStyleSheet(f"font-size:12px;font-weight:600;color:{C_SUCCESS};border:none;")
+                else:
+                    # Jika dibayar lebih dari total
+                    self._remaining_value.setText(f"Kembali {_format_price(abs(self._remaining))}")
+                    self._remaining_value.setStyleSheet(f"font-size:12px;font-weight:600;color:{C_SUCCESS};border:none;")
+            else:  # lunas
+                # Lunas: Kembalian = Uang yang diberikan - Total (tidak boleh kurang)
+                cash_str = self._cash_input.text().strip()
+                self._paid_amount = int(cash_str) if cash_str else 0
+                self._remaining = self._paid_amount - self._total
+
+                if self._remaining < 0:
+                    self._remaining_value.setText(f"Kurang {_format_price(abs(self._remaining))}")
+                    self._remaining_value.setStyleSheet(f"font-size:12px;font-weight:600;color:{C_DANGER};border:none;")
+                else:
+                    self._remaining_value.setText(_format_price(self._remaining))
+                    self._remaining_value.setStyleSheet(f"font-size:12px;font-weight:600;color:{C_SUCCESS};border:none;")
         except ValueError:
-            self._change_value.setText("Format tidak valid")
-            self._change_value.setStyleSheet(f"font-size:12px;font-weight:600;color:{C_DANGER};border:none;")
+            self._remaining_value.setText("Format tidak valid")
+            self._remaining_value.setStyleSheet(f"font-size:12px;font-weight:600;color:{C_DANGER};border:none;")
 
     def _on_confirm(self):
         if self._payment_method == "tunai":
-            cash_str = self._cash_input.text().strip()
-            if not cash_str or int(cash_str) == 0:
-                Toast.show_toast("Masukkan jumlah uang tunai!", "error", self)
-                return
-            if int(cash_str) < self._total:
-                Toast.show_toast("Uang tunai tidak cukup!", "error", self)
-                return
+            if self._payment_type == "lunas":
+                cash_str = self._cash_input.text().strip()
+                if not cash_str or int(cash_str) == 0:
+                    Toast.show_toast("Masukkan jumlah uang tunai!", "error", self)
+                    return
+                if int(cash_str) < self._total:
+                    Toast.show_toast("Uang tunai tidak cukup!", "error", self)
+                    return
+            else:  # hutang
+                # Validasi nama pelanggan
+                customer_name = self._customer_name_input.text().strip()
+                if not customer_name:
+                    Toast.show_toast("Masukkan nama pelanggan untuk hutang!", "error", self)
+                    return
+                # Validasi nomor telepon
+                customer_phone = self._customer_phone_input.text().strip()
+                if not customer_phone:
+                    Toast.show_toast("Masukkan nomor telepon pelanggan!", "error", self)
+                    return
+                # Uang yang dibayarkan boleh 0 (hutang penuh) atau parsial
 
         receipt_text = self._build_receipt_text()
         preview_dialog = ReceiptPreviewDialog(receipt_text, self)
@@ -1960,8 +2133,29 @@ class OrderConfirmDialog(QDialog):
             self.receipt_path = preview_dialog.saved_path
             self.buyer_name = self._buyer_input.text().strip()
             self.payment_method = self._payment_method
-            self.cash_given = self._cash_given if self._payment_method == "tunai" else self._total
-            self.change = self._change if self._payment_method == "tunai" else 0
+            
+            if self._payment_method == "tunai":
+                if self._payment_type == "lunas":
+                    self.cash_given = self._paid_amount
+                    self.change = self._remaining
+                    self.customer_id = None
+                else:  # hutang
+                    # Create customer in database
+                    try:
+                        customer_name = self._customer_name_input.text().strip()
+                        customer_phone = self._customer_phone_input.text().strip()
+                        self.customer_id = CustomerController.add(name=customer_name, phone=customer_phone)
+                    except Exception as e:
+                        Toast.show_toast(f"Error menyimpan pelanggan: {str(e)}", "error", self)
+                        return
+                    
+                    self.cash_given = self._paid_amount
+                    self.change = self._total - self._paid_amount  # Sisa hutang
+            else:  # qris
+                self.cash_given = self._total
+                self.change = 0
+                self.customer_id = None
+            
             self.accept()
 
     def _build_receipt_text(self) -> str:
@@ -1985,11 +2179,16 @@ class OrderConfirmDialog(QDialog):
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         user_name = self._user.get("name", "Cashier")
         buyer_name = self._buyer_input.text().strip() or "Pembeli Umum"
+        
         payment_display = {
-            "tunai": "Tunai", "debit": "Kartu Debit", "kredit": "Kartu Kredit",
-            "qris": "QRIS", "hutang": "Hutang"
+            "tunai": "Tunai",
+            "qris": "QRIS",
         }
         payment_text = payment_display.get(self._payment_method, "Tunai")
+        
+        # Add payment type for Tunai
+        if self._payment_method == "tunai":
+            payment_text += f" - {'Lunas' if self._payment_type == 'lunas' else 'Hutang'}"
 
         lines = [
             _center("WARUNG+"),
@@ -2021,10 +2220,15 @@ class OrderConfirmDialog(QDialog):
             _row("Metode", payment_text),
         ]
 
-        if self._payment_method == "tunai":
+        if self._payment_method == "tunai" and self._payment_type == "lunas":
             lines += [
-                _row("Tunai", self._cash_given),
-                _row("Kembali", self._change),
+                _row("Tunai", self._paid_amount),
+                _row("Kembali", self._remaining),
+            ]
+        elif self._payment_method == "tunai" and self._payment_type == "hutang":
+            lines += [
+                _row("Dibayarkan", self._paid_amount),
+                _row("Sisa Hutang", self._total - self._paid_amount),
             ]
 
         lines += [

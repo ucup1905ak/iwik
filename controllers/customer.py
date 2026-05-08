@@ -16,8 +16,9 @@ class CustomerController:
     method : add, get, edit, remove, fetch
     """
 
-    def add(name: str, phone: str | None = None) -> None:
+    def add(name: str, phone: str | None = None) -> int:
         """Ada Error Handling type nya, nanti dia bakal raise TypeError kalau salah.
+        Returns the ID of the newly created customer.
         """
         try:  # TYPE ERROR HANDLING
             name = str(name)
@@ -30,6 +31,7 @@ class CustomerController:
             (name, phone),
         )
         conn.commit()
+        return cursor.lastrowid
 
     def get(customer_id: int) -> Customer | None:
         """Ada Error Handling type nya, nanti dia bakal raise TypeError kalau salah.
