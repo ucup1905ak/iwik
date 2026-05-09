@@ -17,6 +17,7 @@ from gui.views.screens.sales_page import SalesPage
 from gui.views.screens.supplier_page import SupplierPage
 from gui.views.screens.purchases_page import PurchasePage
 from gui.views.screens.transactions_page import TransactionPage
+from gui.views.screens.receivables_page import ReceivablesPage
 
 
 ANIM_DURATION = 160
@@ -106,6 +107,7 @@ class MainShell(QWidget):
             "dashboard":  ("Dashboard", "📊", None),
             "products":   (None, None, "products"),
             "transactions": (None, None, "transactions"),
+            "receivables": (None, None, "receivables"),
             "cashier":    (None, None, "cashier"),
             "reports":    ("Laporan", "📈", None),
             "users":      (None, None, "users"),
@@ -148,6 +150,8 @@ class MainShell(QWidget):
             widget = PurchasePage(user=self._user)
         elif page_type == "transactions":
             widget = TransactionPage(user=self._user)
+        elif page_type == "receivables":
+            widget = ReceivablesPage(user=self._user)
         else:
             widget = PlaceholderPage(title, emoji)
 

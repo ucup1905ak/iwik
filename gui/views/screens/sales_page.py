@@ -2560,15 +2560,20 @@ class OrderConfirmDialog(QDialog):
 
             if self._payment_type == "hutang":
                 try:
-                    self.customer_id = CustomerController.add(
-                        name=self._buyer_input.text().strip(),
-                        phone=self._phone_input.text().strip()
-                    )
+                    phone = self._phone_input.text().strip()
+                    existing = CustomerController.get_by_phone(phone)
+                    if existing:
+                        self.customer_id = existing.id
+                    else:
+                        self.customer_id = CustomerController.add(
+                            name=self._buyer_input.text().strip(),
+                            phone=phone,
+                        )
                 except Exception as e:
                     Toast.show_toast(f"Error menyimpan pelanggan: {str(e)}", "error", self)
                     return
                 self.cash_given = self._paid_amount
-                self.change = self._total - self._paid_amount  # sisa hutang
+                self.change = self._total - self._paid_amount
             else:  # lunas
                 buyer_name = self._buyer_input.text().strip()
                 if buyer_name:

@@ -72,6 +72,15 @@ class CustomerController:
         conn, cursor = DatabaseManager.require_connection()
         cursor.execute("DELETE FROM Customer WHERE ID = ?", (customer_id,))
         conn.commit()
+        
+    def get_by_phone(phone: str) -> Customer | None:
+        """Cari customer berdasarkan nomor telepon. Return None jika tidak ditemukan."""
+        if not phone:
+            return None
+        _, cursor = DatabaseManager.require_connection()
+        cursor.execute("SELECT * FROM Customer WHERE Phone = ?", (phone,))
+        row = cursor.fetchone()
+        return Customer(*row) if row else None
 
     def fetch() -> list[Customer]:
         """Bakal return **SEMUA** data customer dalam bentuk list of Customer."""

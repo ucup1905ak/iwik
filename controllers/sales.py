@@ -124,8 +124,16 @@ class SalesController:
         conn.commit()
  
     def fetch() -> list[Sales]:
-        """Bakal return **SEMUA** data sales dalam bentuk list of Sales."""
+        """Bakal return SEMUA data sales dari tanggal terbaru."""
+        
         _, cursor = DatabaseManager.require_connection()
-        cursor.execute("SELECT * FROM Sales")
+
+        cursor.execute("""
+            SELECT * 
+            FROM Sales
+            ORDER BY time DESC
+        """)
+
         rows = cursor.fetchall()
+
         return [Sales(*row) for row in rows]
