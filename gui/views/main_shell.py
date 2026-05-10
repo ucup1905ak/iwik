@@ -18,10 +18,11 @@ from gui.views.screens.supplier_page import SupplierPage
 from gui.views.screens.purchases_page import PurchasePage
 from gui.views.screens.transactions_page import TransactionPage
 from gui.views.screens.receivables_page import ReceivablesPage
+from gui.views.screens.dashboard_page import DashboardPage
 
 
 ANIM_DURATION = 160
-INITIAL_PAGE_KEY = "products"
+INITIAL_PAGE_KEY = "dashboard"
 
 
 # ── Placeholder page untuk menu lain ─────────────────────────────────────────
@@ -104,7 +105,7 @@ class MainShell(QWidget):
         # ── Lazy-loaded pages ─────────────────────────────────────────────────
         self._pages: dict[str, QWidget] = {}
         self._page_config = {
-            "dashboard":  ("Dashboard", "📊", None),
+            "dashboard":  (None, None, "dashboard"),
             "products":   (None, None, "products"),
             "transactions": (None, None, "transactions"),
             "receivables": (None, None, "receivables"),
@@ -138,7 +139,9 @@ class MainShell(QWidget):
 
         title, emoji, page_type = self._page_config[key]
 
-        if page_type == "products":
+        if page_type == "dashboard":
+            widget = DashboardPage(user=self._user)
+        elif page_type == "products":
             widget = ProductPage(user=self._user)
         elif page_type == "cashier":
             widget = SalesPage(user=self._user)
