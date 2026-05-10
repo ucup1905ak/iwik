@@ -128,19 +128,25 @@ def _fetch_transactions() -> list[dict]:
                 "price":        price_map.get(d.product_id, 0),
             })
 
-        total_price = sum(
+        subtotal = sum(
             d.quantity * price_map.get(d.product_id, 0)
             for d in detail_by_sale.get(s.id, [])
         )
 
-        # ── Receivable info ──────────────────────────────────────
         receivable = receivable_by_sale.get(s.id)
         if receivable:
-            debt        = receivable.total_amount - receivable.amount_paid
-            debt_status = receivable.status   # 'unpaid' / 'paid' / dll
+            total_price = receivable.total_amount
         else:
+            total_price = s.total_price or subtotal
+
+        # ── Receivable info ──────────────────────────────────────
+        if receivable:
+            debt        = receivable.total_amount - receivable.amount_paid
+            debt_status = receivable.status
+        else:
+            # Tidak ada receivable = bayar lunas di tempat
             debt        = 0.0
-            debt_status = None
+            debt_status = "paid"
         # ─────────────────────────────────────────────────────────
 
         result.append({
@@ -149,7 +155,7 @@ def _fetch_transactions() -> list[dict]:
             "customer_name": customer_name,
             "time":          s.time,
             "payment":       s.payment,
-            "paid_amount":   s.paid_amount,
+            "paid_amount": max(s.paid_amount or 0.0, 0.0),
             "items":         items,
             "total_price":   total_price,
             "debt":          debt,           # ← 0.0 = lunas/tidak ada hutang
@@ -238,14 +244,14 @@ class TransactionCard(QFrame):
         # Debt badge
         if debt_status is not None:
             if debt > 0:
-                debt_tag = QLabel(f"🔴 Hutang")
+                debt_tag = QLabel("🔴 Hutang")
                 debt_tag.setStyleSheet("""
                     background: #FDEAEA; color: #E05252;
                     font-family: 'Segoe UI'; font-size: 9px; font-weight: 700;
                     padding: 2px 7px; border-radius: 5px; border: none;
                 """)
             else:
-                debt_tag = QLabel("✅ Lunas")
+                debt_tag = QLabel("🟢 Lunas")
                 debt_tag.setStyleSheet("""
                     background: #EEFCEF; color: #27AE60;
                     font-family: 'Segoe UI'; font-size: 9px; font-weight: 700;
@@ -672,7 +678,7 @@ class TransactionTableView(QTableWidget):
                     padding: 1px 6px; border-radius: 4px; border: none;
                 """)
             else:
-                badge = QLabel("✅ Lunas")
+                badge = QLabel("🟢 Lunas")
                 badge.setStyleSheet("""
                     background: #EEFCEF; color: #27AE60;
                     font-family: 'Segoe UI'; font-size: 9px; font-weight: 700;
@@ -847,7 +853,20 @@ class TransactionDetailDialog(QDialog):
         _info_row("Pelanggan", tx["customer_name"])
         pt = _payment_theme(tx["payment"])
         _info_row("Pembayaran", f"{pt['emoji']} {_payment_label(tx['payment'])}", pt["text"])
-        _info_row("Total Bayar", _fmt_currency(tx["paid_amount"]), C_ACCENT)
+        # ── tambah baris ini ──
+        subtotal = sum(item["price"] * item["quantity"] for item in tx.get("items", []))
+        diskon = subtotal - tx["total_price"]
+
+        if diskon > 0:
+            _info_row("Subtotal", _fmt_currency(subtotal))
+            _info_row("Diskon", f"- {_fmt_currency(diskon)}", "#D08000")
+
+        _info_row("Total Harga", _fmt_currency(tx["total_price"]), C_ACCENT)
+        _info_row("Dibayar", _fmt_currency(tx["paid_amount"]))
+
+        kembalian = tx["paid_amount"] - tx["total_price"]
+        if kembalian > 0 and tx.get("debt_status") == "paid" and tx.get("debt", 0) == 0:
+            _info_row("Kembalian", _fmt_currency(kembalian), "#27AE60")
 
         cl.addSpacing(8)
 
@@ -1365,7 +1384,7 @@ class TransactionPage(QWidget):
             labels = self._stat_value_labels.get(key)
             if labels:
                 dot, val_lbl = labels
-                dot.setText(value)
+                dot.setText("🪙" if key == "revenue" else value)  # ← konsisten
                 val_lbl.setText(value)
 
     # ── Filter buttons ─────────────────────────────────────────────────────────

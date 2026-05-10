@@ -28,6 +28,7 @@ CREATE TABLE IF NOT EXISTS Sales (
     Time TEXT NOT NULL,
     Payment TEXT,
     PaidAmount REAL,
+    TotalPrice REAL,
 
     FOREIGN KEY (CustomerID) REFERENCES Customer(ID),
     FOREIGN KEY (CashierID) REFERENCES users(id)

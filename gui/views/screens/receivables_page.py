@@ -46,12 +46,12 @@ RADIUS = 14
 
 # ── Status config ──────────────────────────────────────────────────────────────
 STATUS_CONFIG = {
-    "unpaid":  {"label": "Belum Lunas", "bg": "#FDEAEA", "text": "#C0392B", "dot": "#E05252"},
-    "partial": {"label": "Sebagian",    "bg": "#FEF3E2", "text": "#A04000", "dot": "#F39C12"},
-    "paid":    {"label": "Lunas",       "bg": "#E8F8F0", "text": "#1D6A40", "dot": "#27AE60"},
+    "unpaid":  {"label": "🔴 Belum Lunas", "bg": "#FDEAEA", "text": "#C0392B", "dot": "#E05252"},
+    "partial": {"label": "🟡 Sebagian",    "bg": "#FEF3E2", "text": "#A04000", "dot": "#F39C12"},
+    "paid":    {"label": "🟢 Lunas",       "bg": "#E8F8F0", "text": "#1D6A40", "dot": "#27AE60"},
 }
 
-FILTER_STATUS = ["Semua", "Belum Lunas", "Sebagian", "Lunas"]
+FILTER_STATUS = ["Semua", "🔴 Belum Lunas", "🟡 Sebagian", "🟢 Lunas"]
 
 C_ROW_ALT    = "#FAFBFF"
 C_HEADER_BG  = "#FFFFFF"
@@ -307,14 +307,111 @@ class CustomerDetailDialog(QDialog):
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
+# Delete All Receivables Dialog
+# ═══════════════════════════════════════════════════════════════════════════════
+class DeleteAllReceivablesDialog(QDialog):
+    confirmed = pyqtSignal()
+
+    def __init__(self, records: list[Receivables], customer_name: str, parent=None):
+        super().__init__(parent)
+        self._records = records
+        self._name    = customer_name
+        self.setWindowTitle("Hapus Semua Hutang")
+        self.setModal(True)
+        self.setFixedWidth(400)
+        self.setWindowFlag(Qt.WindowType.MSWindowsFixedSizeDialogHint)
+        self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Minimum)
+        self.setSizeGripEnabled(False)
+        self.setStyleSheet(f"QDialog {{ background: {C_WHITE}; font-family: 'Segoe UI'; }}")
+        self._build_ui()
+        self.adjustSize()
+        self.setMaximumSize(400, self.height())
+
+    def _build_ui(self):
+        total = sum(r.total_amount for r in self._records)
+
+        root = QVBoxLayout(self)
+        root.setContentsMargins(0, 0, 0, 0)
+
+        card = QFrame()
+        card.setStyleSheet("QFrame { background-color: #FAFAF8; border: 1px solid #DDD9D2; }")
+        cl = QVBoxLayout(card)
+        cl.setContentsMargins(36, 30, 36, 30)
+        cl.setSpacing(0)
+
+        logo = QLabel("Warung<span style='color:#4F6EF7'>+</span>")
+        logo.setTextFormat(Qt.TextFormat.RichText)
+        logo.setStyleSheet("font-size:14px;color:#5F5E5A;font-weight:500;letter-spacing:1px;border:none;")
+        cl.addWidget(logo)
+        cl.addSpacing(14)
+
+        title = QLabel("Hapus Semua Hutang?")
+        title.setStyleSheet("font-size:20px;font-weight:600;color:#1b1b1b;border:none;")
+        cl.addWidget(title)
+        cl.addSpacing(4)
+
+        sub = QLabel(
+            f"Semua <b>{len(self._records)} transaksi hutang</b> atas nama "
+            f"<b>{self._name}</b> dengan total <b>{_fmt_currency(total)}</b> "
+            f"akan dihapus permanen. Tindakan ini tidak dapat dibatalkan."
+        )
+        sub.setTextFormat(Qt.TextFormat.RichText)
+        sub.setWordWrap(True)
+        sub.setStyleSheet("font-size:12px;color:#888780;border:none;")
+        cl.addWidget(sub)
+        cl.addSpacing(20)
+
+        divider = QFrame()
+        divider.setFixedHeight(1)
+        divider.setStyleSheet("background: #DDD9D2; border: none;")
+        cl.addWidget(divider)
+        cl.addSpacing(18)
+
+        btn_row = QHBoxLayout()
+        btn_row.setSpacing(10)
+
+        cancel_btn = QPushButton("Batal")
+        cancel_btn.setFixedHeight(40)
+        cancel_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        cancel_btn.setStyleSheet("""
+            QPushButton {
+                background: transparent; color: #5F5E5A;
+                font-family: 'Segoe UI'; font-size: 13px; font-weight: 500;
+                border-radius: 10px; border: 1px solid #DDD9D2;
+            }
+            QPushButton:hover { background: #F1EFE8; border: 1px solid #C8C6BF; }
+        """)
+        cancel_btn.clicked.connect(self.reject)
+
+        del_btn = QPushButton("Ya, Hapus Semua")
+        del_btn.setFixedHeight(40)
+        del_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        del_btn.setStyleSheet(f"""
+            QPushButton {{
+                background: {C_DANGER}; color: #FFFFFF;
+                font-family: 'Segoe UI'; font-size: 13px; font-weight: 600;
+                border-radius: 10px; border: none;
+            }}
+            QPushButton:hover {{ background: #C94040; }}
+        """)
+        del_btn.clicked.connect(lambda: (self.confirmed.emit(), self.accept()))
+
+        btn_row.addWidget(cancel_btn)
+        btn_row.addWidget(del_btn)
+        cl.addLayout(btn_row)
+        root.addWidget(card)
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
 # Receivables Table View
 # ═══════════════════════════════════════════════════════════════════════════════
 class ReceivablesTableView(QTableWidget):
-    pay_clicked    = pyqtSignal(object)   # emits Receivables
-    delete_clicked = pyqtSignal(object)   # emits Receivables
-    detail_clicked = pyqtSignal(str, list)  # emits (customer_name, [Receivables])
+    pay_clicked        = pyqtSignal(object)       # emits Receivables
+    delete_clicked     = pyqtSignal(object)       # emits Receivables
+    detail_clicked     = pyqtSignal(str, list)    # emits (customer_name, [Receivables])
+    delete_all_clicked = pyqtSignal(str, list)    # emits (customer_name, [Receivables])
 
-    COLUMNS    = ["  #", "Pelanggan", "Total Hutang", "Terbayar", "Sisa", "Status", "Aksi"]
+    COLUMNS    = ["      #", "Pelanggan", "Total Hutang", "Terbayar", "Sisa", "Status", "Aksi"]
     COL_NO     = 0
     COL_CUST   = 1
     COL_TOTAL  = 2
@@ -376,12 +473,12 @@ class ReceivablesTableView(QTableWidget):
         header.setSectionResizeMode(self.COL_STATUS, QHeaderView.ResizeMode.Fixed)
         header.setSectionResizeMode(self.COL_ACTION, QHeaderView.ResizeMode.Fixed)
 
-        self.setColumnWidth(self.COL_NO,     40)
+        self.setColumnWidth(self.COL_NO,     44)
         self.setColumnWidth(self.COL_TOTAL,  130)
         self.setColumnWidth(self.COL_PAID,   130)
         self.setColumnWidth(self.COL_REMAIN, 130)
-        self.setColumnWidth(self.COL_STATUS, 130)
-        self.setColumnWidth(self.COL_ACTION, 200)   # sedikit lebih lebar untuk tombol Detail
+        self.setColumnWidth(self.COL_STATUS, 170)
+        self.setColumnWidth(self.COL_ACTION, 210)
 
         self.setStyleSheet(f"""
             QTableWidget {{
@@ -467,10 +564,6 @@ class ReceivablesTableView(QTableWidget):
         self.setCellWidget(0, 0, empty)
 
     def populate(self, rows: list[tuple], customer_map: dict, all_receivables: list[Receivables]):
-        """
-        rows: list of (agg_Receivables, customer_name, [all Receivables for that customer])
-        Setiap pelanggan sudah di-deduplikasi menjadi 1 baris dengan nilai agregat.
-        """
         self._all_receivables = all_receivables
         self.clearContents()
         self.setRowCount(0)
@@ -526,14 +619,13 @@ class ReceivablesTableView(QTableWidget):
         return w
 
     def _make_customer_cell(self, text: str, has_multiple: int = 0) -> QWidget:
-        """Nama pelanggan; jika punya banyak transaksi, tambah badge kecil."""
         w = QWidget()
         w.setStyleSheet("background: transparent; border: none;")
         lay = QHBoxLayout(w)
         lay.setContentsMargins(10, 0, 10, 0)
         lay.setSpacing(6)
         lay.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
-        
+
         parts = text.strip().split()
         if len(parts) >= 2:
             initials = parts[0][0].upper() + parts[1][0].upper()
@@ -561,7 +653,7 @@ class ReceivablesTableView(QTableWidget):
             badge.setStyleSheet(f"""
                 background: #FDEAEA; color: {C_DANGER};
                 font-size: 11px; font-weight: 600;
-                padding: 2px 7px; border-radius: 4px;
+                padding: 2px 8px; border-radius: 4px;
             """)
             lay.addWidget(badge)
 
@@ -581,12 +673,11 @@ class ReceivablesTableView(QTableWidget):
         return w
 
     def _make_currency_cell(self, text: str, muted: bool = False, bold: bool = False, danger: bool = False) -> QWidget:
-        """FIX #3: alignment kiri, bukan kanan."""
         w = QWidget()
         w.setStyleSheet("background: transparent; border: none;")
         lay = QHBoxLayout(w)
         lay.setContentsMargins(10, 0, 10, 0)
-        lay.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)  # ← kiri
+        lay.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
         if danger:
             color = C_DANGER
         elif muted:
@@ -633,7 +724,7 @@ class ReceivablesTableView(QTableWidget):
         multi = len(all_for_cust) > 1
 
         if multi:
-            # Multi-transaksi: tombol Detail untuk lihat & bayar per transaksi
+            # ── Tombol Detail ──
             detail_btn = QPushButton("Detail")
             detail_btn.setFixedSize(62, 28)
             detail_btn.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -649,8 +740,26 @@ class ReceivablesTableView(QTableWidget):
                 lambda _=False, n=cust_name, rs=all_for_cust: self.detail_clicked.emit(n, rs)
             )
             lay.addWidget(detail_btn)
+
+            # ── Tombol Hapus Semua ──
+            del_all_btn = QPushButton("Hapus")
+            del_all_btn.setFixedSize(62, 28)
+            del_all_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+            del_all_btn.setStyleSheet(f"""
+                QPushButton {{
+                    background: #FDEAEA; color: {C_DANGER};
+                    font-family: 'Segoe UI'; font-size: 11px; font-weight: 600;
+                    border-radius: 7px; border: none;
+                }}
+                QPushButton:hover {{ background: {C_DANGER}; color: #FFFFFF; }}
+            """)
+            del_all_btn.clicked.connect(
+                lambda _=False, n=cust_name, rs=all_for_cust: self.delete_all_clicked.emit(n, rs)
+            )
+            lay.addWidget(del_all_btn)
+
         else:
-            # Transaksi tunggal: tombol Bayar langsung
+            # ── Transaksi tunggal ──
             if status != "paid":
                 pay_btn = QPushButton("Bayar")
                 pay_btn.setFixedSize(62, 28)
@@ -1165,8 +1274,7 @@ class ReceivablesPage(QWidget):
         self.setStyleSheet(f"background: {C_BG};")
         self._load_data()
         self._build_ui()
-    
-        
+
     def _update_due_date(self, data: dict):
         try:
             rec = ReceivablesController.get(data["id"])
@@ -1217,7 +1325,6 @@ class ReceivablesPage(QWidget):
         layout.setContentsMargins(32, 17, 32, 28)
         layout.setSpacing(0)
 
-        # Header
         header = QHBoxLayout()
         title_col = QVBoxLayout()
         title_col.setSpacing(2)
@@ -1282,6 +1389,7 @@ class ReceivablesPage(QWidget):
         self._table.pay_clicked.connect(self._open_pay_dialog)
         self._table.delete_clicked.connect(self._open_delete_dialog)
         self._table.detail_clicked.connect(self._open_detail_dialog)
+        self._table.delete_all_clicked.connect(self._open_delete_all_dialog)  # ← tambah
         layout.addWidget(self._table, stretch=1)
 
         self._refresh_table()
@@ -1290,7 +1398,6 @@ class ReceivablesPage(QWidget):
     def _build_stats_row(self) -> QHBoxLayout:
         row = QHBoxLayout()
         row.setSpacing(14)
-        # key, label, accent_color, bg_color, is_currency
         stats_def = [
             ("total_debt",   "Total Sisa Hutang",      "#4F6EF7", "#EEF1FE", True),
             ("count_unpaid", "Belum / Sebagian Lunas",  "#E05252", "#FDEAEA", False),
@@ -1304,15 +1411,7 @@ class ReceivablesPage(QWidget):
             row.addWidget(card)
         return row
 
-    def _stat_card(
-        self,
-        key: str,
-        label: str,
-        value: str,
-        color: str,
-        bg: str,
-        is_currency: bool,
-    ) -> tuple[QFrame, QLabel]:
+    def _stat_card(self, key, label, value, color, bg, is_currency):
         card = QFrame()
         card.setStyleSheet(f"QFrame {{ background: {C_WHITE}; border-radius: 12px; border: 1px solid {C_BORDER}; }}")
         card.setFixedHeight(76)
@@ -1321,7 +1420,6 @@ class ReceivablesPage(QWidget):
         lay.setContentsMargins(16, 0, 16, 0)
         lay.setSpacing(12)
 
-        # ── Indikator bulat berwarna (FIX #2) ──
         indicator = QFrame()
         indicator.setFixedSize(40, 40)
         indicator.setStyleSheet(f"background: {bg}; border-radius: 10px; border: none;")
@@ -1331,28 +1429,21 @@ class ReceivablesPage(QWidget):
         ind_lay.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         dot = QLabel()
-        if is_currency:                   # total hutang → emoji koin
+        if is_currency:
             dot.setText("🪙")
             dot.setStyleSheet("font-size: 18px; background: transparent; border: none;")
-        else:                             # angka count → tampilkan value dengan warna accent
+        else:
             dot.setText(value)
             dot.setStyleSheet(f"font-size: 14px; font-weight: 700; color: {color}; background: transparent; border: none;")
         dot.setAlignment(Qt.AlignmentFlag.AlignCenter)
         ind_lay.addWidget(dot)
 
-        # ── Teks nilai + label (FIX #1: warna eksplisit, bukan putih) ──
         val_lbl = QLabel(value)
         val_lbl.setFixedHeight(26)
-        val_lbl.setStyleSheet(
-            f"font-family:'Segoe UI';font-size:22px;font-weight:700;"
-            f"color:{C_TEXT_PRI};background:transparent;border:none;"  # ← C_TEXT_PRI, bukan putih
-        )
+        val_lbl.setStyleSheet(f"font-family:'Segoe UI';font-size:22px;font-weight:700;color:{C_TEXT_PRI};background:transparent;border:none;")
 
         lbl_lbl = QLabel(label)
-        lbl_lbl.setStyleSheet(
-            f"font-family:'Segoe UI';font-size:11px;"
-            f"color:{C_TEXT_SEC};background:transparent;border:none;"
-        )
+        lbl_lbl.setStyleSheet(f"font-family:'Segoe UI';font-size:11px;color:{C_TEXT_SEC};background:transparent;border:none;")
 
         text_w = QWidget()
         text_w.setStyleSheet("background: transparent; border: none;")
@@ -1376,13 +1467,8 @@ class ReceivablesPage(QWidget):
             if lbl:
                 lbl.setText(val)
             dot = self._stat_dots.get(key)
-            if dot and key != "total_debt":   # dot total_debt adalah emoji, tidak perlu diupdate
+            if dot and key != "total_debt":
                 dot.setText(val)
-
-            # Jika ini count_unpaid / count_paid, update juga teks di dalam indikator
-            # (indikator dot untuk non-currency menampilkan value)
-            # Kita tidak simpan referensi dot, jadi biarkan _build_stats_row di-rebuild
-            # saat showEvent. Cukup update label utama untuk sekarang.
 
     # ── Filter buttons ────────────────────────────────────────────────────────
     def _make_filter_btn(self, label: str) -> QPushButton:
@@ -1417,14 +1503,8 @@ class ReceivablesPage(QWidget):
 
     # ── Filtering & refresh ───────────────────────────────────────────────────
     def _filtered_rows(self) -> list[tuple]:
-        """
-        Return list of (representative_Receivables, customer_name, all_records_for_customer, aggregated_Receivables)
-        — 1 baris per pelanggan (customer_id unik). Nilai Total/Terbayar/Sisa adalah agregat semua transaksinya.
-        Status agregat ditentukan dari total keseluruhan.
-        """
-        from collections import defaultdict, OrderedDict
+        from collections import OrderedDict
 
-        # Filter dulu di level individual record
         filtered = self._receivables
 
         if self._search_query:
@@ -1434,37 +1514,31 @@ class ReceivablesPage(QWidget):
                 if q in self._customer_map.get(r.customer_id, "").lower()
             ]
 
-        # Group by customer_id — pertahankan urutan kemunculan pertama
         groups: dict[int | None, list[Receivables]] = OrderedDict()
         for r in filtered:
             groups.setdefault(r.customer_id, []).append(r)
 
         rows = []
         for cid, recs in groups.items():
-            cust_name      = self._customer_map.get(cid, "—")
-            total_amount   = sum(r.total_amount for r in recs)
-            amount_paid    = sum(r.amount_paid  for r in recs)
-            agg_status     = _resolve_status(amount_paid, total_amount)
+            cust_name    = self._customer_map.get(cid, "—")
+            total_amount = sum(r.total_amount for r in recs)
+            amount_paid  = sum(r.amount_paid  for r in recs)
+            agg_status   = _resolve_status(amount_paid, total_amount)
 
-            # Filter status diterapkan pada status agregat pelanggan
-            if self._active_filter == "Belum Lunas" and agg_status != "unpaid":
+            if self._active_filter == "🔴 Belum Lunas" and agg_status != "unpaid":
                 continue
-            elif self._active_filter == "Sebagian" and agg_status != "partial":
+            elif self._active_filter == "🟡 Sebagian" and agg_status != "partial":
                 continue
-            elif self._active_filter == "Lunas" and agg_status != "paid":
+            elif self._active_filter == "🟢 Lunas" and agg_status != "paid":
                 continue
 
-            # Wakil: record pertama (untuk due_date dsb); nilai uang pakai agregat
             rep = recs[0]
-
-            # Pilih due_date terdekat dari transaksi yang belum lunas
             unpaid_dues = [
                 r.due_date for r in recs
                 if r.due_date and _resolve_status(r.amount_paid, r.total_amount) != "paid"
             ]
             nearest_due = min(unpaid_dues) if unpaid_dues else rep.due_date
 
-            # Buat "virtual" rec dengan nilai agregat untuk ditampilkan di tabel
             agg_rec = Receivables(
                 id           = rep.id,
                 sales_id     = rep.sales_id,
@@ -1513,10 +1587,14 @@ class ReceivablesPage(QWidget):
         dlg.exec()
 
     def _open_detail_dialog(self, customer_name: str, records: list[Receivables]):
-        """FIX #4: Tampilkan semua transaksi hutang milik satu pelanggan."""
         dlg = CustomerDetailDialog(customer_name=customer_name, records=records, parent=self)
         dlg.pay_clicked.connect(lambda rec: (dlg.accept(), self._open_pay_dialog(rec)))
         dlg.delete_clicked.connect(lambda rec: (dlg.accept(), self._open_delete_dialog(rec)))
+        dlg.exec()
+
+    def _open_delete_all_dialog(self, customer_name: str, records: list[Receivables]):
+        dlg = DeleteAllReceivablesDialog(records=records, customer_name=customer_name, parent=self)
+        dlg.confirmed.connect(lambda: self._delete_all_receivables(records))
         dlg.exec()
 
     # ── CRUD handlers ─────────────────────────────────────────────────────────
@@ -1556,6 +1634,26 @@ class ReceivablesPage(QWidget):
                 due_date=rec.due_date,
                 status=new_status,
             )
+
+            # ── Update paid_amount di Sales ──
+            if rec.sales_id:
+                from controllers.sales import SalesController
+                sale = SalesController.get(rec.sales_id)
+                if sale:
+                    SalesController.edit(
+                        sale_id=sale.id,
+                        customer_id=sale.customer_id,
+                        cashier_id=sale.cashier_id,
+                        time=sale.time,
+                        payment=sale.payment,
+                        paid_amount=new_paid,
+                        total_price=sale.total_price,
+                    )
+
+            # ── Trigger refresh transactions_page ──
+            from gui.signals import sales_signals
+            sales_signals.sales_completed.emit(rec.sales_id or 0)
+
             self._load_data()
             self._refresh_stats()
             self._refresh_table()
@@ -1571,8 +1669,27 @@ class ReceivablesPage(QWidget):
             self._load_data()
             self._refresh_stats()
             self._refresh_table()
+            from gui.signals import sales_signals
+            sales_signals.sales_completed.emit(rec.sales_id or 0)
             cust = self._customer_map.get(rec.customer_id, "Pelanggan")
             Toast.show_toast(f"Hutang <b>{cust}</b> berhasil dihapus.", "success", self)
+        except Exception as e:
+            QMessageBox.critical(self, "Error", str(e))
+
+    def _delete_all_receivables(self, records: list[Receivables]):
+        try:
+            cust_name = self._customer_map.get(records[0].customer_id, "Pelanggan")
+            for rec in records:
+                ReceivablesController.remove(rec.id)
+            self._load_data()
+            self._refresh_stats()
+            self._refresh_table()
+            # Trigger refresh transactions_page untuk semua sales_id terkait
+            from gui.signals import sales_signals
+            for rec in records:
+                if rec.sales_id:
+                    sales_signals.sales_completed.emit(rec.sales_id)
+            Toast.show_toast(f"Semua hutang <b>{cust_name}</b> berhasil dihapus.", "success", self)
         except Exception as e:
             QMessageBox.critical(self, "Error", str(e))
 

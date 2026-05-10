@@ -1215,10 +1215,10 @@ class SalesPage(QWidget):
                 total=total,
                 discount=discount_amount,
                 payment_method=dialog.payment_method,
-                paid_amount=dialog.cash_given if dialog.payment_method == "tunai" else total,
+                paid_amount=dialog.cash_given,
                 buyer_name=dialog.buyer_name,
                 receipt_path=dialog.receipt_path,
-                payment_type=dialog._payment_type if dialog.payment_method == "tunai" else None,
+                payment_type=dialog._payment_type,
                 customer_id=dialog.customer_id
             )
 
@@ -1239,11 +1239,12 @@ class SalesPage(QWidget):
 
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             sales_id = SalesController.add_return_id(
-                customer_id=customer_id,  # ← pakai parameter yang diterima
+                customer_id=customer_id,
                 cashier_id=self._user["id"],
                 time=timestamp,
                 payment=payment_method,
-                paid_amount=paid_amount
+                paid_amount=paid_amount,
+                total_price=total   # ← tambah
             )
 
             updated_stocks = {}
@@ -1256,7 +1257,7 @@ class SalesPage(QWidget):
                     sales_id=sales_id,
                     product_id=product_id,
                     quantity=quantity,
-                    discount=discount / len(self._cart) if len(self._cart) > 0 else 0
+                    discount=0  # diskon sudah diperhitungkan di total, tidak perlu per item
                 )
 
                 new_stock = fresh_stock - quantity
@@ -1274,7 +1275,7 @@ class SalesPage(QWidget):
                 )
 
             # Save to Receivables if payment is hutang (credit)
-            if payment_method == "tunai" and payment_type == "hutang" and customer_id:
+            if payment_type == "hutang" and customer_id:
                 ReceivablesController.add(
                     sales_id=sales_id,
                     customer_id=customer_id,
@@ -2369,19 +2370,11 @@ class OrderConfirmDialog(QDialog):
         try:
 
             # QRIS lunas tidak perlu kalkulasi
-            if (
-                self._payment_method == "qris"
-                and self._payment_type != "hutang"
-            ):
+            if self._payment_method == "qris" and self._payment_type == "lunas":
                 return
 
             cash_str = self._cash_input.text().strip()
-
-            self._paid_amount = (
-                int(cash_str)
-                if cash_str
-                else 0
-            )
+            self._paid_amount = int(cash_str) if cash_str else 0
 
             # =====================================================
             # HUTANG
@@ -2534,12 +2527,8 @@ class OrderConfirmDialog(QDialog):
             paid_amount = int(cash_str) if cash_str else 0
 
             if paid_amount >= self._total:
-                self._show_field_error(
-                    self._cash_input,
-                    self._phone_err,  # nanti kita ganti dengan cash error sendiri
-                    "Pembayaran hutang harus kurang dari total."
-                )
-                valid = False
+                Toast.show_toast("Pembayaran hutang harus kurang dari total.", "error", self)
+                return
             buyer_name = self._buyer_input.text().strip()
             if not buyer_name:
                 Toast.show_toast("Masukkan nama pembeli untuk hutang!", "error", self)
@@ -2572,8 +2561,10 @@ class OrderConfirmDialog(QDialog):
                 except Exception as e:
                     Toast.show_toast(f"Error menyimpan pelanggan: {str(e)}", "error", self)
                     return
-                self.cash_given = self._paid_amount
-                self.change = self._total - self._paid_amount
+                cash_str = self._cash_input.text().strip()
+                self.cash_given = int(cash_str) if cash_str else 0
+                self.change = self._total - self.cash_given
+
             else:  # lunas
                 buyer_name = self._buyer_input.text().strip()
                 if buyer_name:
@@ -2584,7 +2575,7 @@ class OrderConfirmDialog(QDialog):
                         return
                 else:
                     self.customer_id = None  # Pembeli Umum
-                
+
                 if self._payment_method == "tunai":
                     self.cash_given = self._paid_amount
                     self.change = self._remaining
