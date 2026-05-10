@@ -169,6 +169,7 @@ def _fetch_transactions() -> list[dict]:
 # Transaction Card
 # ═══════════════════════════════════════════════════════════════════════════════
 class TransactionCard(QFrame):
+    CARD_WIDTH = 280
     detail_clicked = pyqtSignal(object)
     delete_clicked = pyqtSignal(object)
 
@@ -470,6 +471,8 @@ class TransactionTableView(QTableWidget):
     def showEvent(self, event):
         super().showEvent(event)
         QTimer.singleShot(0, self._apply_viewport_clip)
+        
+    MIN_STRETCH_WIDTH = 200
 
     def _setup_table(self):
         self.setColumnCount(len(self.COLUMNS))
@@ -510,6 +513,9 @@ class TransactionTableView(QTableWidget):
         self.setColumnWidth(self.COL_TOTAL, 150)
         self.setColumnWidth(self.COL_AMT,  180)
         self.setColumnWidth(self.COL_ACT,  180)
+        
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self.setHorizontalScrollMode(QAbstractItemView.ScrollMode.ScrollPerPixel)
 
         self.setStyleSheet(f"""
             QTableWidget {{
@@ -553,8 +559,54 @@ class TransactionTableView(QTableWidget):
             }}
             QScrollBar::handle:vertical:hover {{ background: #B8BCCE; }}
             QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{ height: 0; }}
-            QScrollBar:horizontal {{ height: 0; }}
+            QScrollBar:horizontal {{
+                background: transparent;
+                height: 10px;
+                margin: 0 8px 2px 8px;
+                border-radius: 3px;
+            }}
+            QScrollBar::handle:horizontal {{
+                background: {C_BORDER};
+                border-radius: 3px;
+                min-width: 24px;
+            }}
+            QScrollBar::handle:horizontal:hover {{
+                background: #B8BCCE;
+            }}
+            QScrollBar::add-line:horizontal,
+            QScrollBar::sub-line:horizontal {{
+                width: 0;
+            }}
         """)
+        
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self._adjust_columns()
+        QTimer.singleShot(0, self._apply_viewport_clip)
+
+    def _adjust_columns(self):
+        header = self.horizontalHeader()
+        fixed_widths = (
+            self.columnWidth(self.COL_NO) +
+            self.columnWidth(self.COL_ID) +
+            self.columnWidth(self.COL_TIME) +
+            self.columnWidth(self.COL_PAY) +
+            self.columnWidth(self.COL_TOTAL) +
+            self.columnWidth(self.COL_AMT) +
+            self.columnWidth(self.COL_ACT)
+        )
+        available = self.viewport().width()
+        # Dibagi 2 karena ada 2 kolom stretch (Kasir + Pelanggan)
+        each_stretch = (available - fixed_widths) // 2
+
+        if each_stretch >= self.MIN_STRETCH_WIDTH:
+            header.setSectionResizeMode(self.COL_CASH, QHeaderView.ResizeMode.Stretch)
+            header.setSectionResizeMode(self.COL_CUST, QHeaderView.ResizeMode.Stretch)
+        else:
+            header.setSectionResizeMode(self.COL_CASH, QHeaderView.ResizeMode.Fixed)
+            header.setSectionResizeMode(self.COL_CUST, QHeaderView.ResizeMode.Fixed)
+            self.setColumnWidth(self.COL_CASH, self.MIN_STRETCH_WIDTH)
+            self.setColumnWidth(self.COL_CUST, self.MIN_STRETCH_WIDTH)
 
     def _show_empty_state(self):
         self.clearContents()
@@ -1268,10 +1320,6 @@ class TransactionPage(QWidget):
         self._grid_layout = QGridLayout(self._grid_container)
         self._grid_layout.setSpacing(14)
         self._grid_layout.setContentsMargins(0, 0, 0, 0)
-        self._grid_layout.setColumnStretch(0, 1)
-        self._grid_layout.setColumnStretch(1, 1)
-        self._grid_layout.setColumnStretch(2, 1)
-        self._grid_layout.setColumnStretch(3, 1)
         self._grid_layout.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
 
         self._scroll.setWidget(self._grid_container)
@@ -1311,8 +1359,8 @@ class TransactionPage(QWidget):
         values = self._calc_stats()
         stats = [
             ("total",   "Total Transaksi",  values["total"],   "#4F6EF7", "#EEF1FE"),
-            ("revenue", "Total Pendapatan", values["revenue"], "#27AE60", "#E8F8F0"),
             ("member",  "Transaksi Member", values["member"],  "#D08000", "#FDF6EC"),
+            ("revenue", "Total Pendapatan", values["revenue"], "#27AE60", "#E8F8F0"),
         ]
         for key, label, value, color, bg in stats:
             row.addWidget(self._stat_card(key, label, value, color, bg))
@@ -1444,6 +1492,15 @@ class TransactionPage(QWidget):
 
     def _refresh_table(self):
         self._table_view.populate(self._filtered_transactions())
+    
+    def _get_column_count(self) -> int:
+        available = self._scroll.viewport().width()
+        cols = available // (
+            TransactionCard.CARD_WIDTH +
+            self._grid_layout.spacing()
+        )
+
+        return max(2, min(4, int(cols)))
 
     def _refresh_grid(self):
         self._render_token += 1
@@ -1455,26 +1512,36 @@ class TransactionPage(QWidget):
 
         self._pending_refresh = False
         self._clear_grid()
+
         txs = self._filtered_transactions()
 
         if not txs:
             empty_wrap = QWidget()
             empty_wrap.setStyleSheet("background: transparent; border: none;")
+
             outer = QVBoxLayout(empty_wrap)
             outer.setContentsMargins(0, 36, 0, 40)
-            outer.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter)
+            outer.setAlignment(
+                Qt.AlignmentFlag.AlignTop |
+                Qt.AlignmentFlag.AlignHCenter
+            )
 
             empty_card = QFrame()
             empty_card.setFixedHeight(260)
             empty_card.setMinimumWidth(420)
             empty_card.setMaximumWidth(560)
+
             empty_card.setStyleSheet(f"""
                 QFrame {{
-                    background:    {C_WHITE};
-                    border:        1px solid {C_BORDER};
+                    background: {C_WHITE};
+                    border: 1px solid {C_BORDER};
                     border-radius: 18px;
                 }}
-                QLabel {{ background: transparent; border: none; }}
+
+                QLabel {{
+                    background: transparent;
+                    border: none;
+                }}
             """)
 
             card_layout = QVBoxLayout(empty_card)
@@ -1488,37 +1555,126 @@ class TransactionPage(QWidget):
 
             title = QLabel("Tidak ada transaksi ditemukan")
             title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            title.setStyleSheet(f"font-family:'Segoe UI';font-size:16px;font-weight:700;color:{C_TEXT_PRI};")
+            title.setStyleSheet(f"""
+                font-family:'Segoe UI';
+                font-size:16px;
+                font-weight:700;
+                color:{C_TEXT_PRI};
+            """)
 
-            subtitle = QLabel("Coba ubah filter atau kata kunci pencarian.")
+            subtitle = QLabel(
+                "Coba ubah filter atau kata kunci pencarian."
+            )
+
             subtitle.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            subtitle.setStyleSheet(f"font-family:'Segoe UI';font-size:12px;color:{C_TEXT_SEC};")
+
+            subtitle.setStyleSheet(f"""
+                font-family:'Segoe UI';
+                font-size:12px;
+                color:{C_TEXT_SEC};
+            """)
 
             card_layout.addStretch()
             card_layout.addWidget(icon)
             card_layout.addWidget(title)
             card_layout.addWidget(subtitle)
             card_layout.addStretch()
+
             outer.addWidget(empty_card)
 
-            self._grid_layout.addWidget(empty_wrap, 0, 0, 1, 4)
+            self._grid_layout.addWidget(
+                empty_wrap,
+                0,
+                0,
+                1,
+                max(1, self._get_column_count())
+            )
+
             self._grid_container.adjustSize()
             self._grid_container.update()
             self._scroll.viewport().update()
             return
 
-        for i, tx in enumerate(txs):
-            if token != self._render_token:
-                return
-            card = TransactionCard(tx)
-            card.detail_clicked.connect(self._open_detail_dialog)
-            card.delete_clicked.connect(self._delete_transaction)
-            self._grid_layout.addWidget(card, i // 4, i % 4)
+        cols = self._get_column_count()
 
-        self._grid_container.setMinimumWidth(5 * 180 + 4 * self._grid_layout.spacing())
+        # reset stretch
+        for c in range(10):
+            self._grid_layout.setColumnStretch(c, 0)
+
+        # apply stretch
+        for c in range(cols):
+            self._grid_layout.setColumnStretch(c, 1)
+
+        if len(txs) <= 60:
+            self._render_all_cards(txs, token)
+        else:
+            self._render_batch_cards(
+                txs,
+                start=0,
+                batch_size=12,
+                token=token
+            )
+
         self._grid_container.adjustSize()
         self._grid_container.update()
         self._scroll.viewport().update()
+
+    def _render_all_cards(self, txs: list[dict], token: int):
+        cols = self._get_column_count()
+
+        for i, tx in enumerate(txs):
+            if token != self._render_token:
+                return
+
+            card = TransactionCard(tx)
+
+            card.detail_clicked.connect(self._open_detail_dialog)
+            card.delete_clicked.connect(self._delete_transaction)
+
+            self._grid_layout.addWidget(
+                card,
+                i // cols,
+                i % cols
+            )
+
+    def _render_batch_cards(
+        self,
+        txs: list[dict],
+        start: int,
+        batch_size: int,
+        token: int
+    ):
+        if token != self._render_token:
+            return
+
+        cols = self._get_column_count()
+
+        end = min(start + batch_size, len(txs))
+
+        for i in range(start, end):
+            tx = txs[i]
+
+            card = TransactionCard(tx)
+
+            card.detail_clicked.connect(self._open_detail_dialog)
+            card.delete_clicked.connect(self._delete_transaction)
+
+            self._grid_layout.addWidget(
+                card,
+                i // cols,
+                i % cols
+            )
+
+        if end < len(txs):
+            QTimer.singleShot(
+                0,
+                lambda: self._render_batch_cards(
+                    txs,
+                    end,
+                    batch_size,
+                    token
+                )
+            )
 
     def _clear_grid(self):
         while self._grid_layout.count():

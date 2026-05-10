@@ -1298,90 +1298,158 @@ class UserPage(QWidget):
 
         self._pending_refresh = False
         self._clear_grid()
+
         users = self._filtered_users()
-        
+
         if not users:
-            empty_wrap = QWidget()
-            empty_wrap.setStyleSheet("background: transparent; border: none;")
-            outer = QVBoxLayout(empty_wrap)
-            outer.setContentsMargins(0, 36, 0, 40)
-            outer.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter)
-
-            empty_card = QFrame()
-            empty_card.setFixedHeight(260)
-            empty_card.setMinimumWidth(420)
-            empty_card.setMaximumWidth(560)
-            empty_card.setStyleSheet(f"""
-                QFrame {{
-                    background:    {C_WHITE};
-                    border:        1px solid {C_BORDER};
-                    border-radius: 18px;
-                }}
-                QLabel {{
-                    background: transparent;
-                    border:     none;
-                }}
-            """)
-
-            card_layout = QVBoxLayout(empty_card)
-            card_layout.setContentsMargins(40, 34, 40, 34)
-            card_layout.setSpacing(8)
-            card_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-            icon = QLabel("👤")
-            icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            icon.setStyleSheet("font-size: 46px;")
-
-            title = QLabel("Tidak ada pengguna ditemukan")
-            title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            title.setStyleSheet(f"""
-                font-family: 'Segoe UI';
-                font-size:   16px;
-                font-weight: 700;
-                color:       {C_TEXT_PRI};
-            """)
-
-            subtitle = QLabel("Coba ubah filter, kata kunci pencarian,\natau tambahkan pengguna baru.")
-            subtitle.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            subtitle.setStyleSheet(f"""
-                font-family: 'Segoe UI';
-                font-size:   12px;
-                color:       {C_TEXT_SEC};
-            """)
-
-            card_layout.addStretch()
-            card_layout.addWidget(icon)
-            card_layout.addWidget(title)
-            card_layout.addWidget(subtitle)
-            card_layout.addSpacing(4)
-            card_layout.addStretch()
-            outer.addWidget(empty_card)
-
-            self._grid_layout.addWidget(empty_wrap, 0, 0, 1, max(1, self._get_column_count()))
-            self._grid_container.adjustSize()
-            self._grid_container.update()
-            self._scroll.viewport().update()
+            self._render_empty_state()
             return
 
-        first_admin_id = UserController.get_first_admin_id()
+        cols = self._get_column_count()
+
+        # reset stretch
+        for c in range(10):
+            self._grid_layout.setColumnStretch(c, 0)
+
+        for c in range(cols):
+            self._grid_layout.setColumnStretch(c, 1)
+
+        if len(users) <= 60:
+            self._render_all_cards(users, token)
+        else:
+            self._render_batch_cards(users, 0, 12, token)
+
+        self._grid_container.adjustSize()
+        self._grid_container.update()
+        self._scroll.viewport().update()
+        
+    def _render_all_cards(self, users: list, token: int):
+        cols = self._get_column_count()
+
         for i, user in enumerate(users):
             if token != self._render_token:
                 return
-            is_first = user[0] == first_admin_id
+
+            is_first = user[0] == UserController.get_first_admin_id()
+
             card = UserCard(user, is_first_admin=is_first)
+
             card.edit_clicked.connect(self._open_edit_dialog)
             card.delete_clicked.connect(self._delete_user)
-            self._grid_layout.addWidget(card, i // 4, i % 4)
 
-        MIN_CARD_W = 180
-        self._grid_container.setMinimumWidth(5 * MIN_CARD_W + 4 * self._grid_layout.spacing())
-        self._grid_container.adjustSize()
+            self._grid_layout.addWidget(
+                card,
+                i // cols,
+                i % cols
+            )
+            
+    def _render_batch_cards(self, users, start: int, batch_size: int, token: int):
+        if token != self._render_token:
+            return
+
+        cols = self._get_column_count()
+        end = min(start + batch_size, len(users))
+
+        for i in range(start, end):
+            if token != self._render_token:
+                return
+
+            user = users[i]
+            is_first = user[0] == UserController.get_first_admin_id()
+
+            card = UserCard(user, is_first_admin=is_first)
+
+            card.edit_clicked.connect(self._open_edit_dialog)
+            card.delete_clicked.connect(self._delete_user)
+
+            self._grid_layout.addWidget(
+                card,
+                i // cols,
+                i % cols
+            )
+
+        if end < len(users):
+            QTimer.singleShot(
+                0,
+                lambda: self._render_batch_cards(users, end, batch_size, token)
+            )
+        
+    def _render_empty_state(self):
+        empty_wrap = QWidget()
+        empty_wrap.setStyleSheet("background: transparent; border: none;")
+
+        outer = QVBoxLayout(empty_wrap)
+        outer.setContentsMargins(0, 36, 0, 40)
+        outer.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter)
+
+        empty_card = QFrame()
+        empty_card.setFixedHeight(260)
+        empty_card.setMinimumWidth(420)
+        empty_card.setMaximumWidth(560)
+
+        empty_card.setStyleSheet(f"""
+            QFrame {{
+                background: {C_WHITE};
+                border: 1px solid {C_BORDER};
+                border-radius: 18px;
+            }}
+            QLabel {{
+                background: transparent;
+                border: none;
+            }}
+        """)
+
+        card_layout = QVBoxLayout(empty_card)
+        card_layout.setContentsMargins(40, 34, 40, 34)
+        card_layout.setSpacing(8)
+        card_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        icon = QLabel("👤")
+        icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        icon.setStyleSheet("font-size: 46px;")
+
+        title = QLabel("Tidak ada pengguna ditemukan")
+        title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        title.setStyleSheet(f"""
+            font-family:'Segoe UI';
+            font-size:16px;
+            font-weight:700;
+            color:{C_TEXT_PRI};
+        """)
+
+        subtitle = QLabel("Coba ubah filter atau tambahkan user baru.")
+        subtitle.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        subtitle.setStyleSheet(f"""
+            font-family:'Segoe UI';
+            font-size:12px;
+            color:{C_TEXT_SEC};
+        """)
+
+        card_layout.addStretch()
+        card_layout.addWidget(icon)
+        card_layout.addWidget(title)
+        card_layout.addWidget(subtitle)
+        card_layout.addStretch()
+
+        outer.addWidget(empty_card)
+
+        self._grid_layout.addWidget(
+            empty_wrap,
+            0, 0,
+            1,
+            max(1, self._get_column_count())
+        )
+
         self._grid_container.adjustSize()
         self._grid_container.update()
         self._scroll.viewport().update()
         
     def _get_column_count(self) -> int:
-        return 4
+        available = self._scroll.viewport().width()
+
+        cols = available // (UserCard.CARD_WIDTH + self._grid_layout.spacing())
+
+        return max(2, min(4, int(cols)))
 
     def _clear_grid(self):
         while self._grid_layout.count():

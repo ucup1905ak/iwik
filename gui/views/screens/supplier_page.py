@@ -23,6 +23,29 @@ from PyQt6.QtGui import QColor, QPainterPath, QRegion, QFont,  QRegularExpressio
 from gui.views.components.toast import Toast
 from gui.views.components import Avatar
 
+SAMPLE_SUPPLIERS = [
+    Supplier(id=1, name="PT Maju Bersama", phone="081234567890", address="Jl. Kaliurang KM 5, Sleman, Yogyakarta"),
+    Supplier(id=2, name="CV Sumber Rejeki", phone="082145678901", address="Jl. Malioboro No. 12, Yogyakarta"),
+    Supplier(id=3, name="Toko Sembako Makmur", phone="085712349876", address="Jl. Magelang KM 8, Sleman"),
+    Supplier(id=4, name="UD Berkah Jaya", phone=None, address="Jl. Solo No. 45, Bantul"),
+    Supplier(id=5, name="PT Nusantara Distribusi", phone="087812341234", address=None),
+    Supplier(id=6, name="CV Pangan Sejahtera", phone="081998877665", address="Jl. Gejayan No. 77, Depok, Sleman"),
+    Supplier(id=7, name="PT Sinar Abadi", phone="081223344556", address="Jl. Ring Road Utara No. 88, Sleman"),
+    Supplier(id=8, name="CV Tani Makmur", phone="082233445566", address="Jl. Wonosari KM 10, Bantul"),
+    Supplier(id=9, name="UD Sukses Selalu", phone="083344556677", address="Jl. Parangtritis No. 19, Yogyakarta"),
+    Supplier(id=10, name="PT Prima Distribusi", phone="084455667788", address="Jl. Imogiri Timur KM 7, Bantul"),
+    Supplier(id=11, name="CV Mitra Usaha", phone=None, address="Jl. Godean KM 4, Sleman"),
+    Supplier(id=12, name="Toko Berkah Rejeki", phone="085566778899", address=None),
+    Supplier(id=13, name="PT Pangan Nusantara", phone="086677889900", address="Jl. Monjali No. 31, Sleman"),
+    Supplier(id=14, name="CV Aneka Jaya", phone="087788990011", address="Jl. Kusumanegara No. 15, Yogyakarta"),
+    Supplier(id=15, name="UD Makmur Sentosa", phone="088899001122", address="Jl. Bantul KM 6, Bantul"),
+    Supplier(id=16, name="PT Sejahtera Food", phone="089900112233", address="Jl. Palagan Tentara Pelajar No. 9, Sleman"),
+    Supplier(id=17, name="CV Cahaya Baru", phone=None, address="Jl. Timoho No. 25, Yogyakarta"),
+    Supplier(id=18, name="UD Sumber Pangan", phone="081112223334", address="Jl. Janti No. 66, Sleman"),
+    Supplier(id=19, name="PT Andalan Supplier", phone="082223334445", address="Jl. Ahmad Dahlan No. 41, Yogyakarta"),
+    Supplier(id=20, name="CV Global Niaga", phone="083334445556", address="Jl. Kabupaten KM 3, Sleman")
+]
+
 # ── Color palette ──────────────────────────────────────────────────────────────
 C_BG       = "#F4F5F9"
 C_WHITE    = "#FFFFFF"
@@ -66,6 +89,9 @@ class SupplierCard(QFrame):
     edit_clicked   = pyqtSignal(object)
     delete_clicked = pyqtSignal(object)
 
+    CARD_WIDTH  = 393
+    CARD_HEIGHT = 300
+
     def __init__(self, supplier: Supplier, parent=None):
         super().__init__(parent)
         self._supplier = supplier
@@ -73,7 +99,6 @@ class SupplierCard(QFrame):
 
     def _build(self):
         self.setObjectName("SupplierCard")
-        self.setFixedHeight(148)
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self.setStyleSheet(f"""
             QFrame#SupplierCard {{
@@ -874,6 +899,7 @@ class SupplierPage(QWidget):
         self._build_ui()
 
     def _load_suppliers(self) -> list[Supplier]:
+        # return SAMPLE_SUPPLIERS.copy()
         return SupplierController.fetch()
 
     # ── Build UI ──────────────────────────────────────────────────────────────
@@ -961,6 +987,7 @@ class SupplierPage(QWidget):
         card_layout.setSpacing(0)
 
         self._scroll = QScrollArea()
+        self._scroll.setViewportMargins(0, 0, 0, 0)
         self._scroll.setWidgetResizable(True)
         self._scroll.setFrameShape(QFrame.Shape.NoFrame)
         self._scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
@@ -969,7 +996,7 @@ class SupplierPage(QWidget):
             QScrollArea > QWidget > QWidget {{ background: transparent; }}
             QScrollBar:vertical {{
                 background: transparent; width: 6px;
-                margin: 8px 2px 8px 0; border-radius: 3px;
+                margin: 0px 2px 8px 0; border-radius: 3px;
             }}
             QScrollBar::handle:vertical {{
                 background: {C_BORDER}; border-radius: 3px; min-height: 28px;
@@ -996,10 +1023,6 @@ class SupplierPage(QWidget):
         self._grid_layout = QGridLayout(self._grid_container)
         self._grid_layout.setSpacing(14)
         self._grid_layout.setContentsMargins(0, 0, 0, 0)
-        self._grid_layout.setColumnStretch(0, 1)
-        self._grid_layout.setColumnStretch(1, 1)
-        self._grid_layout.setColumnStretch(2, 1)
-        self._grid_layout.setColumnStretch(3, 1)
         self._grid_layout.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
 
         self._scroll.setWidget(self._grid_container)
@@ -1140,28 +1163,35 @@ class SupplierPage(QWidget):
 
         self._pending_refresh = False
         self._clear_grid()
+
         suppliers = self._filtered_suppliers()
 
         if not suppliers:
             empty_wrap = QWidget()
             empty_wrap.setStyleSheet("background: transparent; border: none;")
+
             outer = QVBoxLayout(empty_wrap)
             outer.setContentsMargins(0, 36, 0, 40)
-            outer.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter)
+            outer.setAlignment(
+                Qt.AlignmentFlag.AlignTop |
+                Qt.AlignmentFlag.AlignHCenter
+            )
 
             empty_card = QFrame()
             empty_card.setFixedHeight(260)
             empty_card.setMinimumWidth(420)
             empty_card.setMaximumWidth(560)
+
             empty_card.setStyleSheet(f"""
                 QFrame {{
-                    background:    {C_WHITE};
-                    border:        1px solid {C_BORDER};
+                    background: {C_WHITE};
+                    border: 1px solid {C_BORDER};
                     border-radius: 18px;
                 }}
+
                 QLabel {{
                     background: transparent;
-                    border:     none;
+                    border: none;
                 }}
             """)
 
@@ -1177,46 +1207,131 @@ class SupplierPage(QWidget):
             title = QLabel("Tidak ada supplier ditemukan")
             title.setAlignment(Qt.AlignmentFlag.AlignCenter)
             title.setStyleSheet(f"""
-                font-family: 'Segoe UI'; font-size: 16px;
-                font-weight: 700; color: {C_TEXT_PRI};
+                font-family:'Segoe UI';
+                font-size:16px;
+                font-weight:700;
+                color:{C_TEXT_PRI};
             """)
 
-            subtitle = QLabel("Coba ubah kata kunci pencarian,\natau tambahkan supplier baru.")
+            subtitle = QLabel(
+                "Coba ubah kata kunci pencarian,\n"
+                "atau tambahkan supplier baru."
+            )
+
             subtitle.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
             subtitle.setStyleSheet(f"""
-                font-family: 'Segoe UI'; font-size: 12px; color: {C_TEXT_SEC};
+                font-family:'Segoe UI';
+                font-size:12px;
+                color:{C_TEXT_SEC};
             """)
 
             card_layout.addStretch()
             card_layout.addWidget(icon)
             card_layout.addWidget(title)
             card_layout.addWidget(subtitle)
-            card_layout.addSpacing(4)
             card_layout.addStretch()
+
             outer.addWidget(empty_card)
 
-            self._grid_layout.addWidget(empty_wrap, 0, 0, 1, max(1, self._get_column_count()))
+            self._grid_layout.addWidget(
+                empty_wrap,
+                0,
+                0,
+                1,
+                max(1, self._get_column_count())
+            )
+
             self._grid_container.adjustSize()
             self._grid_container.update()
             self._scroll.viewport().update()
             return
 
-        for i, supplier in enumerate(suppliers):
-            if token != self._render_token:
-                return
-            card = SupplierCard(supplier)
-            card.edit_clicked.connect(self._open_edit_dialog)
-            card.delete_clicked.connect(self._delete_supplier)
-            self._grid_layout.addWidget(card, i // 4, i % 4)
+        cols = self._get_column_count()
 
-        MIN_CARD_W = 180
-        self._grid_container.setMinimumWidth(5 * MIN_CARD_W + 4 * self._grid_layout.spacing())
+        # reset stretch
+        for c in range(10):
+            self._grid_layout.setColumnStretch(c, 0)
+
+        # apply stretch
+        for c in range(cols):
+            self._grid_layout.setColumnStretch(c, 1)
+
+        if len(suppliers) <= 60:
+            self._render_all_cards(suppliers, token)
+        else:
+            self._render_batch_cards(
+                suppliers,
+                start=0,
+                batch_size=12,
+                token=token
+            )
+
         self._grid_container.adjustSize()
         self._grid_container.update()
         self._scroll.viewport().update()
+        
+    def _render_all_cards(self, suppliers: list[Supplier], token: int):
+        cols = self._get_column_count()
+
+        for i, supplier in enumerate(suppliers):
+            if token != self._render_token:
+                return
+
+            card = SupplierCard(supplier)
+
+            card.edit_clicked.connect(self._open_edit_dialog)
+            card.delete_clicked.connect(self._delete_supplier)
+
+            self._grid_layout.addWidget(
+                card,
+                i // cols,
+                i % cols
+            )
+            
+    def _render_batch_cards(
+        self,
+        suppliers: list[Supplier],
+        start: int,
+        batch_size: int,
+        token: int
+    ):
+        if token != self._render_token:
+            return
+
+        cols = self._get_column_count()
+
+        end = min(start + batch_size, len(suppliers))
+
+        for i in range(start, end):
+            supplier = suppliers[i]
+
+            card = SupplierCard(supplier)
+
+            card.edit_clicked.connect(self._open_edit_dialog)
+            card.delete_clicked.connect(self._delete_supplier)
+
+            self._grid_layout.addWidget(
+                card,
+                i // cols,
+                i % cols
+            )
+
+        if end < len(suppliers):
+            QTimer.singleShot(
+                0,
+                lambda: self._render_batch_cards(
+                    suppliers,
+                    end,
+                    batch_size,
+                    token
+                )
+            )
 
     def _get_column_count(self) -> int:
-        return 4
+        available = self._scroll.viewport().width()
+        cols = available // (SupplierCard.CARD_WIDTH + self._grid_layout.spacing())
+        return max(2, min(4, int(cols)))
 
     def _clear_grid(self):
         while self._grid_layout.count():

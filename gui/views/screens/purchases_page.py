@@ -96,6 +96,8 @@ class PurchaseCard(QFrame):
     edit_clicked   = pyqtSignal(object)
     delete_clicked = pyqtSignal(object)
     detail_clicked = pyqtSignal(object)
+    CARD_WIDTH  = 393
+    CARD_HEIGHT = 300
 
     def __init__(self, purchase, parent=None):
         super().__init__(parent)
@@ -133,7 +135,7 @@ class PurchaseCard(QFrame):
 
         top.addStretch()
 
-        date_lbl = QLabel(_fmt_date(p.time))
+        date_lbl = QLabel(p.time)
         date_lbl.setStyleSheet(f"""
             font-family: 'Segoe UI'; font-size: 11px;
             color: {C_TEXT_SEC}; border: none;
@@ -241,7 +243,7 @@ class PurchaseTableView(QTableWidget):
     delete_clicked = pyqtSignal(object)
     detail_clicked = pyqtSignal(object)
 
-    COLUMNS    = ["      #", "Supplier", "User", "Tanggal", "Total", "Aksi"]
+    COLUMNS    = ["      #", "Supplier", "User", "Waktu", "Total", "Aksi"]
     COL_NO        = 0
     COL_SUPPLIER  = 1
     COL_USER      = 2
@@ -271,6 +273,8 @@ class PurchaseTableView(QTableWidget):
     def showEvent(self, event):
         super().showEvent(event)
         QTimer.singleShot(0, self._apply_viewport_clip)
+        
+    MIN_NAME_WIDTH = 200
 
     def _setup_table(self):
         self.setColumnCount(len(self.COLUMNS))
@@ -296,17 +300,19 @@ class PurchaseTableView(QTableWidget):
         header.setFixedHeight(42)
 
         header.setSectionResizeMode(self.COL_NO,       QHeaderView.ResizeMode.Fixed)
-        header.setSectionResizeMode(self.COL_SUPPLIER, QHeaderView.ResizeMode.Fixed)
-        header.setSectionResizeMode(self.COL_USER,     QHeaderView.ResizeMode.Fixed)
+        header.setSectionResizeMode(self.COL_SUPPLIER, QHeaderView.ResizeMode.Stretch)
+        header.setSectionResizeMode(self.COL_USER,     QHeaderView.ResizeMode.Stretch)
         header.setSectionResizeMode(self.COL_DATE,     QHeaderView.ResizeMode.Fixed)
-        header.setSectionResizeMode(self.COL_TOTAL,    QHeaderView.ResizeMode.Stretch)
+        header.setSectionResizeMode(self.COL_TOTAL,    QHeaderView.ResizeMode.Fixed)
         header.setSectionResizeMode(self.COL_ACTION,   QHeaderView.ResizeMode.Fixed)
 
         self.setColumnWidth(self.COL_NO,       44)
-        self.setColumnWidth(self.COL_SUPPLIER, 400)
-        self.setColumnWidth(self.COL_USER,     200)
-        self.setColumnWidth(self.COL_DATE,     130)
+        self.setColumnWidth(self.COL_DATE,     200)
+        self.setColumnWidth(self.COL_TOTAL,    200)
         self.setColumnWidth(self.COL_ACTION,   250)
+        
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self.setHorizontalScrollMode(QAbstractItemView.ScrollMode.ScrollPerPixel)
 
         self.setStyleSheet(f"""
             QTableWidget {{
@@ -350,8 +356,87 @@ class PurchaseTableView(QTableWidget):
             }}
             QScrollBar::handle:vertical:hover {{ background: #B8BCCE; }}
             QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{ height: 0; }}
-            QScrollBar:horizontal {{ height: 0; }}
+            QScrollBar:horizontal {{
+                background: transparent;
+                height: 10px;
+                margin: 0 8px 2px 8px;
+                border-radius: 3px;
+            }}
+
+            QScrollBar::handle:horizontal {{
+                background: {C_BORDER};
+                border-radius: 3px;
+                min-width: 24px;
+            }}
+
+            QScrollBar::handle:horizontal:hover {{
+                background: #B8BCCE;
+            }}
+
+            QScrollBar::add-line:horizontal,
+            QScrollBar::sub-line:horizontal {{
+                width: 0;
+            }}
         """)
+        
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self._adjust_columns()
+        QTimer.singleShot(0, self._apply_viewport_clip)
+
+    def _adjust_columns(self):
+        header = self.horizontalHeader()
+
+        fixed_widths = (
+            self.columnWidth(self.COL_NO) +
+            self.columnWidth(self.COL_DATE) +
+            self.columnWidth(self.COL_TOTAL) +
+            self.columnWidth(self.COL_ACTION)
+        )
+
+        available = (
+            self.viewport().width() -
+            self.verticalScrollBar().width()
+        )
+
+        remaining = available - fixed_widths
+
+        # Karena ada 2 kolom stretch:
+        min_required = self.MIN_NAME_WIDTH * 2
+
+        if remaining >= min_required:
+            # Layout normal → supplier & user stretch
+            header.setSectionResizeMode(
+                self.COL_SUPPLIER,
+                QHeaderView.ResizeMode.Stretch
+            )
+
+            header.setSectionResizeMode(
+                self.COL_USER,
+                QHeaderView.ResizeMode.Stretch
+            )
+
+        else:
+            # Layout sempit → fixed + horizontal scroll
+            header.setSectionResizeMode(
+                self.COL_SUPPLIER,
+                QHeaderView.ResizeMode.Fixed
+            )
+
+            header.setSectionResizeMode(
+                self.COL_USER,
+                QHeaderView.ResizeMode.Fixed
+            )
+
+            self.setColumnWidth(
+                self.COL_SUPPLIER,
+                self.MIN_NAME_WIDTH
+            )
+
+            self.setColumnWidth(
+                self.COL_USER,
+                self.MIN_NAME_WIDTH
+            )
 
     def _show_empty_state(self):
         self.clearContents()
@@ -423,7 +508,7 @@ class PurchaseTableView(QTableWidget):
 
             self.setCellWidget(row, self.COL_SUPPLIER, self._make_text_cell(supplier_name))
             self.setCellWidget(row, self.COL_USER,     self._make_text_cell(user_name))
-            self.setCellWidget(row, self.COL_DATE,     self._make_date_cell(_fmt_date(p.time)))
+            self.setCellWidget(row, self.COL_DATE,     self._make_date_cell(p.time))
             self.setCellWidget(row, self.COL_TOTAL,    self._make_total_cell(p.total_amount))
             self.setCellWidget(row, self.COL_ACTION,   self._make_action_buttons(p))
 
@@ -465,9 +550,9 @@ class PurchaseTableView(QTableWidget):
     
     def _make_date_cell(self, text: str) -> QWidget:
         w, lay = self._wrap()
-        
+        weight = "100"
         lbl = QLabel(text)
-        lbl.setStyleSheet(f"font-family:'Segoe UI';font-size:13px;font-weight:600;color:{C_TEXT_PRI};background:transparent;")
+        lbl.setStyleSheet(f"font-family:'Segoe UI';font-size:13px;font-weight:{weight};color:{C_TEXT_PRI};background:transparent;")
         lay.addWidget(lbl)
         return w
 
@@ -1798,61 +1883,200 @@ class PurchasePage(QWidget):
 
         self._pending_refresh = False
         self._clear_grid()
+
         purchases = self._filtered_purchases()
 
         if not purchases:
             empty_wrap = QWidget()
-            empty_wrap.setStyleSheet("background: transparent; border: none;")
+            empty_wrap.setStyleSheet(
+                "background: transparent; border: none;"
+            )
+
             outer = QVBoxLayout(empty_wrap)
-            outer.setContentsMargins(0, 34, 0, 40)
-            outer.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter)
+            outer.setContentsMargins(0, 36, 0, 40)
+
+            outer.setAlignment(
+                Qt.AlignmentFlag.AlignTop |
+                Qt.AlignmentFlag.AlignHCenter
+            )
 
             empty_card = QFrame()
             empty_card.setFixedHeight(260)
             empty_card.setMinimumWidth(420)
             empty_card.setMaximumWidth(560)
+
             empty_card.setStyleSheet(f"""
-                QFrame {{ background:{C_WHITE}; border:1px solid {C_BORDER}; border-radius:18px; }}
-                QLabel {{ background:transparent; border:none; }}
+                QFrame {{
+                    background: {C_WHITE};
+                    border: 1px solid {C_BORDER};
+                    border-radius: 18px;
+                }}
+
+                QLabel {{
+                    background: transparent;
+                    border: none;
+                }}
             """)
+
             card_layout = QVBoxLayout(empty_card)
-            card_layout.setContentsMargins(40, 34, 40, 34)
+
+            card_layout.setContentsMargins(
+                40, 34, 40, 34
+            )
+
             card_layout.setSpacing(8)
-            card_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+            card_layout.setAlignment(
+                Qt.AlignmentFlag.AlignCenter
+            )
 
             icon = QLabel("🛒")
             icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
             icon.setStyleSheet("font-size: 46px;")
-            title = QLabel("Tidak ada pembelian ditemukan")
-            title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            title.setStyleSheet(f"font-family:'Segoe UI';font-size:16px;font-weight:700;color:{C_TEXT_PRI};")
-            subtitle = QLabel("Coba ubah filter, kata kunci pencarian,\natau tambahkan pembelian baru.")
-            subtitle.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            subtitle.setStyleSheet(f"font-family:'Segoe UI';font-size:12px;color:{C_TEXT_SEC};")
+
+            title = QLabel(
+                "Tidak ada pembelian ditemukan"
+            )
+
+            title.setAlignment(
+                Qt.AlignmentFlag.AlignCenter
+            )
+
+            title.setStyleSheet(f"""
+                font-family:'Segoe UI';
+                font-size:16px;
+                font-weight:700;
+                color:{C_TEXT_PRI};
+            """)
+
+            subtitle = QLabel(
+                "Coba ubah filter, kata kunci pencarian,\n"
+                "atau tambahkan pembelian baru."
+            )
+
+            subtitle.setAlignment(
+                Qt.AlignmentFlag.AlignCenter
+            )
+
+            subtitle.setStyleSheet(f"""
+                font-family:'Segoe UI';
+                font-size:12px;
+                color:{C_TEXT_SEC};
+            """)
 
             card_layout.addStretch()
             card_layout.addWidget(icon)
             card_layout.addWidget(title)
             card_layout.addWidget(subtitle)
             card_layout.addStretch()
+
             outer.addWidget(empty_card)
-            self._grid_layout.addWidget(empty_wrap, 0, 0, 1, 4)
+
+            self._grid_layout.addWidget(
+                empty_wrap,
+                0,
+                0,
+                1,
+                max(1, self._get_column_count())
+            )
+
             self._grid_container.adjustSize()
+            self._grid_container.update()
+            self._scroll.viewport().update()
             return
+
+        cols = self._get_column_count()
+
+        # reset stretch
+        for c in range(10):
+            self._grid_layout.setColumnStretch(c, 0)
+
+        # apply stretch
+        for c in range(cols):
+            self._grid_layout.setColumnStretch(c, 1)
+
+        if len(purchases) <= 60:
+            self._render_all_cards(purchases, token)
+        else:
+            self._render_batch_cards(
+                purchases,
+                start=0,
+                batch_size=12,
+                token=token
+            )
+
+        self._grid_container.adjustSize()
+        self._grid_container.update()
+        self._scroll.viewport().update()
+        
+    def _get_column_count(self) -> int:
+        available = self._scroll.viewport().width()
+
+        cols = available // (
+            PurchaseCard.CARD_WIDTH +
+            self._grid_layout.spacing()
+        )
+
+        return max(2, min(4, int(cols)))
+    
+    def _render_all_cards(self, purchases: list, token: int):
+        cols = self._get_column_count()
 
         for i, purchase in enumerate(purchases):
             if token != self._render_token:
                 return
+
             card = PurchaseCard(purchase)
+
             card.edit_clicked.connect(self._open_edit_dialog)
             card.delete_clicked.connect(self._delete_purchase)
             card.detail_clicked.connect(self._open_detail_dialog)
-            self._grid_layout.addWidget(card, i // 4, i % 4)
 
-        self._grid_container.setMinimumWidth(5 * 180 + 4 * self._grid_layout.spacing())
-        self._grid_container.adjustSize()
-        self._grid_container.update()
-        self._scroll.viewport().update()
+            self._grid_layout.addWidget(
+                card,
+                i // cols,
+                i % cols
+            )
+    
+    def _render_batch_cards(
+        self,
+        purchases: list,
+        start: int,
+        batch_size: int,
+        token: int
+    ):
+        if token != self._render_token:
+            return
+
+        cols = self._get_column_count()
+
+        end = min(start + batch_size, len(purchases))
+
+        for i in range(start, end):
+            purchase = purchases[i]
+
+            card = PurchaseCard(purchase)
+
+            card.edit_clicked.connect(self._open_edit_dialog)
+            card.delete_clicked.connect(self._delete_purchase)
+            card.detail_clicked.connect(self._open_detail_dialog)
+
+            self._grid_layout.addWidget(
+                card,
+                i // cols,
+                i % cols
+            )
+
+        if end < len(purchases):
+            QTimer.singleShot(
+                0,
+                lambda: self._render_batch_cards(
+                    purchases,
+                    end,
+                    batch_size,
+                    token
+                )
+            )
 
     def _clear_grid(self):
         while self._grid_layout.count():

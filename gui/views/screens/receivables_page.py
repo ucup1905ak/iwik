@@ -443,6 +443,8 @@ class ReceivablesTableView(QTableWidget):
         super().showEvent(event)
         QTimer.singleShot(0, self._apply_viewport_clip)
 
+    MIN_NAME_WIDTH = 300
+   
     def _setup_table(self):
         self.setColumnCount(len(self.COLUMNS))
         self.setHorizontalHeaderLabels(self.COLUMNS)
@@ -479,6 +481,9 @@ class ReceivablesTableView(QTableWidget):
         self.setColumnWidth(self.COL_REMAIN, 130)
         self.setColumnWidth(self.COL_STATUS, 170)
         self.setColumnWidth(self.COL_ACTION, 210)
+        
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self.setHorizontalScrollMode(QAbstractItemView.ScrollMode.ScrollPerPixel)
 
         self.setStyleSheet(f"""
             QTableWidget {{
@@ -522,8 +527,58 @@ class ReceivablesTableView(QTableWidget):
             }}
             QScrollBar::handle:vertical:hover {{ background: #B8BCCE; }}
             QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{ height: 0; }}
-            QScrollBar:horizontal {{ height: 0; }}
+            QScrollBar:horizontal {{
+                background: transparent;
+                height: 10px;
+                margin: 0 8px 2px 8px;
+                border-radius: 3px;
+            }}
+
+            QScrollBar::handle:horizontal {{
+                background: {C_BORDER};
+                border-radius: 3px;
+                min-width: 24px;
+            }}
+
+            QScrollBar::handle:horizontal:hover {{
+                background: #B8BCCE;
+            }}
+
+            QScrollBar::add-line:horizontal,
+            QScrollBar::sub-line:horizontal {{
+                width: 0;
+            }}
         """)
+        
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self._adjust_columns()
+        QTimer.singleShot(0, self._apply_viewport_clip)
+
+    def _adjust_columns(self):
+        header = self.horizontalHeader()
+
+        # Total lebar semua kolom fixed (kecuali COL_NAME)
+        fixed_widths = (
+            self.columnWidth(self.COL_NO) +
+            self.columnWidth(self.COL_TOTAL) +
+            self.columnWidth(self.COL_PAID) +
+            self.columnWidth(self.COL_REMAIN) +
+            self.columnWidth(self.COL_STATUS) +
+            self.columnWidth(self.COL_ACTION)
+        )
+
+        # Lebar viewport yang tersedia
+        available = self.viewport().width()
+        name_width = available - fixed_widths
+
+        if name_width >= self.MIN_NAME_WIDTH:
+            # Cukup lebar → stretch seperti biasa
+            header.setSectionResizeMode(self.COL_CUST, QHeaderView.ResizeMode.Stretch)
+        else:
+            # Terlalu sempit → fix kolom Nama, aktifkan scroll horizontal
+            header.setSectionResizeMode(self.COL_CUST, QHeaderView.ResizeMode.Fixed)
+            self.setColumnWidth(self.COL_CUST, self.MIN_NAME_WIDTH)
 
     def _show_empty_state(self):
         self.clearContents()
@@ -591,7 +646,20 @@ class ReceivablesTableView(QTableWidget):
             multi     = len(all_for_cust) > 1
 
             self.setCellWidget(row, self.COL_NO,     self._make_no_cell(i + 1))
-            self.setCellWidget(row, self.COL_CUST,   self._make_customer_cell(cust_name, len(all_for_cust) if multi else 0))
+            customer = customer_map.get(agg_rec.customer_id)
+
+            cust_name = customer.name if customer else "Unknown"
+            phone = customer.phone if customer else ""
+
+            self.setCellWidget(
+                row,
+                self.COL_CUST,
+                self._make_customer_cell(
+                    cust_name,
+                    phone,
+                    len(all_for_cust) if multi else 0
+                )
+            )
             self.setCellWidget(row, self.COL_TOTAL,  self._make_currency_cell(_fmt_currency(agg_rec.total_amount)))
             self.setCellWidget(row, self.COL_PAID,   self._make_currency_cell(_fmt_currency(agg_rec.amount_paid), muted=True))
             self.setCellWidget(row, self.COL_REMAIN, self._make_currency_cell(
@@ -618,12 +686,13 @@ class ReceivablesTableView(QTableWidget):
         lay.addWidget(lbl)
         return w
 
-    def _make_customer_cell(self, text: str, has_multiple: int = 0) -> QWidget:
+    def _make_customer_cell(self, text: str, phone: str = "", has_multiple: int = 0) -> QWidget:
         w = QWidget()
         w.setStyleSheet("background: transparent; border: none;")
+
         lay = QHBoxLayout(w)
         lay.setContentsMargins(10, 0, 10, 0)
-        lay.setSpacing(6)
+        lay.setSpacing(8)
         lay.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
 
         parts = text.strip().split()
@@ -638,26 +707,70 @@ class ReceivablesTableView(QTableWidget):
             ("#E6F1FB", "#185FA5"),
             ("#EAF3DE", "#3B6D11"),
         ]
+
         idx = (ord(initials[0]) - ord("A")) % len(palettes)
         bg, fg = palettes[idx]
 
         avatar = Avatar(initials, bg_color=bg, text_color=fg, size=30)
         lay.addWidget(avatar)
 
-        lbl = QLabel(text)
-        lbl.setStyleSheet(f"font-family:'Segoe UI';font-size:13px;color:{C_TEXT_PRI};background:transparent;font-weight:500;")
-        lay.addWidget(lbl)
+        # container nama + phone
+        text_wrap = QWidget()
+        text_wrap.setStyleSheet("background: transparent; border: none;")
+
+        text_lay = QVBoxLayout(text_wrap)
+        text_lay.setContentsMargins(0, 0, 0, 0)
+        text_lay.setSpacing(1)
+
+        name_lbl = QLabel(text)
+        name_lbl.setStyleSheet(f"""
+            font-family:'Segoe UI';
+            font-size:13px;
+            color:{C_TEXT_PRI};
+            background:transparent;
+            font-weight:600;
+        """)
+
+        phone_lbl = QLabel(phone if phone else "-")
+        phone_lbl.setStyleSheet(f"""
+            font-family:'Segoe UI';
+            font-size:11px;
+            color:{C_TEXT_SEC};
+            background:transparent;
+        """)
+
+        text_lay.addWidget(name_lbl)
+        text_lay.addWidget(phone_lbl)
+
+        lay.addWidget(text_wrap)
 
         if has_multiple:
+            badge_wrap = QWidget()
+            badge_wrap.setStyleSheet("background: transparent; border: none;")
+
+            badge_lay = QHBoxLayout(badge_wrap)
+            badge_lay.setContentsMargins(0, 0, 0, 0)
+            badge_lay.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+
             badge = QLabel(f"🔴 {has_multiple} Transaksi")
             badge.setStyleSheet(f"""
-                background: #FDEAEA; color: {C_DANGER};
-                font-size: 11px; font-weight: 600;
-                padding: 2px 8px; border-radius: 4px;
+                background: #FDEAEA;
+                color: {C_DANGER};
+
+                font-family: 'Segoe UI';
+                font-size: 11px;
+                font-weight: 700;
+
+                padding: 4px 10px;
+                border-radius: 6px;
+                border: none;
             """)
-            lay.addWidget(badge)
+
+            badge_lay.addWidget(badge)
+            lay.addWidget(badge_wrap)
 
         lay.addStretch()
+
         return w
 
     def _make_text_cell(self, text: str, muted: bool = False) -> QWidget:
@@ -1305,9 +1418,12 @@ class ReceivablesPage(QWidget):
 
     # ── Data ──────────────────────────────────────────────────────────────────
     def _load_data(self):
-        self._receivables  = ReceivablesController.fetch()
-        self._customers    = CustomerController.fetch()
-        self._customer_map = {c.id: c.name for c in self._customers}
+        self._receivables = ReceivablesController.fetch()
+        self._customers = CustomerController.fetch()
+
+        self._customer_map = {
+            c.id: c for c in self._customers
+        }
 
     def _calc_stats(self) -> dict:
         total_debt   = sum(r.total_amount - r.amount_paid for r in self._receivables if r.status != "paid")
@@ -1399,9 +1515,9 @@ class ReceivablesPage(QWidget):
         row = QHBoxLayout()
         row.setSpacing(14)
         stats_def = [
-            ("total_debt",   "Total Sisa Hutang",      "#4F6EF7", "#EEF1FE", True),
             ("count_unpaid", "Belum / Sebagian Lunas",  "#E05252", "#FDEAEA", False),
             ("count_paid",   "Sudah Lunas",             "#27AE60", "#E8F8F0", False),
+            ("total_debt",   "Total Sisa Hutang",      "#4F6EF7", "#EEF1FE", True),
         ]
         vals = self._calc_stats()
         for key, label, color, bg, is_currency in stats_def:
@@ -1511,7 +1627,10 @@ class ReceivablesPage(QWidget):
             q = self._search_query.lower()
             filtered = [
                 r for r in filtered
-                if q in self._customer_map.get(r.customer_id, "").lower()
+                if (lambda c: (
+                    q in (c.name or "").lower() or
+                    q in (c.phone or "").lower()
+                ) if c else False)(self._customer_map.get(r.customer_id))
             ]
 
         groups: dict[int | None, list[Receivables]] = OrderedDict()
@@ -1520,7 +1639,8 @@ class ReceivablesPage(QWidget):
 
         rows = []
         for cid, recs in groups.items():
-            cust_name    = self._customer_map.get(cid, "—")
+            customer     = self._customer_map.get(cid)
+            cust_name    = customer.name if customer else "—"
             total_amount = sum(r.total_amount for r in recs)
             amount_paid  = sum(r.amount_paid  for r in recs)
             agg_status   = _resolve_status(amount_paid, total_amount)
@@ -1575,13 +1695,17 @@ class ReceivablesPage(QWidget):
         dlg.exec()
 
     def _open_pay_dialog(self, rec: Receivables):
-        cust_name = self._customer_map.get(rec.customer_id, "—")
+        customer = self._customer_map.get(rec.customer_id)
+        cust_name = customer.name if customer else "—"
+
         dlg = PayDialog(rec=rec, customer_name=cust_name, parent=self)
         dlg.paid.connect(self._record_payment)
         dlg.exec()
 
     def _open_delete_dialog(self, rec: Receivables):
-        cust_name = self._customer_map.get(rec.customer_id, "—")
+        customer = self._customer_map.get(rec.customer_id)
+        cust_name = customer.name if customer else "—"
+
         dlg = DeleteReceivableDialog(rec=rec, customer_name=cust_name, parent=self)
         dlg.confirmed.connect(lambda: self._delete_receivable(rec))
         dlg.exec()
@@ -1657,8 +1781,15 @@ class ReceivablesPage(QWidget):
             self._load_data()
             self._refresh_stats()
             self._refresh_table()
-            cust = self._customer_map.get(rec.customer_id, "Pelanggan")
-            msg  = f"Hutang <b>{cust}</b> lunas!" if new_status == "paid" else f"Pembayaran <b>{cust}</b> tercatat."
+            customer = self._customer_map.get(rec.customer_id)
+            cust_name = customer.name if customer else "Pelanggan"
+
+            msg = (
+                f"Hutang <b>{cust_name}</b> lunas!"
+                if new_status == "paid"
+                else f"Pembayaran <b>{cust_name}</b> tercatat."
+            )
+
             Toast.show_toast(msg, "success", self)
         except Exception as e:
             QMessageBox.critical(self, "Error", str(e))
@@ -1671,25 +1802,41 @@ class ReceivablesPage(QWidget):
             self._refresh_table()
             from gui.signals import sales_signals
             sales_signals.sales_completed.emit(rec.sales_id or 0)
-            cust = self._customer_map.get(rec.customer_id, "Pelanggan")
-            Toast.show_toast(f"Hutang <b>{cust}</b> berhasil dihapus.", "success", self)
+            customer = self._customer_map.get(rec.customer_id)
+            cust_name = customer.name if customer else "Pelanggan"
+            Toast.show_toast(
+                f"Hutang <b>{cust_name}</b> berhasil dihapus.",
+                "success",
+                self
+            )
         except Exception as e:
             QMessageBox.critical(self, "Error", str(e))
 
     def _delete_all_receivables(self, records: list[Receivables]):
         try:
-            cust_name = self._customer_map.get(records[0].customer_id, "Pelanggan")
+            customer = self._customer_map.get(records[0].customer_id)
+            cust_name = customer.name if customer else "Pelanggan"
+
             for rec in records:
                 ReceivablesController.remove(rec.id)
+
             self._load_data()
             self._refresh_stats()
             self._refresh_table()
+
             # Trigger refresh transactions_page untuk semua sales_id terkait
             from gui.signals import sales_signals
+
             for rec in records:
                 if rec.sales_id:
                     sales_signals.sales_completed.emit(rec.sales_id)
-            Toast.show_toast(f"Semua hutang <b>{cust_name}</b> berhasil dihapus.", "success", self)
+
+            Toast.show_toast(
+                f"Semua hutang <b>{cust_name}</b> berhasil dihapus.",
+                "success",
+                self
+            )
+
         except Exception as e:
             QMessageBox.critical(self, "Error", str(e))
 

@@ -116,7 +116,7 @@ class ProductCard(QFrame):
     edit_clicked   = pyqtSignal(Product)
     delete_clicked = pyqtSignal(Product)
 
-    CARD_WIDTH  = 320
+    CARD_WIDTH  = 360
     CARD_HEIGHT = 300
 
     def __init__(self, product: Product, parent=None):
@@ -129,7 +129,6 @@ class ProductCard(QFrame):
         stock   = product.stock
 
         self.setObjectName("ProductCard")
-        self.setFixedHeight(180)  # lebih pendek karena layout horizontal
 
         from PyQt6.QtWidgets import QSizePolicy
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
@@ -379,6 +378,8 @@ class ProductTableView(QTableWidget):
     def showEvent(self, event):
         super().showEvent(event)
         QTimer.singleShot(0, self._apply_viewport_clip)
+    
+    MIN_NAME_WIDTH = 200
 
     def _setup_table(self):
         self.setColumnCount(len(self.COLUMNS))
@@ -424,6 +425,9 @@ class ProductTableView(QTableWidget):
         self.setColumnWidth(self.COL_PRICE,    160)
         self.setColumnWidth(self.COL_STOCK,    130)
         self.setColumnWidth(self.COL_ACTION,   200)
+        
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self.setHorizontalScrollMode(QAbstractItemView.ScrollMode.ScrollPerPixel)
 
         # ===== STYLE =====
         self.setStyleSheet(f"""
@@ -522,9 +526,57 @@ class ProductTableView(QTableWidget):
             }}
 
             QScrollBar:horizontal {{
-                height: 0;
+                background: transparent;
+                height: 10px;
+                margin: 0 8px 2px 8px;
+                border-radius: 3px;
+            }}
+
+            QScrollBar::handle:horizontal {{
+                background: {C_BORDER};
+                border-radius: 3px;
+                min-width: 24px;
+            }}
+
+            QScrollBar::handle:horizontal:hover {{
+                background: #B8BCCE;
+            }}
+
+            QScrollBar::add-line:horizontal,
+            QScrollBar::sub-line:horizontal {{
+                width: 0;
             }}
         """)
+        
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self._adjust_columns()
+        QTimer.singleShot(0, self._apply_viewport_clip)
+
+    def _adjust_columns(self):
+        header = self.horizontalHeader()
+
+        # Total lebar semua kolom fixed (kecuali COL_NAME)
+        fixed_widths = (
+            self.columnWidth(self.COL_NO) +
+            self.columnWidth(self.COL_SKU) +
+            self.columnWidth(self.COL_CATEGORY) +
+            self.columnWidth(self.COL_PRICE) +
+            self.columnWidth(self.COL_STOCK) +
+            self.columnWidth(self.COL_ACTION)
+        )
+
+        # Lebar viewport yang tersedia
+        available = self.viewport().width()
+        name_width = available - fixed_widths
+
+        if name_width >= self.MIN_NAME_WIDTH:
+            # Cukup lebar → stretch seperti biasa
+            header.setSectionResizeMode(self.COL_NAME, QHeaderView.ResizeMode.Stretch)
+        else:
+            # Terlalu sempit → fix kolom Nama, aktifkan scroll horizontal
+            header.setSectionResizeMode(self.COL_NAME, QHeaderView.ResizeMode.Fixed)
+            self.setColumnWidth(self.COL_NAME, self.MIN_NAME_WIDTH)
 
     # ── Empty state ───────────────────────────────────────────────────────────
     def _show_empty_state(self):
@@ -1724,7 +1776,7 @@ class ProductPage(QWidget):
 
     def _build_ui(self):
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(32, 17, 32, 28)
+        layout.setContentsMargins(16, 17, 16, 28)
         layout.setSpacing(0)
 
         # ── Header ────────────────────────────────────────────────────────────
@@ -1928,11 +1980,6 @@ class ProductPage(QWidget):
         self._grid_container = QWidget()
         self._grid_container.setStyleSheet("background: transparent;")
         self._grid_layout = QGridLayout(self._grid_container)
-        self._grid_layout.setHorizontalSpacing(14)
-        self._grid_layout.setVerticalSpacing(14)
-        self._grid_layout.setColumnStretch(0, 1)
-        self._grid_layout.setColumnStretch(1, 1)
-        self._grid_layout.setColumnStretch(2, 1)
         self._grid_layout.setSpacing(14)
         self._grid_layout.setContentsMargins(0, 0, 0, 0)
         self._grid_layout.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
@@ -2158,7 +2205,13 @@ class ProductPage(QWidget):
 
     def _get_column_count(self) -> int:
         available = self._scroll.viewport().width()
-        return max(1, available // (ProductCard.CARD_WIDTH + self._grid_layout.spacing()))
+
+        cols = available // (
+            ProductCard.CARD_WIDTH +
+            self._grid_layout.spacing()
+        )
+
+        return max(2, min(4, int(cols)))
 
     # ── Refresh ────────────────────────────────────────────────────────────────
     def _refresh_view(self):
@@ -2180,28 +2233,35 @@ class ProductPage(QWidget):
 
         self._pending_refresh = False
         self._clear_grid()
+
         products = self._filtered_products()
 
         if not products:
             empty_wrap = QWidget()
             empty_wrap.setStyleSheet("background: transparent; border: none;")
+
             outer = QVBoxLayout(empty_wrap)
             outer.setContentsMargins(0, 36, 0, 40)
-            outer.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter)
+            outer.setAlignment(
+                Qt.AlignmentFlag.AlignTop |
+                Qt.AlignmentFlag.AlignHCenter
+            )
 
             empty_card = QFrame()
             empty_card.setFixedHeight(260)
             empty_card.setMinimumWidth(420)
             empty_card.setMaximumWidth(560)
+
             empty_card.setStyleSheet(f"""
                 QFrame {{
-                    background:    {C_WHITE};
-                    border:        1px solid {C_BORDER};
+                    background: {C_WHITE};
+                    border: 1px solid {C_BORDER};
                     border-radius: 18px;
                 }}
+
                 QLabel {{
                     background: transparent;
-                    border:     none;
+                    border: none;
                 }}
             """)
 
@@ -2216,76 +2276,130 @@ class ProductPage(QWidget):
 
             title = QLabel("Tidak ada produk ditemukan")
             title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
             title.setStyleSheet(f"""
-                font-family: 'Segoe UI';
-                font-size:   16px;
-                font-weight: 700;
-                color:       {C_TEXT_PRI};
+                font-family:'Segoe UI';
+                font-size:16px;
+                font-weight:700;
+                color:{C_TEXT_PRI};
             """)
 
-            subtitle = QLabel("Coba ubah filter, kata kunci pencarian,\natau tambahkan produk baru.")
+            subtitle = QLabel(
+                "Coba ubah filter, kata kunci pencarian,\n"
+                "atau tambahkan produk baru."
+            )
+
             subtitle.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
             subtitle.setStyleSheet(f"""
-                font-family: 'Segoe UI';
-                font-size:   12px;
-                color:       {C_TEXT_SEC};
+                font-family:'Segoe UI';
+                font-size:12px;
+                color:{C_TEXT_SEC};
             """)
 
             card_layout.addStretch()
             card_layout.addWidget(icon)
             card_layout.addWidget(title)
             card_layout.addWidget(subtitle)
-            card_layout.addSpacing(4)
             card_layout.addStretch()
+
             outer.addWidget(empty_card)
 
-            self._grid_layout.addWidget(empty_wrap, 0, 0, 1, max(1, self._get_column_count()))
+            self._grid_layout.addWidget(
+                empty_wrap,
+                0,
+                0,
+                1,
+                max(1, self._get_column_count())
+            )
+
             self._grid_container.adjustSize()
             self._grid_container.update()
             self._scroll.viewport().update()
             return
 
+        cols = self._get_column_count()
+
+        # reset stretch
+        for c in range(10):
+            self._grid_layout.setColumnStretch(c, 0)
+
+        # apply stretch
+        for c in range(cols):
+            self._grid_layout.setColumnStretch(c, 1)
+
         if len(products) <= 60:
             self._render_all_cards(products, token)
         else:
-            self._render_batch_cards(products, 0, batch_size=12, token=token)
+            self._render_batch_cards(
+                products,
+                start=0,
+                batch_size=12,
+                token=token
+            )
 
-    def _render_all_cards(self, products: list, token: int):
-        if token != self._render_token or not self.isVisible():
-            self._pending_refresh = True
-            return
+        self._grid_container.adjustSize()
+        self._grid_container.update()
+        self._scroll.viewport().update()
+
+
+    def _render_all_cards(self, products: list[Product], token: int):
+        cols = self._get_column_count()
+
         for i, product in enumerate(products):
-            card = ProductCard(product)
-            card.edit_clicked.connect(self._open_edit_dialog)
-            card.delete_clicked.connect(self._delete_product)
-            self._grid_layout.addWidget(card, i // 3, i % 3)
-        self._grid_container.adjustSize()
-        self._grid_container.update()
-        self._scroll.viewport().update()
+            if token != self._render_token:
+                return
 
-    def _render_batch_cards(self, products: list, start_idx: int, batch_size: int = 12, token: int = None):
-        if token is None:
-            token = self._render_token
-        if token != self._render_token or not self.isVisible():
-            self._pending_refresh = True
-            return
-        cols    = self._get_column_count()
-        end_idx = min(start_idx + batch_size, len(products))
-        for i in range(start_idx, end_idx):
-            card = ProductCard(products[i])
+            card = ProductCard(product)
+
             card.edit_clicked.connect(self._open_edit_dialog)
             card.delete_clicked.connect(self._delete_product)
-            self._grid_layout.addWidget(card, i // cols, i % cols)
-        self._grid_container.adjustSize()
-        self._grid_container.update()
-        self._scroll.viewport().update()
-        if end_idx < len(products):
+
+            self._grid_layout.addWidget(
+                card,
+                i // cols,
+                i % cols
+            )
+
+
+    def _render_batch_cards(
+        self,
+        products: list[Product],
+        start: int,
+        batch_size: int,
+        token: int
+    ):
+        if token != self._render_token:
+            return
+
+        cols = self._get_column_count()
+
+        end = min(start + batch_size, len(products))
+
+        for i in range(start, end):
+            product = products[i]
+
+            card = ProductCard(product)
+
+            card.edit_clicked.connect(self._open_edit_dialog)
+            card.delete_clicked.connect(self._delete_product)
+
+            self._grid_layout.addWidget(
+                card,
+                i // cols,
+                i % cols
+            )
+
+        if end < len(products):
             QTimer.singleShot(
                 0,
-                lambda idx=end_idx, t=token: self._render_batch_cards(products, idx, batch_size, t),
+                lambda: self._render_batch_cards(
+                    products,
+                    end,
+                    batch_size,
+                    token
+                )
             )
-        else:
-            self._fill_grid_remainder(len(products), cols)
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
