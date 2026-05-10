@@ -27,11 +27,11 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt, pyqtSignal, QTimer, QDateTime
 from PyQt6.QtGui import QColor, QPainterPath, QRegion, QFont
 from gui.views.components.toast import Toast
-# Tambahkan import ini di bagian atas
 from controllers.supplier import SupplierController
-from controllers.product import ProductController
+from controllers.product import ProductController, Product as ProductModel
 from controllers.user import UserController
 from gui.views.components import Avatar
+from gui.signals import product_signals, purchase_signals
 
 # ── Color palette ──────────────────────────────────────────────────────────────
 C_BG       = "#F4F5F9"
@@ -1354,15 +1354,34 @@ class PurchaseDetailDialog(QDialog):
                 purchase_price=purchase_price,
             )
 
-            # 🔥 WAJIB: update total
+            # Update total pembelian
             PurchaseDetailController.update_purchase_total(self._purchase.id)
+
+            # ─── Update stok produk: bertambah sesuai qty yang dibeli ───────
+            fresh = ProductController.get(product_id)
+            if fresh:
+                new_stock = int(fresh.stock or 0) + quantity
+                ProductController.edit(
+                    product_id=fresh.id,
+                    name=fresh.name,
+                    brand=fresh.brand,
+                    stock=new_stock,
+                    price=fresh.price,
+                    sku=fresh.sku,
+                    category=fresh.category,
+                    image_path=fresh.image_path,
+                )
+                # Broadcast ke kasir & produk page
+                product_signals.product_stock_changed.emit(product_id, new_stock)
+
+            # Broadcast ke dashboard (purchase selesai / detail berubah)
+            purchase_signals.purchase_completed.emit(self._purchase.id)
 
             self._new_qty_spin.setValue(1)
             self._new_price_spin.setValue(0)
 
             self._load_details()
             self._refresh_meta()
-            
             self.data_changed.emit()
 
         except Exception as e:
@@ -1370,11 +1389,33 @@ class PurchaseDetailDialog(QDialog):
 
     def _on_remove_detail(self, detail_id: int):
         try:
+            # Ambil detail sebelum dihapus agar bisa kembalikan stok
+            detail = PurchaseDetailController.get(detail_id)
+
             PurchaseDetailController.remove(detail_id)
             PurchaseDetailController.update_purchase_total(self._purchase.id)
+
+            # ─── Kembalikan stok produk: berkurang sesuai qty yang dihapus ──
+            if detail:
+                fresh = ProductController.get(detail.product_id)
+                if fresh:
+                    new_stock = max(0, int(fresh.stock or 0) - detail.quantity)
+                    ProductController.edit(
+                        product_id=fresh.id,
+                        name=fresh.name,
+                        brand=fresh.brand,
+                        stock=new_stock,
+                        price=fresh.price,
+                        sku=fresh.sku,
+                        category=fresh.category,
+                        image_path=fresh.image_path,
+                    )
+                    product_signals.product_stock_changed.emit(detail.product_id, new_stock)
+
+            purchase_signals.purchase_completed.emit(self._purchase.id)
+
             self._load_details()
             self._refresh_meta()
-            
             self.data_changed.emit()
         except Exception as e:
             QMessageBox.critical(self, "Error", str(e))

@@ -6,7 +6,7 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 from typing import Literal
 
-from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor, QPainter, QPainterPath, QPen, QBrush
 from PyQt6.QtWidgets import (
     QWidget,
@@ -24,11 +24,11 @@ from PyQt6.QtWidgets import (
 from controllers.product import ProductController, Product
 from controllers.sales import SalesController, Sales
 from controllers.sales_detail import SalesDetailController, SalesDetail
-from controllers.receivables import ReceivablesController
 from gui.views.components.toast import Toast
+from gui.signals import sales_signals, purchase_signals
 
 
-# ── Color palette: disamakan dengan product_page.py / sales_page.py ───────────
+# ── Theme: disamakan dengan product_page.py / sales_page.py ──────────────────
 C_BG = "#F4F5F9"
 C_WHITE = "#FFFFFF"
 C_ACCENT = "#4F6EF7"
@@ -60,7 +60,10 @@ Period = Literal["daily", "weekly", "monthly"]
 
 
 def _cat_theme(category: str | None) -> dict:
-    return CAT_THEME.get(category or "Lainnya", {"emoji": "📦", "bg": "#F1F3F8", "text": "#6C757D"})
+    return CAT_THEME.get(
+        category or "Lainnya",
+        {"emoji": "📦", "bg": "#F1F3F8", "text": "#6C757D"},
+    )
 
 
 def _format_price(price: float | int | None) -> str:
@@ -91,6 +94,7 @@ def _parse_datetime(value: str | None) -> datetime | None:
     if not value:
         return None
 
+    value = str(value).strip()
     formats = [
         "%Y-%m-%d %H:%M:%S",
         "%Y-%m-%d %H:%M",
@@ -99,35 +103,42 @@ def _parse_datetime(value: str | None) -> datetime | None:
 
     for fmt in formats:
         try:
-            return datetime.strptime(str(value), fmt)
+            return datetime.strptime(value, fmt)
         except ValueError:
             continue
 
     try:
-        return datetime.fromisoformat(str(value))
+        return datetime.fromisoformat(value)
     except ValueError:
         return None
 
 
 def _period_start(period: Period) -> datetime:
+    """Return the start datetime for filtering sales.
+    - daily  : midnight today (calendar day)
+    - weekly : 7 days ago from now (rolling window)
+    - monthly: 30 days ago from now (rolling window)
+    """
     now = datetime.now()
 
     if period == "daily":
         return now.replace(hour=0, minute=0, second=0, microsecond=0)
 
     if period == "weekly":
-        start = now - timedelta(days=now.weekday())
-        return start.replace(hour=0, minute=0, second=0, microsecond=0)
+        # Rolling 7-day window — avoids the "Monday midnight" edge-case
+        # where calendar-week-start equals right now and all data falls out.
+        return (now - timedelta(days=6)).replace(hour=0, minute=0, second=0, microsecond=0)
 
-    return now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    # monthly: rolling 30-day window
+    return (now - timedelta(days=29)).replace(hour=0, minute=0, second=0, microsecond=0)
 
 
 def _period_label(period: Period) -> str:
     if period == "daily":
         return "Hari Ini"
     if period == "weekly":
-        return "Minggu Ini"
-    return "Bulan Ini"
+        return "7 Hari Terakhir"
+    return "30 Hari Terakhir"
 
 
 def _same_period(time_value: str | None, period: Period) -> bool:
@@ -138,7 +149,7 @@ def _same_period(time_value: str | None, period: Period) -> bool:
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# Simple Bar Chart Widget
+# Chart
 # ═══════════════════════════════════════════════════════════════════════════════
 class SalesChartWidget(QWidget):
     def __init__(self, parent=None):
@@ -159,11 +170,10 @@ class SalesChartWidget(QWidget):
 
         w = self.width()
         h = self.height()
-
         if w <= 0 or h <= 0:
             return
 
-        left = 44
+        left = 48
         right = 18
         top = 18
         bottom = 42
@@ -171,7 +181,6 @@ class SalesChartWidget(QWidget):
         chart_w = max(1, w - left - right)
         chart_h = max(1, h - top - bottom)
 
-        # Background grid
         grid_pen = QPen(QColor(C_BORDER))
         grid_pen.setWidth(1)
         painter.setPen(grid_pen)
@@ -180,7 +189,8 @@ class SalesChartWidget(QWidget):
             y = top + int(chart_h * i / 4)
             painter.drawLine(left, y, left + chart_w, y)
 
-        if not self._data:
+        has_non_zero = any(value > 0 for _, value in self._data)
+        if not self._data or not has_non_zero:
             painter.setPen(QColor(C_TEXT_SEC))
             painter.drawText(self.rect(), Qt.AlignmentFlag.AlignCenter, "Belum ada data penjualan")
             return
@@ -195,12 +205,13 @@ class SalesChartWidget(QWidget):
             bar_h = int((value / max_value) * (chart_h - 10)) if max_value else 0
             y = top + chart_h - bar_h
 
-            rect_path = QPainterPath()
-            rect_path.addRoundedRect(x, y, bar_w, bar_h, 5, 5)
+            if value > 0:
+                rect_path = QPainterPath()
+                rect_path.addRoundedRect(x, y, bar_w, bar_h, 5, 5)
 
-            painter.setPen(Qt.PenStyle.NoPen)
-            painter.setBrush(QBrush(QColor(C_ACCENT)))
-            painter.drawPath(rect_path)
+                painter.setPen(Qt.PenStyle.NoPen)
+                painter.setBrush(QBrush(QColor(C_ACCENT)))
+                painter.drawPath(rect_path)
 
             painter.setPen(QColor(C_TEXT_SEC))
             font = painter.font()
@@ -217,7 +228,6 @@ class SalesChartWidget(QWidget):
                     label,
                 )
 
-        # Y-axis max label
         painter.setPen(QColor(C_TEXT_SEC))
         font = painter.font()
         font.setPointSize(8)
@@ -227,7 +237,7 @@ class SalesChartWidget(QWidget):
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# Reusable UI Components
+# Reusable Cards
 # ═══════════════════════════════════════════════════════════════════════════════
 class MetricCard(QFrame):
     def __init__(self, title: str, value: str, subtitle: str, icon: str, color: str = C_ACCENT, parent=None):
@@ -373,7 +383,6 @@ class CategoryCard(QFrame):
             border: none;
         """)
         info.addWidget(sub)
-
         root.addLayout(info)
 
 
@@ -506,23 +515,28 @@ class InsightCard(QFrame):
         self._items_layout.setContentsMargins(0, 0, 0, 0)
         self._items_layout.setSpacing(8)
         root.addLayout(self._items_layout)
-        root.addStretch()
 
+        self._footer_stretch = None
         self.set_items([])
 
     def set_items(self, items: list[tuple[str, str, str, str]]):
-        if not self._items_layout:
+        # IMPORTANT:
+        # Jangan pakai `if not self._items_layout`.
+        # QLayout yang kosong bisa dianggap False oleh PyQt, sehingga item tidak pernah muncul.
+        if self._items_layout is None:
             return
 
         while self._items_layout.count():
-            item = self._items_layout.takeAt(0)
-            if item.widget():
-                item.widget().deleteLater()
+            layout_item = self._items_layout.takeAt(0)
+            widget = layout_item.widget()
+            if widget is not None:
+                widget.setParent(None)
+                widget.deleteLater()
 
         if not items:
             empty = QLabel(self._empty_text)
             empty.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            empty.setMinimumHeight(160)
+            empty.setMinimumHeight(150)
             empty.setStyleSheet(f"""
                 font-family: 'Segoe UI';
                 font-size: 12px;
@@ -531,10 +545,101 @@ class InsightCard(QFrame):
                 border: none;
             """)
             self._items_layout.addWidget(empty)
-            return
+        else:
+            for title, subtitle, badge, color in items:
+                self._items_layout.addWidget(InsightItem(title, subtitle, badge, color))
 
-        for title, subtitle, badge, color in items:
-            self._items_layout.addWidget(InsightItem(title, subtitle, badge, color))
+        self._items_layout.addStretch()
+        self.update()
+
+
+class PredictionCard(QFrame):
+    def __init__(self, title: str, icon: str, parent=None):
+        super().__init__(parent)
+        self._title = title
+        self._icon = icon
+        self._build()
+
+    def _build(self):
+        self.setObjectName("PredictionCard")
+        self.setMinimumHeight(180)
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        self.setStyleSheet(f"""
+            QFrame#PredictionCard {{
+                background: {C_WHITE};
+                border-radius: {RADIUS}px;
+                border: 1.5px solid {C_BORDER};
+            }}
+        """)
+        _apply_card_shadow(self)
+
+        root = QVBoxLayout(self)
+        root.setContentsMargins(18, 18, 18, 18)
+        root.setSpacing(12)
+
+        header = QHBoxLayout()
+        header.setContentsMargins(0, 0, 0, 0)
+        header.setSpacing(10)
+
+        icon = QLabel(self._icon)
+        icon.setFixedSize(36, 36)
+        icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        icon.setStyleSheet(f"""
+            background: {C_TAG_BG};
+            color: {C_ACCENT};
+            border-radius: 10px;
+            border: none;
+            font-size: 17px;
+        """)
+        header.addWidget(icon)
+
+        title = QLabel(self._title)
+        title.setStyleSheet(f"""
+            font-family: 'Segoe UI';
+            font-size: 15px;
+            font-weight: 800;
+            color: {C_TEXT_PRI};
+            background: transparent;
+            border: none;
+        """)
+        header.addWidget(title)
+        header.addStretch()
+        root.addLayout(header)
+
+        self._value_lbl = QLabel("Rp 0")
+        self._value_lbl.setStyleSheet(f"""
+            font-family: 'Segoe UI';
+            font-size: 28px;
+            font-weight: 800;
+            color: {C_ACCENT};
+            background: transparent;
+            border: none;
+        """)
+        root.addWidget(self._value_lbl)
+
+        self._subtitle_lbl = QLabel("Belum ada data penjualan.")
+        self._subtitle_lbl.setWordWrap(True)
+        self._subtitle_lbl.setStyleSheet(f"""
+            font-family: 'Segoe UI';
+            font-size: 12px;
+            color: {C_TEXT_SEC};
+            background: transparent;
+            border: none;
+        """)
+        root.addWidget(self._subtitle_lbl)
+        root.addStretch()
+
+    def set_content(self, value: str, subtitle: str, color: str = C_ACCENT):
+        self._value_lbl.setText(value)
+        self._value_lbl.setStyleSheet(f"""
+            font-family: 'Segoe UI';
+            font-size: 28px;
+            font-weight: 800;
+            color: {color};
+            background: transparent;
+            border: none;
+        """)
+        self._subtitle_lbl.setText(subtitle)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -556,6 +661,19 @@ class DashboardPage(QWidget):
         self.setStyleSheet(f"background: {C_BG};")
 
         self._build_ui()
+        self._load_data()
+
+        # ── Auto-refresh: setiap transaksi penjualan / pembelian selesai ───────
+        sales_signals.sales_completed.connect(self._on_sales_completed)
+        purchase_signals.purchase_completed.connect(self._on_purchase_completed)
+
+    # ── Signal handlers ──────────────────────────────────────────────
+    def _on_sales_completed(self, sales_id: int):
+        """Dipanggil otomatis setelah kasir simpan order."""
+        self._load_data()
+
+    def _on_purchase_completed(self, purchase_id: int):
+        """Dipanggil otomatis setelah admin tambah/hapus detail pembelian."""
         self._load_data()
 
     # ── UI Build ──────────────────────────────────────────────────────────────
@@ -607,6 +725,7 @@ class DashboardPage(QWidget):
         self._build_category_section(self._content_layout)
         self._build_chart_section(self._content_layout)
         self._build_insight_section(self._content_layout)
+        self._build_prediction_section(self._content_layout)
 
         scroll.setWidget(content)
         root.addWidget(scroll)
@@ -829,6 +948,39 @@ class DashboardPage(QWidget):
         section.addLayout(grid)
         parent_layout.addLayout(section)
 
+    def _build_prediction_section(self, parent_layout: QVBoxLayout):
+        section = QVBoxLayout()
+        section.setContentsMargins(0, 0, 0, 0)
+        section.setSpacing(10)
+
+        title = QLabel("Prediksi Omset")
+        title.setStyleSheet(f"""
+            font-family: 'Segoe UI';
+            font-size: 16px;
+            font-weight: 800;
+            color: {C_TEXT_PRI};
+            background: transparent;
+            border: none;
+        """)
+        section.addWidget(title)
+
+        grid = QGridLayout()
+        grid.setContentsMargins(0, 0, 0, 0)
+        grid.setHorizontalSpacing(12)
+        grid.setVerticalSpacing(12)
+
+        self._omset_prediction_card = PredictionCard("Prediksi Omset", "📈")
+        self._omset_insight_card = PredictionCard("Insight Deskriptif", "💡")
+
+        grid.addWidget(self._omset_prediction_card, 0, 0)
+        grid.addWidget(self._omset_insight_card, 0, 1)
+
+        grid.setColumnStretch(0, 1)
+        grid.setColumnStretch(1, 1)
+
+        section.addLayout(grid)
+        parent_layout.addLayout(section)
+
     # ── Data Load / Refresh ───────────────────────────────────────────────────
     def _load_data(self):
         try:
@@ -880,13 +1032,18 @@ class DashboardPage(QWidget):
 
     def _refresh_dashboard(self):
         period_sales = self._filtered_sales()
-        period_sales_ids = {sale.id for sale in period_sales}
-        period_details = [d for d in self._sales_details if d.sales_id in period_sales_ids]
+        period_sales_ids = {int(sale.id) for sale in period_sales}
+        period_details = [
+            detail
+            for detail in self._sales_details
+            if int(detail.sales_id) in period_sales_ids
+        ]
 
         self._refresh_metrics(period_sales)
         self._refresh_categories()
         self._refresh_chart(period_sales)
         self._refresh_insights(period_details)
+        self._refresh_prediction()
 
     # ── Data Helpers ──────────────────────────────────────────────────────────
     def _filtered_sales(self) -> list[Sales]:
@@ -901,16 +1058,18 @@ class DashboardPage(QWidget):
         empty_stock_count = len([p for p in self._products if int(p.stock or 0) == 0])
 
         label = _period_label(self._active_period)
-        self._revenue_card.set_values(_format_price(revenue), label)
-        self._transaction_card.set_values(_format_number(transaction_count), f"Transaksi {_period_label(self._active_period).lower()}")
+        # Show total sales for period on revenue card subtitle
+        self._revenue_card.set_values(_format_price(revenue), f"{label} • {_format_number(transaction_count)} transaksi")
+        self._transaction_card.set_values(_format_number(transaction_count), f"Transaksi {label.lower()}")
         self._product_card.set_values(_format_number(product_count), f"{_format_number(active_categories)} kategori aktif")
         self._restock_card.set_values(_format_number(low_stock_count), f"{_format_number(empty_stock_count)} produk habis")
 
     def _refresh_categories(self):
         while self._category_grid.count():
             item = self._category_grid.takeAt(0)
-            if item.widget():
-                item.widget().deleteLater()
+            widget = item.widget()
+            if widget is not None:
+                widget.deleteLater()
 
         stats = {cat: {"count": 0, "stock": 0} for cat in SAMPLE_CATEGORIES}
 
@@ -931,14 +1090,16 @@ class DashboardPage(QWidget):
         if self._active_period == "daily":
             self._chart_subtitle.setText("Pendapatan hari ini per jam")
         elif self._active_period == "weekly":
-            self._chart_subtitle.setText("Pendapatan minggu ini per hari")
+            self._chart_subtitle.setText("Pendapatan 7 hari terakhir per hari")
         else:
-            self._chart_subtitle.setText("Pendapatan bulan ini per tanggal")
+            self._chart_subtitle.setText("Pendapatan 30 hari terakhir per tanggal")
 
     def _build_chart_data(self, period_sales: list[Sales]) -> list[tuple[str, float]]:
         buckets: dict[str, float] = defaultdict(float)
+        now = datetime.now()
 
         if self._active_period == "daily":
+            # Hourly buckets for today
             labels = [f"{hour:02d}" for hour in range(24)]
             for label in labels:
                 buckets[label] = 0
@@ -951,39 +1112,51 @@ class DashboardPage(QWidget):
             return [(label, buckets[label]) for label in labels]
 
         if self._active_period == "weekly":
-            day_labels = ["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"]
-            for label in day_labels:
+            # Rolling 7-day window — one bucket per calendar day
+            days: list[datetime] = [
+                (now - timedelta(days=i)).replace(hour=0, minute=0, second=0, microsecond=0)
+                for i in range(6, -1, -1)  # oldest → newest
+            ]
+            labels = [d.strftime("%d/%m") for d in days]
+            date_to_label = {d.date(): lbl for d, lbl in zip(days, labels)}
+            for label in labels:
                 buckets[label] = 0
 
             for sale in period_sales:
                 dt = _parse_datetime(sale.time)
-                if dt:
-                    buckets[day_labels[dt.weekday()]] += float(sale.total_price or 0)
+                if dt and dt.date() in date_to_label:
+                    buckets[date_to_label[dt.date()]] += float(sale.total_price or 0)
 
-            return [(label, buckets[label]) for label in day_labels]
+            return [(label, buckets[label]) for label in labels]
 
-        now = datetime.now()
-        day_count = now.day
-        labels = [str(day) for day in range(1, day_count + 1)]
+        # monthly — rolling 30-day window, one bucket per calendar day
+        days = [
+            (now - timedelta(days=i)).replace(hour=0, minute=0, second=0, microsecond=0)
+            for i in range(29, -1, -1)  # oldest → newest
+        ]
+        labels = [d.strftime("%d/%m") for d in days]
+        date_to_label = {d.date(): lbl for d, lbl in zip(days, labels)}
         for label in labels:
             buckets[label] = 0
 
         for sale in period_sales:
             dt = _parse_datetime(sale.time)
-            if dt:
-                buckets[str(dt.day)] += float(sale.total_price or 0)
+            if dt and dt.date() in date_to_label:
+                buckets[date_to_label[dt.date()]] += float(sale.total_price or 0)
 
         return [(label, buckets[label]) for label in labels]
 
+    # ── Product Insights ──────────────────────────────────────────────────────
     def _refresh_insights(self, period_details: list[SalesDetail]):
-        product_map = {p.id: p for p in self._products}
+        product_map = {int(p.id): p for p in self._products}
         sold_qty: dict[int, int] = defaultdict(int)
 
         for detail in period_details:
-            sold_qty[detail.product_id] += int(detail.quantity or 0)
+            product_id = int(detail.product_id)
+            sold_qty[product_id] += int(detail.quantity or 0)
 
         top_items = self._build_top_selling_items(product_map, sold_qty)
-        low_items = self._build_low_selling_items(product_map, sold_qty)
+        low_items = self._build_low_selling_items(sold_qty)
         stock_items = self._build_low_stock_items()
 
         self._top_selling_card.set_items(top_items)
@@ -992,12 +1165,16 @@ class DashboardPage(QWidget):
 
     def _build_top_selling_items(self, product_map: dict[int, Product], sold_qty: dict[int, int]) -> list[tuple[str, str, str, str]]:
         ranked = sorted(
-            [(product_id, qty) for product_id, qty in sold_qty.items() if qty > 0 and product_id in product_map],
+            [
+                (product_id, qty)
+                for product_id, qty in sold_qty.items()
+                if qty > 0 and product_id in product_map
+            ],
             key=lambda item: item[1],
             reverse=True,
         )[:3]
 
-        items = []
+        items: list[tuple[str, str, str, str]] = []
         for product_id, qty in ranked:
             product = product_map[product_id]
             items.append((
@@ -1006,37 +1183,43 @@ class DashboardPage(QWidget):
                 f"{_format_number(qty)} terjual",
                 C_SUCCESS,
             ))
+
         return items
 
-    def _build_low_selling_items(self, product_map: dict[int, Product], sold_qty: dict[int, int]) -> list[tuple[str, str, str, str]]:
+    def _build_low_selling_items(self, sold_qty: dict[int, int]) -> list[tuple[str, str, str, str]]:
         if not self._products:
             return []
 
         ranked = sorted(
             self._products,
-            key=lambda product: (sold_qty.get(product.id, 0), product.name.lower()),
+            key=lambda product: (
+                sold_qty.get(int(product.id), 0),
+                str(product.name).lower(),
+            ),
         )[:3]
 
-        items = []
+        items: list[tuple[str, str, str, str]] = []
         for product in ranked:
-            qty = sold_qty.get(product.id, 0)
+            qty = sold_qty.get(int(product.id), 0)
             items.append((
                 product.name,
                 f"{product.category or 'Tanpa kategori'} • Stok {int(product.stock or 0)}",
                 f"{_format_number(qty)} terjual",
                 C_WARNING if qty > 0 else C_DANGER,
             ))
+
         return items
 
     def _build_low_stock_items(self) -> list[tuple[str, str, str, str]]:
         low_stock = sorted(
-            [p for p in self._products if int(p.stock or 0) < LOW_STOCK_THRESHOLD],
-            key=lambda product: int(product.stock or 0),
+            [product for product in self._products if int(product.stock or 0) < LOW_STOCK_THRESHOLD],
+            key=lambda product: (int(product.stock or 0), str(product.name).lower()),
         )[:3]
 
-        items = []
+        items: list[tuple[str, str, str, str]] = []
         for product in low_stock:
             stock = int(product.stock or 0)
+
             if stock == 0:
                 badge = "Habis"
                 color = C_DANGER
@@ -1050,11 +1233,184 @@ class DashboardPage(QWidget):
                 badge,
                 color,
             ))
+
         return items
 
+    # ── Omset Prediction Helpers ──────────────────────────────────────────────
+    def _prediction_config(self) -> dict:
+        """Config for prediction model — window is always in *days* since
+        we switched to rolling-day series for all periods."""
+        if self._active_period == "weekly":
+            return {
+                "window": 7,
+                "unit_label": "hari",
+                "target_label": "7 hari berikutnya",
+                "empty_message": "Belum ada data 7 hari terakhir untuk membuat prediksi omset.",
+            }
 
-# Optional local preview untuk testing langsung file ini.
-# Jalankan hanya jika struktur project dan database sudah siap.
+        if self._active_period == "monthly":
+            return {
+                "window": 30,
+                "unit_label": "hari",
+                "target_label": "30 hari berikutnya",
+                "empty_message": "Belum ada data 30 hari terakhir untuk membuat prediksi omset.",
+            }
+
+        return {
+            "window": 7,
+            "unit_label": "hari",
+            "target_label": "hari berikutnya",
+            "empty_message": "Belum ada data harian untuk membuat prediksi omset.",
+        }
+
+    def _build_omset_series_for_prediction(self) -> list[tuple[str, float]]:
+        buckets: dict[tuple, float] = defaultdict(float)
+        labels: dict[tuple, str] = {}
+
+        for sale in self._sales:
+            dt = _parse_datetime(sale.time)
+            if not dt:
+                continue
+
+            omset = float(sale.total_price or 0)
+
+            if self._active_period == "weekly":
+                iso_year, iso_week, _ = dt.isocalendar()
+                key = (iso_year, iso_week)
+                label = f"{iso_year}-W{iso_week:02d}"
+            elif self._active_period == "monthly":
+                key = (dt.year, dt.month)
+                label = f"{dt.year}-{dt.month:02d}"
+            else:
+                key = (dt.year, dt.month, dt.day)
+                label = dt.strftime("%Y-%m-%d")
+
+            buckets[key] += omset
+            labels[key] = label
+
+        return [(labels[key], buckets[key]) for key in sorted(buckets.keys())]
+
+    def _calculate_omset_prediction(self) -> dict:
+        cfg = self._prediction_config()
+        series = self._build_omset_series_for_prediction()
+
+        if not series:
+            return {
+                "status": "empty",
+                "prediction": 0,
+                "window": cfg["window"],
+                "unit_label": cfg["unit_label"],
+                "target_label": cfg["target_label"],
+                "trend_status": "empty",
+                "trend_message": cfg["empty_message"],
+                "message": cfg["empty_message"],
+            }
+
+        window = cfg["window"]
+        recent = series[-window:]
+        prediction = sum(value for _, value in recent) / len(recent)
+
+        previous = series[-(window * 2):-window]
+        trend_status = "neutral"
+        trend_message = (
+            "Data pembanding masih terbatas. Prediksi akan lebih stabil setelah "
+            f"data {cfg['unit_label']} bertambah."
+        )
+
+        if previous:
+            previous_avg = sum(value for _, value in previous) / len(previous)
+
+            if previous_avg <= 0 and prediction > 0:
+                trend_status = "up"
+                trend_message = "Omset mulai terbentuk karena periode sebelumnya belum memiliki penjualan."
+            elif previous_avg > 0:
+                diff_percent = ((prediction - previous_avg) / previous_avg) * 100
+
+                if diff_percent > 10:
+                    trend_status = "up"
+                    trend_message = f"Omset cenderung naik sekitar {diff_percent:.1f}% dibanding periode sebelumnya."
+                elif diff_percent < -10:
+                    trend_status = "down"
+                    trend_message = f"Omset cenderung turun sekitar {abs(diff_percent):.1f}% dibanding periode sebelumnya."
+                else:
+                    trend_status = "stable"
+                    trend_message = "Omset relatif stabil dibanding periode sebelumnya."
+
+        return {
+            "status": "success",
+            "prediction": prediction,
+            "window": len(recent),
+            "unit_label": cfg["unit_label"],
+            "target_label": cfg["target_label"],
+            "trend_status": trend_status,
+            "trend_message": trend_message,
+            "message": (
+                f"Prediksi omset {cfg['target_label']} berdasarkan rata-rata "
+                f"{len(recent)} {cfg['unit_label']} terakhir."
+            ),
+        }
+
+    def _refresh_prediction(self):
+        try:
+            result = self._calculate_omset_prediction()
+
+            if result["status"] == "empty":
+                self._omset_prediction_card.set_content(
+                    "Rp 0",
+                    result["message"],
+                    C_TEXT_SEC,
+                )
+                self._omset_insight_card.set_content(
+                    "Data belum cukup",
+                    "Mulai lakukan transaksi agar dashboard dapat menghitung prediksi omset.",
+                    C_WARNING,
+                )
+                return
+
+            self._omset_prediction_card.set_content(
+                _format_price(result["prediction"]),
+                (
+                    f"Prediksi omset {result['target_label']} berdasarkan rata-rata "
+                    f"{result['window']} {result['unit_label']} terakhir."
+                ),
+                C_ACCENT,
+            )
+
+            trend_status = result.get("trend_status", "neutral")
+            trend_message = result.get("trend_message", "Belum ada insight tren.")
+
+            if trend_status == "up":
+                insight_value = "Tren Naik"
+                color = C_SUCCESS
+            elif trend_status == "down":
+                insight_value = "Tren Turun"
+                color = C_DANGER
+            elif trend_status == "stable":
+                insight_value = "Stabil"
+                color = C_ACCENT
+            else:
+                insight_value = "Data Terbatas"
+                color = C_WARNING
+
+            self._omset_insight_card.set_content(
+                insight_value,
+                trend_message,
+                color,
+            )
+
+        except Exception as e:
+            self._omset_prediction_card.set_content(
+                "Rp 0",
+                f"Gagal menghitung prediksi omset: {str(e)}",
+                C_DANGER,
+            )
+            self._omset_insight_card.set_content(
+                "Error",
+                "Periksa kembali data penjualan dan koneksi database.",
+                C_DANGER,
+            )
+
+
 if __name__ == "__main__":
     import sys
     from PyQt6.QtWidgets import QApplication

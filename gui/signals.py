@@ -37,6 +37,22 @@ class SalesSignals(QObject):
     sales_completed = pyqtSignal(int)  # sales_id
 
 
+class PurchaseSignals(QObject):
+    """Signals untuk perubahan data pembelian"""
+    
+    # Signal ketika pembelian berhasil diproses
+    purchase_completed = pyqtSignal(int)  # purchase_id
+
+
+class DashboardSignals(QObject):
+    """Signals untuk update tampilan dashboard"""
+    
+    # Signal untuk me-refresh data dashboard
+    refresh_requested = pyqtSignal()
+
+
 # Global instances - akses dari mana saja
 product_signals = ProductSignals()
 sales_signals = SalesSignals()
+purchase_signals = PurchaseSignals()
+dashboard_signals = DashboardSignals()
