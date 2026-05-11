@@ -23,6 +23,8 @@ from PyQt6.QtWidgets import (
     QDateEdit,
     QDoubleSpinBox,
     QScrollArea,
+    QStackedWidget,
+    QGridLayout,
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QTimer, QDate
 from PyQt6.QtGui import QColor, QPainterPath, QRegion, QFont
@@ -403,6 +405,366 @@ class DeleteAllReceivablesDialog(QDialog):
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
+# Receivable Card (Card View)
+# ═══════════════════════════════════════════════════════════════════════════════
+class ReceivableCard(QFrame):
+    """Satu kartu hutang pelanggan untuk tampilan grid/card view."""
+
+    CARD_WIDTH = 290
+
+    pay_clicked        = pyqtSignal(object)       # emits Receivables (agg)
+    delete_clicked     = pyqtSignal(object)       # emits Receivables (agg)
+    detail_clicked     = pyqtSignal(str, list)    # emits (customer_name, [Receivables])
+    delete_all_clicked = pyqtSignal(str, list)    # emits (customer_name, [Receivables])
+
+    def __init__(
+        self,
+        agg_rec: Receivables,
+        cust_name: str,
+        phone: str,
+        all_for_cust: list[Receivables],
+        parent=None,
+    ):
+        super().__init__(parent)
+        self._agg_rec      = agg_rec
+        self._cust_name    = cust_name
+        self._phone        = phone
+        self._all_for_cust = all_for_cust
+        self._build()
+
+    def _build(self):
+        agg       = self._agg_rec
+        status    = _resolve_status(agg.amount_paid, agg.total_amount)
+        cfg       = _status_cfg(status)
+        remaining = agg.total_amount - agg.amount_paid
+        multi     = len(self._all_for_cust) > 1
+
+        # Border warna sesuai status
+        border_color = cfg["dot"]
+        top_accent   = cfg["bg"]
+
+        self.setObjectName("ReceivableCard")
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        self.setStyleSheet(f"""
+            QFrame#ReceivableCard {{
+                background:    {C_WHITE};
+                border-radius: 14px;
+                border:        1.5px solid {border_color};
+            }}
+        """)
+
+        root = QVBoxLayout(self)
+        root.setContentsMargins(0, 0, 0, 0)
+        root.setSpacing(0)
+
+        # ── Top accent strip ──────────────────────────────────────────────────
+        top_strip = QFrame()
+        top_strip.setFixedHeight(36)
+        top_strip.setStyleSheet(f"""
+            QFrame {{
+                background: {top_accent};
+                border-top-left-radius:  13px;
+                border-top-right-radius: 13px;
+                border-bottom: 1px solid {border_color};
+                border-left: none; border-right: none; border-top: none;
+            }}
+        """)
+        strip_lay = QHBoxLayout(top_strip)
+        strip_lay.setContentsMargins(14, 0, 14, 0)
+        strip_lay.setSpacing(6)
+
+        # Avatar inisial
+        parts = self._cust_name.strip().split()
+        initials = (
+            (parts[0][0] + parts[1][0]).upper()
+            if len(parts) >= 2
+            else self._cust_name[:2].upper() if self._cust_name else "?"
+        )
+        palettes = [
+            ("#EEF0FD", "#3B52C4"),
+            ("#FDF0EC", "#B04A28"),
+            ("#E6F1FB", "#185FA5"),
+            ("#EAF3DE", "#3B6D11"),
+        ]
+        idx = (ord(initials[0]) - ord("A")) % len(palettes)
+        av_bg, av_fg = palettes[idx]
+
+        avatar = Avatar(initials, bg_color=av_bg, text_color=av_fg, size=24)
+        strip_lay.addWidget(avatar)
+
+        name_lbl = QLabel(self._cust_name)
+        name_lbl.setStyleSheet(f"""
+            font-family: 'Segoe UI'; font-size: 12px; font-weight: 700;
+            color: {C_TEXT_PRI}; background: transparent; border: none;
+        """)
+        strip_lay.addWidget(name_lbl)
+        strip_lay.addStretch()
+
+        # Status badge di kanan strip
+        status_badge = QLabel(cfg["label"])
+        status_badge.setStyleSheet(f"""
+            background: transparent; color: {cfg['text']};
+            font-family: 'Segoe UI'; font-size: 9px; font-weight: 700;
+            border: none;
+        """)
+        strip_lay.addWidget(status_badge)
+
+        root.addWidget(top_strip)
+
+        # ── Body ──────────────────────────────────────────────────────────────
+        body = QVBoxLayout()
+        body.setContentsMargins(14, 10, 14, 10)
+        body.setSpacing(8)
+
+        # Nomor telepon + badge multi transaksi
+        info_row = QHBoxLayout()
+        info_row.setSpacing(6)
+        phone_lbl = QLabel(f"📞  {self._phone}" if self._phone else "📞  —")
+        phone_lbl.setStyleSheet(f"""
+            font-family: 'Segoe UI'; font-size: 11px;
+            color: {C_TEXT_SEC}; background: transparent; border: none;
+        """)
+        info_row.addWidget(phone_lbl)
+        info_row.addStretch()
+
+        if multi:
+            multi_badge = QLabel(f"🔴 {len(self._all_for_cust)} Transaksi")
+            multi_badge.setStyleSheet(f"""
+                background: #FDEAEA; color: {C_DANGER};
+                font-family: 'Segoe UI'; font-size: 10px; font-weight: 700;
+                padding: 3px 8px; border-radius: 5px; border: none;
+            """)
+            info_row.addWidget(multi_badge)
+        body.addLayout(info_row)
+
+        # Divider
+        div1 = QFrame()
+        div1.setFixedHeight(1)
+        div1.setStyleSheet(f"background: {C_DIVIDER}; border: none;")
+        body.addWidget(div1)
+
+        # Amount columns: Total · Terbayar · Sisa
+        amt_row = QHBoxLayout()
+        amt_row.setSpacing(0)
+
+        def _amt_col(label: str, value: str, color: str):
+            col = QVBoxLayout()
+            col.setSpacing(2)
+            lbl = QLabel(label)
+            lbl.setStyleSheet(f"font-family:'Segoe UI';font-size:9px;color:{C_TEXT_SEC};background:transparent;border:none;")
+            val = QLabel(value)
+            val.setStyleSheet(f"font-family:'Segoe UI';font-size:12px;font-weight:700;color:{color};background:transparent;border:none;")
+            col.addWidget(lbl)
+            col.addWidget(val)
+            return col
+
+        remain_color = C_DANGER if remaining > 0 and status != "paid" else C_SUCCESS
+
+        amt_row.addLayout(_amt_col("Total Hutang", _fmt_currency(agg.total_amount), C_TEXT_PRI))
+        amt_row.addStretch()
+
+        sep1 = QFrame()
+        sep1.setFixedWidth(1)
+        sep1.setStyleSheet(f"background: {C_DIVIDER}; border: none;")
+        amt_row.addWidget(sep1)
+        amt_row.addSpacing(10)
+
+        amt_row.addLayout(_amt_col("Terbayar", _fmt_currency(agg.amount_paid), C_TEXT_SEC))
+        amt_row.addStretch()
+
+        sep2 = QFrame()
+        sep2.setFixedWidth(1)
+        sep2.setStyleSheet(f"background: {C_DIVIDER}; border: none;")
+        amt_row.addWidget(sep2)
+        amt_row.addSpacing(10)
+
+        amt_row.addLayout(_amt_col("Sisa", _fmt_currency(remaining), remain_color))
+
+        body.addLayout(amt_row)
+
+        # Due date (jika ada)
+        if agg.due_date:
+            today = QDate.currentDate()
+            try:
+                d = QDate.fromString(agg.due_date, "yyyy-MM-dd")
+                overdue = d.isValid() and d < today and status != "paid"
+            except Exception:
+                overdue = False
+            due_color  = C_DANGER if overdue else C_TEXT_SEC
+            due_prefix = "⚠  " if overdue else "📅  "
+            due_lbl = QLabel(f"{due_prefix}Jatuh tempo: {agg.due_date}")
+            due_lbl.setStyleSheet(f"""
+                font-family: 'Segoe UI'; font-size: 10px;
+                color: {due_color}; background: transparent; border: none;
+            """)
+            body.addWidget(due_lbl)
+
+        root.addLayout(body)
+
+        # ── Footer: action buttons ────────────────────────────────────────────
+        footer = QFrame()
+        footer.setStyleSheet(f"""
+            QFrame {{
+                background: #F7F8FC;
+                border-bottom-left-radius:  13px;
+                border-bottom-right-radius: 13px;
+                border-top: 1px solid {C_DIVIDER};
+                border-left: none; border-right: none; border-bottom: none;
+            }}
+        """)
+        footer_lay = QHBoxLayout(footer)
+        footer_lay.setContentsMargins(14, 7, 14, 7)
+        footer_lay.setSpacing(6)
+        footer_lay.addStretch()
+
+        if multi:
+            detail_btn = QPushButton("Detail")
+            detail_btn.setFixedSize(68, 26)
+            detail_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+            detail_btn.setStyleSheet(f"""
+                QPushButton {{
+                    background: {C_TAG_BG}; color: {C_ACCENT};
+                    font-family: 'Segoe UI'; font-size: 11px; font-weight: 600;
+                    border-radius: 7px; border: none;
+                }}
+                QPushButton:hover {{ background: {C_ACCENT}; color: #FFFFFF; }}
+            """)
+            detail_btn.clicked.connect(
+                lambda _=False, n=self._cust_name, rs=self._all_for_cust:
+                    self.detail_clicked.emit(n, rs)
+            )
+            footer_lay.addWidget(detail_btn)
+
+            del_all_btn = QPushButton("Hapus")
+            del_all_btn.setFixedSize(68, 26)
+            del_all_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+            del_all_btn.setStyleSheet(f"""
+                QPushButton {{
+                    background: #FDEAEA; color: {C_DANGER};
+                    font-family: 'Segoe UI'; font-size: 11px; font-weight: 600;
+                    border-radius: 7px; border: none;
+                }}
+                QPushButton:hover {{ background: {C_DANGER}; color: #FFFFFF; }}
+            """)
+            del_all_btn.clicked.connect(
+                lambda _=False, n=self._cust_name, rs=self._all_for_cust:
+                    self.delete_all_clicked.emit(n, rs)
+            )
+            footer_lay.addWidget(del_all_btn)
+
+        else:
+            actual_rec = self._all_for_cust[0] if self._all_for_cust else self._agg_rec
+
+            if status != "paid":
+                pay_btn = QPushButton("Bayar")
+                pay_btn.setFixedSize(68, 26)
+                pay_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+                pay_btn.setStyleSheet(f"""
+                    QPushButton {{
+                        background: #E8F8F0; color: {C_SUCCESS};
+                        font-family: 'Segoe UI'; font-size: 11px; font-weight: 600;
+                        border-radius: 7px; border: none;
+                    }}
+                    QPushButton:hover {{ background: {C_SUCCESS}; color: #FFFFFF; }}
+                """)
+                pay_btn.clicked.connect(lambda _=False, r=actual_rec: self.pay_clicked.emit(r))
+                footer_lay.addWidget(pay_btn)
+
+            del_btn = QPushButton("Hapus")
+            del_btn.setFixedSize(68, 26)
+            del_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+            del_btn.setStyleSheet(f"""
+                QPushButton {{
+                    background: #FDEAEA; color: {C_DANGER};
+                    font-family: 'Segoe UI'; font-size: 11px; font-weight: 600;
+                    border-radius: 7px; border: none;
+                }}
+                QPushButton:hover {{ background: {C_DANGER}; color: #FFFFFF; }}
+            """)
+            del_btn.clicked.connect(lambda _=False, r=actual_rec: self.delete_clicked.emit(r))
+            footer_lay.addWidget(del_btn)
+
+        root.addWidget(footer)
+
+        # Tinggi dinamis
+        base_h = 36 + 10 + 22 + 1 + 10 + 38 + 1 + 10 + 40
+        extra  = 20 if agg.due_date else 0
+        self.setFixedHeight(base_h + extra)
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# View Toggle
+# ═══════════════════════════════════════════════════════════════════════════════
+class ReceivablesViewToggle(QWidget):
+    VIEW_TABLE = "table"
+    VIEW_CARD  = "card"
+    toggled    = pyqtSignal(str)
+
+    def __init__(self, initial: str = VIEW_TABLE, parent=None):
+        super().__init__(parent)
+        self._current = initial
+        self._build()
+
+    def _build(self):
+        self.setFixedHeight(38)
+        self.setStyleSheet(f"""
+            QWidget {{ background: {C_WHITE}; border: 1px solid {C_BORDER}; border-radius: 10px; }}
+        """)
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(5)
+
+        self._table_btn = QPushButton("☰  Tabel")
+        self._table_btn.setFixedHeight(38)
+        self._table_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self._table_btn.clicked.connect(lambda: self._select(self.VIEW_TABLE))
+
+        self._card_btn = QPushButton("⊞  Kartu")
+        self._card_btn.setFixedHeight(38)
+        self._card_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self._card_btn.clicked.connect(lambda: self._select(self.VIEW_CARD))
+
+        layout.addWidget(self._table_btn)
+        layout.addWidget(self._card_btn)
+        self._update_styles()
+
+    def _select(self, mode: str):
+        if mode == self._current:
+            return
+        self._current = mode
+        self._update_styles()
+        self.toggled.emit(mode)
+
+    def _update_styles(self):
+        active = f"""
+            QPushButton {{
+                background: {C_ACCENT}; color: #FFFFFF;
+                font-family: 'Segoe UI'; font-size: 12px; font-weight: 600;
+                border-radius: 7px; padding: 0 14px; border: none;
+            }}
+        """
+        inactive = f"""
+            QPushButton {{
+                background: transparent; color: {C_TEXT_SEC};
+                font-family: 'Segoe UI'; font-size: 12px; font-weight: 400;
+                border-radius: 7px; padding: 0 14px; border: 1px solid transparent;
+            }}
+            QPushButton:hover {{
+                background: {C_TAG_BG}; color: {C_ACCENT}; border: 1px solid {C_ACCENT};
+            }}
+        """
+        if self._current == self.VIEW_TABLE:
+            self._table_btn.setStyleSheet(active)
+            self._card_btn.setStyleSheet(inactive)
+        else:
+            self._card_btn.setStyleSheet(active)
+            self._table_btn.setStyleSheet(inactive)
+
+    def current(self) -> str:
+        return self._current
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
 # Receivables Table View
 # ═══════════════════════════════════════════════════════════════════════════════
 class ReceivablesTableView(QTableWidget):
@@ -437,6 +799,7 @@ class ReceivablesTableView(QTableWidget):
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
+        self._adjust_columns()
         QTimer.singleShot(0, self._apply_viewport_clip)
 
     def showEvent(self, event):
@@ -549,16 +912,10 @@ class ReceivablesTableView(QTableWidget):
                 width: 0;
             }}
         """)
-        
-    def resizeEvent(self, event):
-        super().resizeEvent(event)
-        self._adjust_columns()
-        QTimer.singleShot(0, self._apply_viewport_clip)
 
     def _adjust_columns(self):
         header = self.horizontalHeader()
 
-        # Total lebar semua kolom fixed (kecuali COL_NAME)
         fixed_widths = (
             self.columnWidth(self.COL_NO) +
             self.columnWidth(self.COL_TOTAL) +
@@ -568,15 +925,12 @@ class ReceivablesTableView(QTableWidget):
             self.columnWidth(self.COL_ACTION)
         )
 
-        # Lebar viewport yang tersedia
         available = self.viewport().width()
         name_width = available - fixed_widths
 
         if name_width >= self.MIN_NAME_WIDTH:
-            # Cukup lebar → stretch seperti biasa
             header.setSectionResizeMode(self.COL_CUST, QHeaderView.ResizeMode.Stretch)
         else:
-            # Terlalu sempit → fix kolom Nama, aktifkan scroll horizontal
             header.setSectionResizeMode(self.COL_CUST, QHeaderView.ResizeMode.Fixed)
             self.setColumnWidth(self.COL_CUST, self.MIN_NAME_WIDTH)
 
@@ -714,7 +1068,6 @@ class ReceivablesTableView(QTableWidget):
         avatar = Avatar(initials, bg_color=bg, text_color=fg, size=30)
         lay.addWidget(avatar)
 
-        # container nama + phone
         text_wrap = QWidget()
         text_wrap.setStyleSheet("background: transparent; border: none;")
 
@@ -837,7 +1190,6 @@ class ReceivablesTableView(QTableWidget):
         multi = len(all_for_cust) > 1
 
         if multi:
-            # ── Tombol Detail ──
             detail_btn = QPushButton("Detail")
             detail_btn.setFixedSize(62, 28)
             detail_btn.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -854,7 +1206,6 @@ class ReceivablesTableView(QTableWidget):
             )
             lay.addWidget(detail_btn)
 
-            # ── Tombol Hapus Semua ──
             del_all_btn = QPushButton("Hapus")
             del_all_btn.setFixedSize(62, 28)
             del_all_btn.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -872,7 +1223,6 @@ class ReceivablesTableView(QTableWidget):
             lay.addWidget(del_all_btn)
 
         else:
-            # ── Transaksi tunggal ──
             if status != "paid":
                 pay_btn = QPushButton("Bayar")
                 pay_btn.setFixedSize(62, 28)
@@ -1374,12 +1724,16 @@ class DeleteReceivableDialog(QDialog):
 class ReceivablesPage(QWidget):
     def __init__(self, user: dict = None, parent=None):
         super().__init__(parent)
-        self._user           = user or {}
-        self._receivables    = []
-        self._customer_map   = {}
-        self._customers      = []
-        self._active_filter  = "Semua"
-        self._search_query   = ""
+        self._user              = user or {}
+        self._receivables       = []
+        self._customer_map      = {}
+        self._customers         = []
+        self._active_filter     = "Semua"
+        self._search_query      = ""
+        self._view_mode         = ReceivablesViewToggle.VIEW_TABLE
+        self._grid_initialized  = False
+        self._pending_refresh   = False
+        self._render_token      = 0
         self._stat_labels: dict[str, QLabel] = {}
         self._stat_dots:   dict[str, QLabel] = {}
 
@@ -1405,7 +1759,7 @@ class ReceivablesPage(QWidget):
             )
             self._load_data()
             self._refresh_stats()
-            self._refresh_table()
+            self._refresh_view()
             cust = self._customer_map.get(rec.customer_id, "—")
             msg = (
                 f"Jatuh tempo <b>{cust}</b> dihapus."
@@ -1474,8 +1828,15 @@ class ReceivablesPage(QWidget):
         layout.addLayout(self._build_stats_row())
         layout.addSpacing(20)
 
-        bar = QHBoxLayout()
-        bar.setSpacing(10)
+        # ── Filter bar + view toggle ───────────────────────────────────────────
+        bar_and_toggle = QHBoxLayout()
+        bar_and_toggle.setSpacing(10)
+
+        filter_widget = QWidget()
+        filter_widget.setStyleSheet("background: transparent;")
+        fw_layout = QHBoxLayout(filter_widget)
+        fw_layout.setContentsMargins(0, 0, 0, 0)
+        fw_layout.setSpacing(10)
 
         search = QLineEdit()
         search.setPlaceholderText("🔍  Cari nama pelanggan...")
@@ -1489,24 +1850,95 @@ class ReceivablesPage(QWidget):
             QLineEdit:focus {{ border: 1.5px solid {C_ACCENT}; }}
         """)
         search.textChanged.connect(self._on_search_changed)
-        bar.addWidget(search)
-        bar.addSpacing(6)
+        fw_layout.addWidget(search)
+        fw_layout.addSpacing(6)
 
         self._filter_buttons: dict[str, QPushButton] = {}
         for f in FILTER_STATUS:
             btn = self._make_filter_btn(f)
             self._filter_buttons[f] = btn
-            bar.addWidget(btn)
-        bar.addStretch()
-        layout.addLayout(bar)
+            fw_layout.addWidget(btn)
+        fw_layout.addStretch()
+
+        self._view_toggle = ReceivablesViewToggle(initial=ReceivablesViewToggle.VIEW_TABLE)
+        self._view_toggle.toggled.connect(self._on_view_mode_changed)
+
+        bar_and_toggle.addWidget(filter_widget, stretch=1)
+        bar_and_toggle.addWidget(self._view_toggle)
+        layout.addLayout(bar_and_toggle)
         layout.addSpacing(16)
+
+        # ── Content stack ──────────────────────────────────────────────────────
+        self._content_stack = QStackedWidget()
+        self._content_stack.setStyleSheet("background: transparent;")
+
+        # ── Page 0: Card grid ──────────────────────────────────────────────────
+        self._card_page = QWidget()
+        self._card_page.setStyleSheet("background: transparent;")
+        card_page_layout = QVBoxLayout(self._card_page)
+        card_page_layout.setContentsMargins(0, 0, 0, 0)
+        card_page_layout.setSpacing(0)
+
+        self._scroll = QScrollArea()
+        self._scroll.setWidgetResizable(True)
+        self._scroll.setFrameShape(QFrame.Shape.NoFrame)
+        self._scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self._scroll.setStyleSheet(f"""
+            QScrollArea {{ background: transparent; border: none; }}
+            QScrollArea > QWidget > QWidget {{ background: transparent; }}
+            QScrollBar:vertical {{
+                background: transparent; width: 6px;
+                margin: 8px 2px 8px 0; border-radius: 3px;
+            }}
+            QScrollBar::handle:vertical {{
+                background: {C_BORDER}; border-radius: 3px; min-height: 28px;
+            }}
+            QScrollBar::handle:vertical:hover {{ background: #B8BCCE; }}
+            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{
+                height: 0; background: none;
+            }}
+            QScrollBar:horizontal {{
+                background: transparent; height: 8px;
+                margin: 0 0 2px 0; border-radius: 3px;
+            }}
+            QScrollBar::handle:horizontal {{
+                background: {C_BORDER}; border-radius: 3px; min-width: 28px;
+            }}
+            QScrollBar::handle:horizontal:hover {{ background: #B8BCCE; }}
+            QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {{
+                width: 0; background: none;
+            }}
+        """)
+
+        self._grid_container = QWidget()
+        self._grid_container.setStyleSheet("background: transparent;")
+        self._grid_layout = QGridLayout(self._grid_container)
+        self._grid_layout.setSpacing(14)
+        self._grid_layout.setContentsMargins(0, 0, 0, 0)
+        self._grid_layout.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
+
+        self._scroll.setWidget(self._grid_container)
+        card_page_layout.addWidget(self._scroll)
+
+        # ── Page 1: Table ──────────────────────────────────────────────────────
+        self._table_page = QWidget()
+        self._table_page.setStyleSheet("background: transparent;")
+        table_page_layout = QVBoxLayout(self._table_page)
+        table_page_layout.setContentsMargins(0, 0, 0, 0)
+        table_page_layout.setSpacing(0)
 
         self._table = ReceivablesTableView()
         self._table.pay_clicked.connect(self._open_pay_dialog)
         self._table.delete_clicked.connect(self._open_delete_dialog)
         self._table.detail_clicked.connect(self._open_detail_dialog)
-        self._table.delete_all_clicked.connect(self._open_delete_all_dialog)  # ← tambah
-        layout.addWidget(self._table, stretch=1)
+        self._table.delete_all_clicked.connect(self._open_delete_all_dialog)
+        table_page_layout.addWidget(self._table)
+
+        self._content_stack.addWidget(self._card_page)   # index 0
+        self._content_stack.addWidget(self._table_page)  # index 1
+        self._content_stack.setCurrentIndex(1)
+
+        layout.addWidget(self._content_stack, stretch=1)
 
         self._refresh_table()
 
@@ -1672,13 +2104,179 @@ class ReceivablesPage(QWidget):
 
         return rows
 
+    def _refresh_view(self):
+        if self._view_mode == ReceivablesViewToggle.VIEW_CARD:
+            self._refresh_grid()
+        else:
+            self._refresh_table()
+
     def _refresh_table(self):
         self._table.populate(self._filtered_rows(), self._customer_map, self._receivables)
 
+    # ── Card grid ─────────────────────────────────────────────────────────────
+    def _get_column_count(self) -> int:
+        available = self._scroll.viewport().width()
+        cols = available // (ReceivableCard.CARD_WIDTH + self._grid_layout.spacing())
+        return max(2, min(4, int(cols)))
+
+    def _refresh_grid(self):
+        self._render_token += 1
+        token = self._render_token
+
+        if not self.isVisible():
+            self._pending_refresh = True
+            return
+
+        self._pending_refresh = False
+        self._clear_grid()
+
+        rows = self._filtered_rows()
+
+        if not rows:
+            self._grid_layout.setAlignment(
+                Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter
+            )
+
+            empty_wrap = QWidget()
+            empty_wrap.setStyleSheet("background: transparent; border: none;")
+            empty_wrap.setMinimumWidth(self._scroll.viewport().width())
+
+            outer = QVBoxLayout(empty_wrap)
+            outer.setContentsMargins(0, 43, 2, 0)
+            outer.setSpacing(0)
+            outer.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter)
+
+            empty_card = QFrame()
+            empty_card.setFixedHeight(260)
+            empty_card.setFixedWidth(460)
+            empty_card.setStyleSheet(f"""
+                QFrame {{
+                    background: {C_WHITE};
+                    border: 1px solid {C_BORDER};
+                    border-radius: 18px;
+                }}
+                QLabel {{ background: transparent; border: none; }}
+            """)
+
+            ec_layout = QVBoxLayout(empty_card)
+            ec_layout.setContentsMargins(40, 34, 40, 34)
+            ec_layout.setSpacing(8)
+            ec_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+            icon = QLabel("💳")
+            icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            icon.setStyleSheet("font-size: 46px;")
+
+            etitle = QLabel("Tidak ada data hutang")
+            etitle.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            etitle.setStyleSheet(f"font-family:'Segoe UI';font-size:16px;font-weight:700;color:{C_TEXT_PRI};")
+
+            esub = QLabel("Coba ubah filter atau kata kunci pencarian.")
+            esub.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            esub.setStyleSheet(f"font-family:'Segoe UI';font-size:12px;color:{C_TEXT_SEC};")
+
+            ec_layout.addStretch()
+            ec_layout.addWidget(icon)
+            ec_layout.addWidget(etitle)
+            ec_layout.addWidget(esub)
+            ec_layout.addStretch()
+
+            outer.addWidget(empty_card)
+            self._grid_layout.addWidget(empty_wrap, 0, 0)
+
+            self._grid_container.adjustSize()
+            self._grid_container.update()
+            self._scroll.viewport().update()
+            return
+
+        self._grid_layout.setAlignment(
+            Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft
+        )
+        cols = self._get_column_count()
+
+        for c in range(10):
+            self._grid_layout.setColumnStretch(c, 0)
+        for c in range(cols):
+            self._grid_layout.setColumnStretch(c, 1)
+
+        if len(rows) <= 60:
+            self._render_all_cards(rows, token)
+        else:
+            self._render_batch_cards(rows, start=0, batch_size=12, token=token)
+
+        self._grid_container.adjustSize()
+        self._grid_container.update()
+        self._scroll.viewport().update()
+
+    def _render_all_cards(self, rows: list[tuple], token: int):
+        cols = self._get_column_count()
+        for i, (agg_rec, cust_name, all_for_cust) in enumerate(rows):
+            if token != self._render_token:
+                return
+            customer  = self._customer_map.get(agg_rec.customer_id)
+            phone     = customer.phone if customer else ""
+            card = ReceivableCard(agg_rec, cust_name, phone, all_for_cust)
+            card.pay_clicked.connect(self._open_pay_dialog)
+            card.delete_clicked.connect(self._open_delete_dialog)
+            card.detail_clicked.connect(self._open_detail_dialog)
+            card.delete_all_clicked.connect(self._open_delete_all_dialog)
+            self._grid_layout.addWidget(card, i // cols, i % cols)
+
+    def _render_batch_cards(
+        self,
+        rows: list[tuple],
+        start: int,
+        batch_size: int,
+        token: int,
+    ):
+        if token != self._render_token:
+            return
+        cols = self._get_column_count()
+        end  = min(start + batch_size, len(rows))
+
+        for i in range(start, end):
+            agg_rec, cust_name, all_for_cust = rows[i]
+            customer = self._customer_map.get(agg_rec.customer_id)
+            phone    = customer.phone if customer else ""
+            card = ReceivableCard(agg_rec, cust_name, phone, all_for_cust)
+            card.pay_clicked.connect(self._open_pay_dialog)
+            card.delete_clicked.connect(self._open_delete_dialog)
+            card.detail_clicked.connect(self._open_detail_dialog)
+            card.delete_all_clicked.connect(self._open_delete_all_dialog)
+            self._grid_layout.addWidget(card, i // cols, i % cols)
+
+        if end < len(rows):
+            QTimer.singleShot(
+                0,
+                lambda: self._render_batch_cards(rows, end, batch_size, token),
+            )
+
+    def _clear_grid(self):
+        while self._grid_layout.count():
+            item = self._grid_layout.takeAt(0)
+            w = item.widget()
+            if w:
+                w.setParent(None)
+                w.deleteLater()
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        if self._view_mode == ReceivablesViewToggle.VIEW_CARD:
+            QTimer.singleShot(0, self._refresh_grid)
+
     # ── Event handlers ────────────────────────────────────────────────────────
+    def _on_view_mode_changed(self, mode: str):
+        self._view_mode = mode
+        if mode == ReceivablesViewToggle.VIEW_TABLE:
+            self._content_stack.setCurrentIndex(1)
+            self._refresh_table()
+        else:
+            self._content_stack.setCurrentIndex(0)
+            self._refresh_grid()
+
     def _on_search_changed(self, text: str):
         self._search_query = text.strip()
-        self._refresh_table()
+        self._refresh_view()
 
     def _on_filter_changed(self, label: str):
         old = self._active_filter
@@ -1687,7 +2285,7 @@ class ReceivablesPage(QWidget):
         self._active_filter = label
         if btn := self._filter_buttons.get(label):
             self._style_filter_btn(btn, True)
-        self._refresh_table()
+        self._refresh_view()
 
     def _open_add_dialog(self):
         dlg = AddReceivableDialog(customers=self._customers, parent=self)
@@ -1734,7 +2332,7 @@ class ReceivablesPage(QWidget):
             )
             self._load_data()
             self._refresh_stats()
-            self._refresh_table()
+            self._refresh_view()
             cust = self._customer_map.get(data["customer_id"], "Pelanggan")
             Toast.show_toast(f"Hutang <b>{cust}</b> berhasil ditambahkan.", "success", self)
         except Exception as e:
@@ -1780,7 +2378,7 @@ class ReceivablesPage(QWidget):
 
             self._load_data()
             self._refresh_stats()
-            self._refresh_table()
+            self._refresh_view()
             customer = self._customer_map.get(rec.customer_id)
             cust_name = customer.name if customer else "Pelanggan"
 
@@ -1799,7 +2397,7 @@ class ReceivablesPage(QWidget):
             ReceivablesController.remove(rec.id)
             self._load_data()
             self._refresh_stats()
-            self._refresh_table()
+            self._refresh_view()
             from gui.signals import sales_signals
             sales_signals.sales_completed.emit(rec.sales_id or 0)
             customer = self._customer_map.get(rec.customer_id)
@@ -1822,11 +2420,9 @@ class ReceivablesPage(QWidget):
 
             self._load_data()
             self._refresh_stats()
-            self._refresh_table()
+            self._refresh_view()
 
-            # Trigger refresh transactions_page untuk semua sales_id terkait
             from gui.signals import sales_signals
-
             for rec in records:
                 if rec.sales_id:
                     sales_signals.sales_completed.emit(rec.sales_id)
@@ -1844,4 +2440,9 @@ class ReceivablesPage(QWidget):
         super().showEvent(event)
         self._load_data()
         self._refresh_stats()
-        self._refresh_table()
+        if not self._grid_initialized or self._pending_refresh:
+            self._grid_initialized = True
+            self._pending_refresh  = False
+            QTimer.singleShot(0, self._refresh_view)
+        else:
+            self._refresh_view()

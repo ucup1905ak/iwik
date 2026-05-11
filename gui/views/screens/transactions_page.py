@@ -611,16 +611,21 @@ class TransactionTableView(QTableWidget):
     def _show_empty_state(self):
         self.clearContents()
         self.setRowCount(1)
-        self.setSpan(0, 0, 1, self.columnCount())
-        self.setRowHeight(0, 240)
         self.setShowGrid(False)
+        self.setRowHeight(0, 240)
 
-        for col in range(self.columnCount()):
-            item = QTableWidgetItem()
-            item.setFlags(Qt.ItemFlag.NoItemFlags)
-            item.setBackground(QColor(C_WHITE))
-            item.setData(Qt.ItemDataRole.DisplayRole, "")
-            self.setItem(0, col, item)
+        self.setSpan(0, 0, 1, self.columnCount())
+
+        item = QTableWidgetItem()
+        item.setFlags(Qt.ItemFlag.NoItemFlags)
+        item.setBackground(QColor(C_WHITE))
+        self.setItem(0, 0, item)
+
+        outer = QWidget()
+        outer.setStyleSheet("background: transparent; border: none;")
+        outer_lay = QHBoxLayout(outer)
+        outer_lay.setContentsMargins(0, 0, 0, 0)
+        outer_lay.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         empty = QWidget()
         empty.setObjectName("EmptyState")
@@ -647,7 +652,9 @@ class TransactionTableView(QTableWidget):
         lay.addWidget(title)
         lay.addWidget(sub)
         lay.addStretch()
-        self.setCellWidget(0, 0, empty)
+
+        outer_lay.addWidget(empty)
+        self.setCellWidget(0, 0, outer)
 
     def populate(self, transactions: list):
         self.clearContents()
@@ -1516,28 +1523,28 @@ class TransactionPage(QWidget):
         txs = self._filtered_transactions()
 
         if not txs:
+            self._grid_layout.setAlignment(
+                Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter
+            )
+
             empty_wrap = QWidget()
             empty_wrap.setStyleSheet("background: transparent; border: none;")
+            empty_wrap.setMinimumWidth(self._scroll.viewport().width())
 
             outer = QVBoxLayout(empty_wrap)
-            outer.setContentsMargins(0, 36, 0, 40)
-            outer.setAlignment(
-                Qt.AlignmentFlag.AlignTop |
-                Qt.AlignmentFlag.AlignHCenter
-            )
+            outer.setContentsMargins(0, 33, 2, 0)
+            outer.setSpacing(0)
+            outer.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter)
 
             empty_card = QFrame()
             empty_card.setFixedHeight(260)
-            empty_card.setMinimumWidth(420)
-            empty_card.setMaximumWidth(560)
-
+            empty_card.setFixedWidth(460)
             empty_card.setStyleSheet(f"""
                 QFrame {{
                     background: {C_WHITE};
                     border: 1px solid {C_BORDER};
                     border-radius: 18px;
                 }}
-
                 QLabel {{
                     background: transparent;
                     border: none;
@@ -1556,22 +1563,18 @@ class TransactionPage(QWidget):
             title = QLabel("Tidak ada transaksi ditemukan")
             title.setAlignment(Qt.AlignmentFlag.AlignCenter)
             title.setStyleSheet(f"""
-                font-family:'Segoe UI';
-                font-size:16px;
-                font-weight:700;
-                color:{C_TEXT_PRI};
+                font-family: 'Segoe UI';
+                font-size:   16px;
+                font-weight: 700;
+                color:       {C_TEXT_PRI};
             """)
 
-            subtitle = QLabel(
-                "Coba ubah filter atau kata kunci pencarian."
-            )
-
+            subtitle = QLabel("Coba ubah filter atau kata kunci pencarian.")
             subtitle.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
             subtitle.setStyleSheet(f"""
-                font-family:'Segoe UI';
-                font-size:12px;
-                color:{C_TEXT_SEC};
+                font-family: 'Segoe UI';
+                font-size:   12px;
+                color:       {C_TEXT_SEC};
             """)
 
             card_layout.addStretch()
@@ -1582,19 +1585,16 @@ class TransactionPage(QWidget):
 
             outer.addWidget(empty_card)
 
-            self._grid_layout.addWidget(
-                empty_wrap,
-                0,
-                0,
-                1,
-                max(1, self._get_column_count())
-            )
+            self._grid_layout.addWidget(empty_wrap, 0, 0)
 
             self._grid_container.adjustSize()
             self._grid_container.update()
             self._scroll.viewport().update()
             return
 
+        self._grid_layout.setAlignment(
+            Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft
+        )
         cols = self._get_column_count()
 
         # reset stretch

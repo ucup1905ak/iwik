@@ -1167,20 +1167,22 @@ class SupplierPage(QWidget):
         suppliers = self._filtered_suppliers()
 
         if not suppliers:
+            self._grid_layout.setAlignment(
+                Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter
+            )
+
             empty_wrap = QWidget()
             empty_wrap.setStyleSheet("background: transparent; border: none;")
+            empty_wrap.setMinimumWidth(self._scroll.viewport().width())  # ← isi lebar viewport
 
             outer = QVBoxLayout(empty_wrap)
-            outer.setContentsMargins(0, 36, 0, 40)
-            outer.setAlignment(
-                Qt.AlignmentFlag.AlignTop |
-                Qt.AlignmentFlag.AlignHCenter
-            )
+            outer.setContentsMargins(0, 34, 0, 0)
+            outer.setSpacing(0)
+            outer.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter)
 
             empty_card = QFrame()
             empty_card.setFixedHeight(260)
-            empty_card.setMinimumWidth(420)
-            empty_card.setMaximumWidth(560)
+            empty_card.setFixedWidth(460)
 
             empty_card.setStyleSheet(f"""
                 QFrame {{
@@ -1238,8 +1240,6 @@ class SupplierPage(QWidget):
                 empty_wrap,
                 0,
                 0,
-                1,
-                max(1, self._get_column_count())
             )
 
             self._grid_container.adjustSize()
