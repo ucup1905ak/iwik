@@ -44,7 +44,7 @@ class AppShell(QWidget):
 
         self._stack.addWidget(main)
         self._stack.setCurrentWidget(main)
-        
+
     def __init__(self):
         super().__init__()
 
@@ -63,8 +63,8 @@ class AppShell(QWidget):
 
         self._animating = False
         self._in_main_shell = False
-        self._show_splash()
-        # self._skip_to_main()  # DEV MODE: langsung ke main shell tanpa auth
+        # self._show_splash()
+        self._skip_to_main()  # DEV MODE: langsung ke main shell tanpa auth
 
     # ────────────────────────────────────────────────────────────────────────
     # Background — hanya tampil saat di auth screens
@@ -93,11 +93,11 @@ class AppShell(QWidget):
         self._splash.finished.connect(self._on_splash_finished)
         self._stack.addWidget(self._splash)
         self._stack.setCurrentWidget(self._splash)
-        
+
     def _on_splash_finished(self):
         """Setelah splash, check database dan arahkan ke flow yang sesuai"""
         self.users = self._load_users_from_db()
-        
+
         # Jika database kosong, tampilkan form tambah admin pertama kali
         if len(self.users) == 0:
             self._go_add_admin(initial=True)

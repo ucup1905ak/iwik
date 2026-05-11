@@ -33,43 +33,64 @@ import random
 import string
 
 # ── Color palette ──────────────────────────────────────────────────────────────
-C_BG       = "#F4F5F9"
-C_WHITE    = "#FFFFFF"
-C_ACCENT   = "#4F6EF7"
+C_BG = "#F4F5F9"
+C_WHITE = "#FFFFFF"
+C_ACCENT = "#4F6EF7"
 C_ACCENT_H = "#3A57E8"
 C_TEXT_PRI = "#1A1D2E"
 C_TEXT_SEC = "#6B6F80"
-C_BORDER   = "#E4E6EE"
-C_DANGER   = "#E05252"
-C_TAG_BG   = "#EEF1FE"
+C_BORDER = "#E4E6EE"
+C_DANGER = "#E05252"
+C_TAG_BG = "#EEF1FE"
 C_TAG_TEXT = "#4F6EF7"
 
 ENABLE_CARD_SHADOWS = False
 RADIUS = 14
 
-SAMPLE_CATEGORIES = ["Semua", "Makanan", "Minuman", "Snack", "Sembako", "Lainnya"]
+SAMPLE_CATEGORIES = ["Semua", "Makanan",
+                     "Minuman", "Snack", "Sembako", "Lainnya"]
 
 SAMPLE_PRODUCTS = [
-    Product(id=1,  name="Nasi Goreng Spesial",   brand="Warung Nusantara", sku="MKN-001", category="Makanan", stock=10,  price=25000),
-    Product(id=2,  name="Es Teh Manis",           brand="Fresh Drink",      sku="MNM-001", category="Minuman", stock=120, price=5000),
-    Product(id=3,  name="Keripik Singkong",       brand="SnackRasa",        sku="SNK-001", category="Snack",   stock=1,   price=8000),
-    Product(id=4,  name="Mie Goreng",             brand="MieKu",            sku="MKN-002", category="Makanan", stock=0,   price=20000),
-    Product(id=5,  name="Ayam Geprek",            brand="GeprekZone",       sku="MKN-003", category="Makanan", stock=15,  price=22000),
-    Product(id=6,  name="Kopi Susu Gula Aren",   brand="CoffeeDaily",      sku="MNM-002", category="Minuman", stock=45,  price=18000),
-    Product(id=7,  name="Roti Bakar Coklat",     brand="BakeHouse",        sku="SNK-002", category="Snack",   stock=0,   price=15000),
-    Product(id=8,  name="Beras Premium 5Kg",     brand="PanenMakmur",      sku="SMB-001", category="Sembako", stock=18,  price=78000),
-    Product(id=9,  name="Minyak Goreng 1L",      brand="Tropis",           sku="SMB-002", category="Sembako", stock=40,  price=21000),
-    Product(id=10, name="Air Mineral 600ml",      brand="AquaFresh",        sku="MNM-003", category="Minuman", stock=200, price=4000),
-    Product(id=11, name="Susu Coklat Botol",     brand="MilkyDay",         sku="MNM-004", category="Minuman", stock=55,  price=9000),
-    Product(id=12, name="Biskuit Coklat",        brand="Crunchy",          sku="SNK-003", category="Snack",   stock=70,  price=12000),
-    Product(id=13, name="Indomie Ayam Bawang",   brand="Indomie",          sku="MKN-004", category="Makanan", stock=150, price=3500),
-    Product(id=14, name="Telur Ayam 1Kg",        brand="FarmFresh",        sku="SMB-003", category="Sembako", stock=12,  price=29000),
-    Product(id=15, name="Gula Pasir 1Kg",        brand="SweetSugar",       sku="SMB-004", category="Sembako", stock=25,  price=16000),
-    Product(id=16, name="Jus Jeruk Segar",       brand="FruitPress",       sku="MNM-005", category="Minuman", stock=14,  price=12000),
-    Product(id=17, name="Wafer Keju",            brand="Cheezy",           sku="SNK-004", category="Snack",   stock=90,  price=10000),
-    Product(id=18, name="Sabun Cuci Piring",     brand="CleanMax",         sku="LNY-001", category="Lainnya", stock=33,  price=14000),
-    Product(id=19, name="Tisu Gulung",           brand="SoftCare",         sku="LNY-002", category="Lainnya", stock=60,  price=11000),
-    Product(id=20, name="Sambal Botol Pedas",    brand="HotTaste",         sku="LNY-003", category="Lainnya", stock=8,   price=17000),
+    Product(id=1,  name="Nasi Goreng Spesial",   brand="Warung Nusantara",
+            sku="MKN-001", category="Makanan", stock=10,  price=25000),
+    Product(id=2,  name="Es Teh Manis",           brand="Fresh Drink",
+            sku="MNM-001", category="Minuman", stock=120, price=5000),
+    Product(id=3,  name="Keripik Singkong",       brand="SnackRasa",
+            sku="SNK-001", category="Snack",   stock=1,   price=8000),
+    Product(id=4,  name="Mie Goreng",             brand="MieKu",
+            sku="MKN-002", category="Makanan", stock=0,   price=20000),
+    Product(id=5,  name="Ayam Geprek",            brand="GeprekZone",
+            sku="MKN-003", category="Makanan", stock=15,  price=22000),
+    Product(id=6,  name="Kopi Susu Gula Aren",   brand="CoffeeDaily",
+            sku="MNM-002", category="Minuman", stock=45,  price=18000),
+    Product(id=7,  name="Roti Bakar Coklat",     brand="BakeHouse",
+            sku="SNK-002", category="Snack",   stock=0,   price=15000),
+    Product(id=8,  name="Beras Premium 5Kg",     brand="PanenMakmur",
+            sku="SMB-001", category="Sembako", stock=18,  price=78000),
+    Product(id=9,  name="Minyak Goreng 1L",      brand="Tropis",
+            sku="SMB-002", category="Sembako", stock=40,  price=21000),
+    Product(id=10, name="Air Mineral 600ml",      brand="AquaFresh",
+            sku="MNM-003", category="Minuman", stock=200, price=4000),
+    Product(id=11, name="Susu Coklat Botol",     brand="MilkyDay",
+            sku="MNM-004", category="Minuman", stock=55,  price=9000),
+    Product(id=12, name="Biskuit Coklat",        brand="Crunchy",
+            sku="SNK-003", category="Snack",   stock=70,  price=12000),
+    Product(id=13, name="Indomie Ayam Bawang",   brand="Indomie",
+            sku="MKN-004", category="Makanan", stock=150, price=3500),
+    Product(id=14, name="Telur Ayam 1Kg",        brand="FarmFresh",
+            sku="SMB-003", category="Sembako", stock=12,  price=29000),
+    Product(id=15, name="Gula Pasir 1Kg",        brand="SweetSugar",
+            sku="SMB-004", category="Sembako", stock=25,  price=16000),
+    Product(id=16, name="Jus Jeruk Segar",       brand="FruitPress",
+            sku="MNM-005", category="Minuman", stock=14,  price=12000),
+    Product(id=17, name="Wafer Keju",            brand="Cheezy",
+            sku="SNK-004", category="Snack",   stock=90,  price=10000),
+    Product(id=18, name="Sabun Cuci Piring",     brand="CleanMax",
+            sku="LNY-001", category="Lainnya", stock=33,  price=14000),
+    Product(id=19, name="Tisu Gulung",           brand="SoftCare",
+            sku="LNY-002", category="Lainnya", stock=60,  price=11000),
+    Product(id=20, name="Sambal Botol Pedas",    brand="HotTaste",
+            sku="LNY-003", category="Lainnya", stock=8,   price=17000),
 ]
 
 CAT_THEME = {
@@ -80,10 +101,10 @@ CAT_THEME = {
     "Lainnya": {"emoji": "📦", "bg": "#F1F3F8", "text": "#6C757D"},
 }
 
-C_ROW_ALT    = "#FAFBFF"
-C_HEADER_BG  = "#FFFFFF"
+C_ROW_ALT = "#FAFBFF"
+C_HEADER_BG = "#FFFFFF"
 C_HEADER_TEXT = "#9EA3B8"
-C_DIVIDER    = "#F0F1F7"
+C_DIVIDER = "#F0F1F7"
 
 
 def _cat_theme(category: str) -> dict:
@@ -113,10 +134,10 @@ def _apply_card_shadow(widget: QWidget):
 # Product Card
 # ═══════════════════════════════════════════════════════════════════════════════
 class ProductCard(QFrame):
-    edit_clicked   = pyqtSignal(Product)
+    edit_clicked = pyqtSignal(Product)
     delete_clicked = pyqtSignal(Product)
 
-    CARD_WIDTH  = 360
+    CARD_WIDTH = 360
     CARD_HEIGHT = 300
 
     def __init__(self, product: Product, parent=None):
@@ -126,12 +147,14 @@ class ProductCard(QFrame):
 
     def _build(self):
         product = self._product
-        stock   = product.stock
+        stock = product.stock
 
         self.setObjectName("ProductCard")
 
         from PyQt6.QtWidgets import QSizePolicy
-        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        self.setSizePolicy(QSizePolicy.Policy.Expanding,
+                           QSizePolicy.Policy.Fixed)
+        self.setFixedHeight(200)
 
         self.setStyleSheet(f"""
             QFrame#ProductCard {{
@@ -179,7 +202,8 @@ class ProductCard(QFrame):
                 img_label.setPixmap(scaled)
             else:
                 img_label.setText("📦")
-                img_label.setStyleSheet(f"font-size: 40px; color: {C_TEXT_SEC};")
+                img_label.setStyleSheet(
+                    f"font-size: 40px; color: {C_TEXT_SEC};")
         else:
             img_label.setText("📦")
             img_label.setStyleSheet(f"font-size: 40px; color: {C_TEXT_SEC};")
@@ -327,7 +351,8 @@ class ProductCard(QFrame):
                 color:      #FFFFFF;
             }}
         """)
-        del_btn.clicked.connect(lambda: self.delete_clicked.emit(self._product))
+        del_btn.clicked.connect(
+            lambda: self.delete_clicked.emit(self._product))
 
         bottom.addWidget(price_lbl)
         bottom.addStretch()
@@ -343,18 +368,19 @@ class ProductCard(QFrame):
 # Product Table View
 # ═══════════════════════════════════════════════════════════════════════════════
 class ProductTableView(QTableWidget):
-    edit_clicked   = pyqtSignal(Product)
+    edit_clicked = pyqtSignal(Product)
     delete_clicked = pyqtSignal(Product)
 
-    COLUMNS      = ["      #", "Nama Produk", "SKU", "Kategori", "Harga", "Stok", "Aksi"]
-    COL_NO       = 0
-    COL_NAME     = 1
-    COL_SKU      = 2
+    COLUMNS = ["      #", "Nama Produk", "SKU",
+               "Kategori", "Harga", "Stok", "Aksi"]
+    COL_NO = 0
+    COL_NAME = 1
+    COL_SKU = 2
     COL_CATEGORY = 3
-    COL_PRICE    = 4
-    COL_STOCK    = 5
-    COL_ACTION   = 6
-    ROW_H        = 52
+    COL_PRICE = 4
+    COL_STOCK = 5
+    COL_ACTION = 6
+    ROW_H = 52
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -378,7 +404,7 @@ class ProductTableView(QTableWidget):
     def showEvent(self, event):
         super().showEvent(event)
         QTimer.singleShot(0, self._apply_viewport_clip)
-    
+
     MIN_NAME_WIDTH = 200
 
     def _setup_table(self):
@@ -390,7 +416,8 @@ class ProductTableView(QTableWidget):
         self.setShowGrid(True)
         self.setGridStyle(Qt.PenStyle.SolidLine)
 
-        self.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        self.setSelectionBehavior(
+            QAbstractItemView.SelectionBehavior.SelectRows)
         self.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
@@ -407,17 +434,25 @@ class ProductTableView(QTableWidget):
         # ===== HEADER =====
         header = self.horizontalHeader()
         header.setHighlightSections(False)
-        header.setDefaultAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        header.setDefaultAlignment(
+            Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
         header.setStretchLastSection(False)
         header.setFixedHeight(42)
 
-        header.setSectionResizeMode(self.COL_NO,       QHeaderView.ResizeMode.Fixed)
-        header.setSectionResizeMode(self.COL_NAME,     QHeaderView.ResizeMode.Stretch)
-        header.setSectionResizeMode(self.COL_SKU,      QHeaderView.ResizeMode.Fixed)
-        header.setSectionResizeMode(self.COL_CATEGORY, QHeaderView.ResizeMode.Fixed)
-        header.setSectionResizeMode(self.COL_PRICE,    QHeaderView.ResizeMode.Fixed)
-        header.setSectionResizeMode(self.COL_STOCK,    QHeaderView.ResizeMode.Fixed)
-        header.setSectionResizeMode(self.COL_ACTION,   QHeaderView.ResizeMode.Fixed)
+        header.setSectionResizeMode(
+            self.COL_NO,       QHeaderView.ResizeMode.Fixed)
+        header.setSectionResizeMode(
+            self.COL_NAME,     QHeaderView.ResizeMode.Stretch)
+        header.setSectionResizeMode(
+            self.COL_SKU,      QHeaderView.ResizeMode.Fixed)
+        header.setSectionResizeMode(
+            self.COL_CATEGORY, QHeaderView.ResizeMode.Fixed)
+        header.setSectionResizeMode(
+            self.COL_PRICE,    QHeaderView.ResizeMode.Fixed)
+        header.setSectionResizeMode(
+            self.COL_STOCK,    QHeaderView.ResizeMode.Fixed)
+        header.setSectionResizeMode(
+            self.COL_ACTION,   QHeaderView.ResizeMode.Fixed)
 
         self.setColumnWidth(self.COL_NO,       44)
         self.setColumnWidth(self.COL_SKU,      110)
@@ -425,9 +460,10 @@ class ProductTableView(QTableWidget):
         self.setColumnWidth(self.COL_PRICE,    160)
         self.setColumnWidth(self.COL_STOCK,    130)
         self.setColumnWidth(self.COL_ACTION,   200)
-        
+
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
-        self.setHorizontalScrollMode(QAbstractItemView.ScrollMode.ScrollPerPixel)
+        self.setHorizontalScrollMode(
+            QAbstractItemView.ScrollMode.ScrollPerPixel)
 
         # ===== STYLE =====
         self.setStyleSheet(f"""
@@ -547,7 +583,7 @@ class ProductTableView(QTableWidget):
                 width: 0;
             }}
         """)
-        
+
     def resizeEvent(self, event):
         super().resizeEvent(event)
         self._adjust_columns()
@@ -572,10 +608,12 @@ class ProductTableView(QTableWidget):
 
         if name_width >= self.MIN_NAME_WIDTH:
             # Cukup lebar → stretch seperti biasa
-            header.setSectionResizeMode(self.COL_NAME, QHeaderView.ResizeMode.Stretch)
+            header.setSectionResizeMode(
+                self.COL_NAME, QHeaderView.ResizeMode.Stretch)
         else:
             # Terlalu sempit → fix kolom Nama, aktifkan scroll horizontal
-            header.setSectionResizeMode(self.COL_NAME, QHeaderView.ResizeMode.Fixed)
+            header.setSectionResizeMode(
+                self.COL_NAME, QHeaderView.ResizeMode.Fixed)
             self.setColumnWidth(self.COL_NAME, self.MIN_NAME_WIDTH)
 
     # ── Empty state ───────────────────────────────────────────────────────────
@@ -624,14 +662,15 @@ class ProductTableView(QTableWidget):
             color:       {C_TEXT_PRI};
         """)
 
-        subtitle = QLabel("Coba ubah filter, kata kunci pencarian,\natau tambahkan produk baru.")
+        subtitle = QLabel(
+            "Coba ubah filter, kata kunci pencarian,\natau tambahkan produk baru.")
         subtitle.setAlignment(Qt.AlignmentFlag.AlignCenter)
         subtitle.setStyleSheet(f"""
             font-family: 'Segoe UI';
             font-size:   12px;
             color:       {C_TEXT_SEC};
         """)
-        
+
         layout.addStretch()
         layout.addWidget(icon)
         layout.addWidget(title)
@@ -639,9 +678,9 @@ class ProductTableView(QTableWidget):
         layout.addStretch()
 
         self.setCellWidget(0, 0, empty_widget)
-        
 
     # ── Populate ──────────────────────────────────────────────────────────────
+
     def populate(self, products: list):
         self.clearContents()
         self.setRowCount(0)
@@ -661,16 +700,24 @@ class ProductTableView(QTableWidget):
             for col in range(len(self.COLUMNS)):
                 ph = QTableWidgetItem()
                 ph.setBackground(QColor(row_bg))
-                ph.setFlags(Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable)
+                ph.setFlags(Qt.ItemFlag.ItemIsEnabled |
+                            Qt.ItemFlag.ItemIsSelectable)
                 self.setItem(row, col, ph)
 
-            self.setCellWidget(row, self.COL_NO,       self._make_no_cell(i + 1, row_bg))
-            self.setCellWidget(row, self.COL_NAME,     self._make_name_cell(product, row_bg))
-            self.setCellWidget(row, self.COL_SKU,      self._make_sku_cell(product, row_bg))
-            self.setCellWidget(row, self.COL_CATEGORY, self._make_category_badge(product.category, row_bg))
-            self.setCellWidget(row, self.COL_PRICE,    self._make_price_cell(product, row_bg))
-            self.setCellWidget(row, self.COL_STOCK,    self._make_stock_badge(product.stock, row_bg))
-            self.setCellWidget(row, self.COL_ACTION,   self._make_action_buttons(product, row_bg))
+            self.setCellWidget(row, self.COL_NO,
+                               self._make_no_cell(i + 1, row_bg))
+            self.setCellWidget(row, self.COL_NAME,
+                               self._make_name_cell(product, row_bg))
+            self.setCellWidget(row, self.COL_SKU,
+                               self._make_sku_cell(product, row_bg))
+            self.setCellWidget(row, self.COL_CATEGORY, self._make_category_badge(
+                product.category, row_bg))
+            self.setCellWidget(row, self.COL_PRICE,
+                               self._make_price_cell(product, row_bg))
+            self.setCellWidget(row, self.COL_STOCK,
+                               self._make_stock_badge(product.stock, row_bg))
+            self.setCellWidget(row, self.COL_ACTION,
+                               self._make_action_buttons(product, row_bg))
 
         QTimer.singleShot(0, self._apply_viewport_clip)
 
@@ -836,7 +883,8 @@ class ProductTableView(QTableWidget):
         lay = QHBoxLayout(w)
         lay.setContentsMargins(5, 0, 0, 0)
         lay.setSpacing(4)
-        lay.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        lay.setAlignment(Qt.AlignmentFlag.AlignLeft |
+                         Qt.AlignmentFlag.AlignVCenter)
 
         btn_wrap = QWidget()
         btn_wrap.setStyleSheet("""
@@ -903,18 +951,19 @@ class ProductDialog(QDialog):
 
     def __init__(self, product: Product = None, parent=None):
         super().__init__(parent)
-        self._product   = product
+        self._product = product
         self._edit_mode = product is not None
 
-        self.setWindowTitle("Edit Produk" if self._edit_mode else "Tambah Produk")
+        self.setWindowTitle(
+            "Edit Produk" if self._edit_mode else "Tambah Produk")
         self.setModal(True)
         self.setFixedWidth(420)
-        self.setWindowFlag(Qt.WindowType.MSWindowsFixedSizeDialogHint) 
+        self.setWindowFlag(Qt.WindowType.MSWindowsFixedSizeDialogHint)
         self.setSizePolicy(
             QSizePolicy.Policy.Fixed,
             QSizePolicy.Policy.Minimum,
         )
-        self.setSizeGripEnabled(False) 
+        self.setSizeGripEnabled(False)
         self.setStyleSheet(f"""
             QDialog {{
                 background:  {C_WHITE};
@@ -1074,7 +1123,7 @@ class ProductDialog(QDialog):
             combo.addItem(cat)
 
         wl.addWidget(combo)
-        
+
         arrow_lbl = QLabel("⌄", combo)
         arrow_lbl.setStyleSheet(f"""
             font-family: 'Segoe UI'; font-size: 18px; font-weight: 600;
@@ -1084,7 +1133,8 @@ class ProductDialog(QDialog):
         arrow_lbl.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
 
         # Posisi setelah layout diset — pakai QTimer agar width sudah terhitung
-        QTimer.singleShot(0, lambda: arrow_lbl.setGeometry(combo.width() - 28, -8, 24, 40))
+        QTimer.singleShot(0, lambda: arrow_lbl.setGeometry(
+            combo.width() - 28, -8, 24, 40))
 
         err_lbl = QLabel("")
         err_lbl.setStyleSheet("""
@@ -1154,12 +1204,15 @@ class ProductDialog(QDialog):
 
         logo = QLabel("Warung<span style='color:#4F6EF7'>+</span>")
         logo.setTextFormat(Qt.TextFormat.RichText)
-        logo.setStyleSheet("font-size:14px;color:#5F5E5A;font-weight:500;letter-spacing:1px;border:none;")
+        logo.setStyleSheet(
+            "font-size:14px;color:#5F5E5A;font-weight:500;letter-spacing:1px;border:none;")
         header_lay.addWidget(logo)
         header_lay.addSpacing(15)
 
-        title = QLabel("Edit Produk" if self._edit_mode else "Tambah Produk Baru")
-        title.setStyleSheet("font-size:20px;font-weight:600;color:#1b1b1b;border:none;")
+        title = QLabel(
+            "Edit Produk" if self._edit_mode else "Tambah Produk Baru")
+        title.setStyleSheet(
+            "font-size:20px;font-weight:600;color:#1b1b1b;border:none;")
         header_lay.addWidget(title)
         header_lay.addSpacing(5)
 
@@ -1187,12 +1240,17 @@ class ProductDialog(QDialog):
         cl.addSpacing(18)
 
         # ── Fields ────────────────────────────────────────────────────────────
-        self._name_field,  self._name_err  = self._make_field(cl, "Nama",        "Contoh: Kecap")
-        self._brand_field, self._brand_err = self._make_field(cl, "Merek",       "Contoh: Bango")
-        self._sku_field,   self._sku_err   = self._make_field(cl, "SKU",         "Contoh: MKN-001")
-        self._cat_combo,   self._cat_err   = self._make_combo(cl, "Kategori")
-        self._price_field, self._price_err = self._make_field(cl, "Harga (Rp)",  "Contoh: 25000", input_type="number")
-        self._stock_field, self._stock_err = self._make_field(cl, "Stok",        "Contoh: 10",    input_type="number")
+        self._name_field,  self._name_err = self._make_field(
+            cl, "Nama",        "Contoh: Kecap")
+        self._brand_field, self._brand_err = self._make_field(
+            cl, "Merek",       "Contoh: Bango")
+        self._sku_field,   self._sku_err = self._make_field(
+            cl, "SKU",         "Contoh: MKN-001")
+        self._cat_combo,   self._cat_err = self._make_combo(cl, "Kategori")
+        self._price_field, self._price_err = self._make_field(
+            cl, "Harga (Rp)",  "Contoh: 25000", input_type="number")
+        self._stock_field, self._stock_err = self._make_field(
+            cl, "Stok",        "Contoh: 10",    input_type="number")
 
         # ── Image Upload Section ──────────────────────────────────────────────
         img_wrap = QWidget()
@@ -1325,7 +1383,8 @@ class ProductDialog(QDialog):
         """)
         cancel_btn.clicked.connect(self.reject)
 
-        save_btn = QPushButton("Simpan Produk" if self._edit_mode else "Tambah Produk")
+        save_btn = QPushButton(
+            "Simpan Produk" if self._edit_mode else "Tambah Produk")
         save_btn.setFixedHeight(40)
         save_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         save_btn.setStyleSheet(f"""
@@ -1341,7 +1400,7 @@ class ProductDialog(QDialog):
         footer_lay.addWidget(cancel_btn)
         footer_lay.addWidget(save_btn)
         root.addWidget(footer)
-        
+
         if self._edit_mode:
             p = self._product
             self._name_field.setText(p.name)
@@ -1368,19 +1427,19 @@ class ProductDialog(QDialog):
             "",
             "Image Files (*.jpg *.jpeg *.png *.webp);;All Files (*)"
         )
-        
+
         if not file_path:
             return
-        
+
         # Check file size
         is_valid, msg = ImageOptimizer.file_size_valid(file_path)
         if not is_valid:
             QMessageBox.warning(self, "Ukuran Gambar Terlalu Besar", msg)
             return
-        
+
         self._selected_image_path = file_path
         self._set_image_preview(file_path)
-    
+
     def _set_image_preview(self, image_path: str):
         """Set image preview"""
         try:
@@ -1388,7 +1447,7 @@ class ProductDialog(QDialog):
             if pixmap.isNull():
                 self._image_preview.setText("❌ Gambar tidak valid")
                 return
-            
+
             # Scale to fit preview
             scaled_pixmap = pixmap.scaledToHeight(
                 75,
@@ -1396,14 +1455,14 @@ class ProductDialog(QDialog):
             )
             self._image_preview.setPixmap(scaled_pixmap)
             self._remove_img_btn.setVisible(True)
-            
+
             # Update info
             size = ImageOptimizer.get_file_size(image_path)
             size_str = ImageOptimizer.format_file_size(size)
             self._image_info.setText(f"Ukuran file: {size_str}")
         except Exception as e:
             self._image_preview.setText(f"❌ Error: {str(e)}")
-    
+
     def _on_remove_image(self):
         """Remove selected image"""
         self._selected_image_path = None
@@ -1431,36 +1490,42 @@ class ProductDialog(QDialog):
 
         name = self._name_field.text().strip()
         if not name:
-            self._show_error(self._name_field, self._name_err, "Nama produk tidak boleh kosong.")
+            self._show_error(self._name_field, self._name_err,
+                             "Nama produk tidak boleh kosong.")
             valid = False
-            
+
         brand = self._brand_field.text().strip()
         if not brand:
-            self._show_error(self._brand_field, self._brand_err, "Merek tidak boleh kosong.")
+            self._show_error(self._brand_field, self._brand_err,
+                             "Merek tidak boleh kosong.")
             valid = False
 
         sku = self._sku_field.text().strip()
         if not sku:
-            self._show_error(self._sku_field, self._sku_err, "SKU tidak boleh kosong.")
+            self._show_error(self._sku_field, self._sku_err,
+                             "SKU tidak boleh kosong.")
             valid = False
-            
+
         existing = ProductController.fetch()
         for p in existing:
             if p.sku == sku and p.id != (self._product.id if self._edit_mode else None):
-                self._show_error(self._sku_field, self._sku_err, "SKU sudah digunakan produk lain.")
+                self._show_error(self._sku_field, self._sku_err,
+                                 "SKU sudah digunakan produk lain.")
                 valid = False
                 break
 
         price_text = self._price_field.text().strip()
         if not price_text:
-            self._show_error(self._price_field, self._price_err, "Harga tidak boleh kosong.")
+            self._show_error(self._price_field, self._price_err,
+                             "Harga tidak boleh kosong.")
             valid = False
 
         stock_text = self._stock_field.text().strip()
         if not stock_text:
-            self._show_error(self._stock_field, self._stock_err, "Stok tidak boleh kosong.")
+            self._show_error(self._stock_field, self._stock_err,
+                             "Stok tidak boleh kosong.")
             valid = False
-            
+
         if not self._edit_mode:
             # Mode tambah produk → wajib upload gambar
             if not self._selected_image_path:
@@ -1499,16 +1564,16 @@ class ProductDialog(QDialog):
             # User uploaded a new image
             product_id = self._product.id if self._edit_mode else 0
             output_path, success, msg = ImageOptimizer.optimize_image(
-                self._selected_image_path, 
+                self._selected_image_path,
                 product_id
             )
-            
+
             if not success:
                 QMessageBox.warning(self, "Gagal Kompresi Gambar", msg)
                 return
-            
+
             image_path = output_path
-            
+
             # If editing and there's an old image, delete it
             if self._edit_mode and self._existing_image_path and self._existing_image_path != self._selected_image_path:
                 ImageOptimizer.delete_image(self._existing_image_path)
@@ -1534,6 +1599,8 @@ class ProductDialog(QDialog):
 # ═══════════════════════════════════════════════════════════════════════════════
 # Delete Product Dialog
 # ═══════════════════════════════════════════════════════════════════════════════
+
+
 class DeleteProductDialog(QDialog):
     confirmed = pyqtSignal()
 
@@ -1545,9 +1612,11 @@ class DeleteProductDialog(QDialog):
         self.setModal(True)
         self.setFixedWidth(420)  # ← samakan width
         self.setWindowFlag(Qt.WindowType.MSWindowsFixedSizeDialogHint)
-        self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Minimum)
+        self.setSizePolicy(QSizePolicy.Policy.Fixed,
+                           QSizePolicy.Policy.Minimum)
         self.setSizeGripEnabled(False)
-        self.setStyleSheet(f"QDialog {{ background: {C_WHITE}; font-family: 'Segoe UI'; }}")
+        self.setStyleSheet(
+            f"QDialog {{ background: {C_WHITE}; font-family: 'Segoe UI'; }}")
         self._build_ui()
         self.adjustSize()
         self.setMaximumSize(420, self.height())  # ← samakan
@@ -1558,7 +1627,8 @@ class DeleteProductDialog(QDialog):
         root.setSpacing(0)
 
         card = QFrame()
-        card.setStyleSheet("QFrame { background-color: #FAFAF8; border: 1px solid #DDD9D2; }")
+        card.setStyleSheet(
+            "QFrame { background-color: #FAFAF8; border: 1px solid #DDD9D2; }")
 
         cl = QVBoxLayout(card)
         cl.setContentsMargins(36, 30, 36, 30)  # ← samakan
@@ -1566,11 +1636,13 @@ class DeleteProductDialog(QDialog):
 
         logo = QLabel("Warung<span style='color:#4F6EF7'>+</span>")
         logo.setTextFormat(Qt.TextFormat.RichText)
-        logo.setStyleSheet("font-size:14px;color:#5F5E5A;font-weight:500;letter-spacing:1px;border:none;")
+        logo.setStyleSheet(
+            "font-size:14px;color:#5F5E5A;font-weight:500;letter-spacing:1px;border:none;")
         cl.addWidget(logo)
 
         title = QLabel("Hapus Produk?")
-        title.setStyleSheet("font-size:20px;font-weight:600;color:#1b1b1b;border:none;")
+        title.setStyleSheet(
+            "font-size:20px;font-weight:600;color:#1b1b1b;border:none;")
         cl.addWidget(title)
 
         subtitle = QLabel(
@@ -1602,13 +1674,16 @@ class DeleteProductDialog(QDialog):
         cat_icon = QLabel(cat["emoji"])
         cat_icon.setFixedSize(36, 36)
         cat_icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        cat_icon.setStyleSheet(f"font-size:18px;background:{cat['bg']};border-radius:8px;")
+        cat_icon.setStyleSheet(
+            f"font-size:18px;background:{cat['bg']};border-radius:8px;")
 
         detail = QVBoxLayout()
         detail.setSpacing(2)
         name_lbl = QLabel(self._product.name)
-        name_lbl.setStyleSheet(f"font-size:13px;font-weight:600;color:{C_TEXT_PRI};")
-        meta_lbl = QLabel(f"SKU: {self._product.sku}  ·  {_format_price(self._product.price)}")
+        name_lbl.setStyleSheet(
+            f"font-size:13px;font-weight:600;color:{C_TEXT_PRI};")
+        meta_lbl = QLabel(
+            f"SKU: {self._product.sku}  ·  {_format_price(self._product.price)}")
         meta_lbl.setStyleSheet(f"font-size:11px;color:{C_TEXT_SEC};")
         detail.addWidget(name_lbl)
         detail.addWidget(meta_lbl)
@@ -1660,10 +1735,12 @@ class DeleteProductDialog(QDialog):
 # ═══════════════════════════════════════════════════════════════════════════════
 # View Toggle
 # ═══════════════════════════════════════════════════════════════════════════════
+
+
 class ViewToggle(QWidget):
     VIEW_TABLE = "table"
-    VIEW_CARD  = "card"
-    toggled    = pyqtSignal(str)
+    VIEW_CARD = "card"
+    toggled = pyqtSignal(str)
 
     def __init__(self, initial: str = VIEW_CARD, parent=None):
         super().__init__(parent)
@@ -1751,24 +1828,26 @@ class ViewToggle(QWidget):
 class ProductPage(QWidget):
     def __init__(self, user: dict = None, parent=None):
         super().__init__(parent)
-        self._user              = user or {}
-        self._products          = self._load_products()
-        self._active_category   = "Semua"
-        self._search_query      = ""
-        self._view_mode         = ViewToggle.VIEW_TABLE
-        self._grid_initialized  = False
-        self._render_token      = 0
-        self._pending_refresh   = False
+        self._user = user or {}
+        self._products = self._load_products()
+        self._active_category = "Semua"
+        self._search_query = ""
+        self._view_mode = ViewToggle.VIEW_TABLE
+        self._grid_initialized = False
+        self._render_token = 0
+        self._pending_refresh = False
         self._stat_value_labels: dict[str, tuple[QLabel, QLabel]] = {}
 
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
         self.setStyleSheet(f"background: {C_BG};")
         self._build_ui()
-        
+
         # Connect signals untuk sync stok real-time dari halaman lain
-        product_signals.product_stock_changed.connect(self._on_product_stock_changed_signal)
+        product_signals.product_stock_changed.connect(
+            self._on_product_stock_changed_signal)
         product_signals.product_added.connect(self._on_product_added_signal)
-        product_signals.product_deleted.connect(self._on_product_deleted_signal)
+        product_signals.product_deleted.connect(
+            self._on_product_deleted_signal)
 
     def _load_products(self) -> list[Product]:
         # return SAMPLE_PRODUCTS.copy()
@@ -1941,8 +2020,10 @@ class ProductPage(QWidget):
         self._scroll = QScrollArea()
         self._scroll.setWidgetResizable(True)
         self._scroll.setFrameShape(QFrame.Shape.NoFrame)
-        self._scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self._scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self._scroll.setHorizontalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self._scroll.setVerticalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self._scroll.setStyleSheet(f"""
             QScrollArea {{
                 background: transparent;
@@ -1982,7 +2063,8 @@ class ProductPage(QWidget):
         self._grid_layout = QGridLayout(self._grid_container)
         self._grid_layout.setSpacing(14)
         self._grid_layout.setContentsMargins(0, 0, 0, 0)
-        self._grid_layout.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
+        self._grid_layout.setAlignment(
+            Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
 
         self._scroll.setWidget(self._grid_container)
         card_page_layout.addWidget(self._scroll)
@@ -2019,10 +2101,14 @@ class ProductPage(QWidget):
         row.setSpacing(14)
         values = self._calc_stats()
         stats = [
-            ("total",      "Total Produk", values["total"],      "#4F6EF7", "#EEF1FE"),
-            ("out_stock",  "Stok Habis",   values["out_stock"],  "#E05252", "#FDEAEA"),
-            ("low_stock",  "Stok Menipis", values["low_stock"],  "#E07D2A", "#FDF3EA"),
-            ("categories", "Kategori",     values["categories"], "#27AE60", "#E8F8F0"),
+            ("total",      "Total Produk",
+             values["total"],      "#4F6EF7", "#EEF1FE"),
+            ("out_stock",  "Stok Habis",
+             values["out_stock"],  "#E05252", "#FDEAEA"),
+            ("low_stock",  "Stok Menipis",
+             values["low_stock"],  "#E07D2A", "#FDF3EA"),
+            ("categories", "Kategori",
+             values["categories"], "#27AE60", "#E8F8F0"),
         ]
         for key, label, value, color, bg in stats:
             row.addWidget(self._stat_card(key, label, value, color, bg))
@@ -2145,7 +2231,8 @@ class ProductPage(QWidget):
         font.setWeight(600 if is_active else 500)
         btn.setFont(font)
         self._style_cat_btn(btn, cat, is_active)
-        btn.clicked.connect(lambda checked=False, s=cat: self._on_cat_changed(s))
+        btn.clicked.connect(lambda checked=False,
+                            s=cat: self._on_cat_changed(s))
         return btn
 
     def _style_cat_btn(self, btn: QPushButton, cat: str, active: bool):
@@ -2192,7 +2279,8 @@ class ProductPage(QWidget):
             result = [p for p in result if p.category == self._active_category]
         if self._search_query:
             q = self._search_query.lower()
-            result = [p for p in result if q in p.name.lower() or (p.sku and q in p.sku.lower())]
+            result = [p for p in result if q in p.name.lower() or (
+                p.sku and q in p.sku.lower())]
         return result
 
     def _clear_grid(self):
@@ -2237,28 +2325,31 @@ class ProductPage(QWidget):
         products = self._filtered_products()
 
         if not products:
+            # Reset alignment grid ke center saat kosong
+            self._grid_layout.setAlignment(
+                Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter
+            )
+
             empty_wrap = QWidget()
             empty_wrap.setStyleSheet("background: transparent; border: none;")
+            # Paksa widget mengisi lebar penuh scroll viewport
+            empty_wrap.setMinimumWidth(self._scroll.viewport().width())
 
             outer = QVBoxLayout(empty_wrap)
-            outer.setContentsMargins(0, 36, 0, 40)
-            outer.setAlignment(
-                Qt.AlignmentFlag.AlignTop |
-                Qt.AlignmentFlag.AlignHCenter
-            )
+            outer.setContentsMargins(0, 34, 0, 0)   # ← tambah margin atas
+            outer.setSpacing(0)
+            outer.setAlignment(Qt.AlignmentFlag.AlignTop |
+                               Qt.AlignmentFlag.AlignHCenter)
 
             empty_card = QFrame()
             empty_card.setFixedHeight(260)
-            empty_card.setMinimumWidth(420)
-            empty_card.setMaximumWidth(560)
-
+            empty_card.setFixedWidth(460)
             empty_card.setStyleSheet(f"""
                 QFrame {{
                     background: {C_WHITE};
                     border: 1px solid {C_BORDER};
                     border-radius: 18px;
                 }}
-
                 QLabel {{
                     background: transparent;
                     border: none;
@@ -2276,25 +2367,22 @@ class ProductPage(QWidget):
 
             title = QLabel("Tidak ada produk ditemukan")
             title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
             title.setStyleSheet(f"""
-                font-family:'Segoe UI';
-                font-size:16px;
-                font-weight:700;
-                color:{C_TEXT_PRI};
+                font-family: 'Segoe UI';
+                font-size:   16px;
+                font-weight: 700;
+                color:       {C_TEXT_PRI};
             """)
 
             subtitle = QLabel(
                 "Coba ubah filter, kata kunci pencarian,\n"
                 "atau tambahkan produk baru."
             )
-
             subtitle.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
             subtitle.setStyleSheet(f"""
-                font-family:'Segoe UI';
-                font-size:12px;
-                color:{C_TEXT_SEC};
+                font-family: 'Segoe UI';
+                font-size:   12px;
+                color:       {C_TEXT_SEC};
             """)
 
             card_layout.addStretch()
@@ -2305,19 +2393,15 @@ class ProductPage(QWidget):
 
             outer.addWidget(empty_card)
 
-            self._grid_layout.addWidget(
-                empty_wrap,
-                0,
-                0,
-                1,
-                max(1, self._get_column_count())
-            )
+            self._grid_layout.addWidget(empty_wrap, 0, 0)
 
             self._grid_container.adjustSize()
             self._grid_container.update()
             self._scroll.viewport().update()
             return
-
+        self._grid_layout.setAlignment(
+            Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft
+        )
         cols = self._get_column_count()
 
         # reset stretch
@@ -2342,7 +2426,6 @@ class ProductPage(QWidget):
         self._grid_container.update()
         self._scroll.viewport().update()
 
-
     def _render_all_cards(self, products: list[Product], token: int):
         cols = self._get_column_count()
 
@@ -2360,7 +2443,6 @@ class ProductPage(QWidget):
                 i // cols,
                 i % cols
             )
-
 
     def _render_batch_cards(
         self,
@@ -2467,7 +2549,7 @@ class ProductPage(QWidget):
                 category=data["category"],
                 image_path=data.get("image_path"),
             )
-            
+
             # If image was added with product_id=0, rename it to the actual ID
             if data.get("image_path"):
                 self._products = self._load_products()
@@ -2476,12 +2558,16 @@ class ProductPage(QWidget):
                     image_path = data.get("image_path")
                     if os.path.exists(image_path) and "product_0" in os.path.basename(image_path):
                         old_path = image_path
-                        ext = os.path.splitext(old_path)[1]  # ambil ekstensi asli
-                        original_name = data.get("original_image_name") or os.path.splitext(os.path.basename(old_path))[0]
-                        random_suffix = ''.join(random.choices(string.ascii_lowercase, k=5))
+                        # ambil ekstensi asli
+                        ext = os.path.splitext(old_path)[1]
+                        original_name = data.get("original_image_name") or os.path.splitext(
+                            os.path.basename(old_path))[0]
+                        random_suffix = ''.join(
+                            random.choices(string.ascii_lowercase, k=5))
                         ext = os.path.splitext(old_path)[1]
                         new_filename = f"{original_name}_{random_suffix}{ext}"
-                        new_path = os.path.join(os.path.dirname(old_path), new_filename)
+                        new_path = os.path.join(
+                            os.path.dirname(old_path), new_filename)
                         try:
                             if os.path.exists(old_path):
                                 os.rename(old_path, new_path)
@@ -2497,15 +2583,16 @@ class ProductPage(QWidget):
                                 )
                         except Exception as e:
                             print(f"Error renaming image: {e}")
-            
+
             self._products = self._load_products()
             # Emit signal untuk notifikasi halaman lain
             if self._products:
                 product_signals.product_added.emit(self._products[-1])
-            
+
             self._refresh_stats()
             self._refresh_view()
-            Toast.show_toast(f"Produk <b>{data['name']}</b> berhasil ditambahkan.", "success", self)
+            Toast.show_toast(
+                f"Produk <b>{data['name']}</b> berhasil ditambahkan.", "success", self)
         except TypeError as e:
             QMessageBox.critical(self, "Error", str(e))
 
@@ -2527,10 +2614,12 @@ class ProductPage(QWidget):
                 image_path = data["image_path"]
                 if os.path.exists(image_path):
                     original_name = data["original_image_name"]
-                    random_suffix = ''.join(random.choices(string.ascii_lowercase, k=5))
+                    random_suffix = ''.join(
+                        random.choices(string.ascii_lowercase, k=5))
                     ext = os.path.splitext(image_path)[1]
                     new_filename = f"{original_name}_{random_suffix}{ext}"
-                    new_path = os.path.join(os.path.dirname(image_path), new_filename)
+                    new_path = os.path.join(
+                        os.path.dirname(image_path), new_filename)
                     try:
                         os.rename(image_path, new_path)
                         ProductController.edit(
@@ -2548,13 +2637,15 @@ class ProductPage(QWidget):
 
             self._products = self._load_products()
             # Emit signal untuk notifikasi halaman lain
-            updated_product = next((p for p in self._products if p.id == data["id"]), None)
+            updated_product = next(
+                (p for p in self._products if p.id == data["id"]), None)
             if updated_product:
                 product_signals.product_edited.emit(updated_product)
-            
+
             self._refresh_stats()
             self._refresh_view()
-            Toast.show_toast(f"Produk <b>{data['name']}</b> berhasil diperbarui.", "success", self)
+            Toast.show_toast(
+                f"Produk <b>{data['name']}</b> berhasil diperbarui.", "success", self)
         except TypeError as e:
             QMessageBox.critical(self, "Error", str(e))
 
@@ -2564,16 +2655,17 @@ class ProductPage(QWidget):
                 # Hapus file gambar dulu sebelum hapus dari DB
                 if product.image_path and os.path.exists(product.image_path):
                     ImageOptimizer.delete_image(product.image_path)
-                
+
                 product_id = product.id
                 ProductController.remove(product_id)
                 # Emit signal untuk notifikasi halaman lain
                 product_signals.product_deleted.emit(product_id)
-                
+
                 self._products = self._load_products()
                 self._refresh_stats()
                 self._refresh_view()
-                Toast.show_toast(f"Produk <b>{product.name}</b> berhasil dihapus.", "success", self)
+                Toast.show_toast(
+                    f"Produk <b>{product.name}</b> berhasil dihapus.", "success", self)
             except ValueError as e:
                 # Foreign key constraint - produk masih ada referensi
                 QMessageBox.warning(self, "Tidak Bisa Dihapus", str(e))
@@ -2587,7 +2679,8 @@ class ProductPage(QWidget):
     def _on_export_clicked(self):
         """Handle export button click dengan custom dialog"""
         if not self._products:
-            QMessageBox.warning(self, "Export", "Tidak ada produk untuk diekspor.")
+            QMessageBox.warning(
+                self, "Export", "Tidak ada produk untuk diekspor.")
             return
 
         try:
@@ -2604,11 +2697,12 @@ class ProductPage(QWidget):
                 }
                 for p in self._products
             ]
-            
+
             # Show custom dialog
-            dialog = ImportExportDialog(dialog_type="export", products_data=products_data, parent=self)
+            dialog = ImportExportDialog(
+                dialog_type="export", products_data=products_data, parent=self)
             result = dialog.exec()
-            
+
             if result == QDialog.DialogCode.Accepted:
                 Toast.show_toast(dialog.result_message, "success", self)
                 # Optional: open folder
@@ -2621,7 +2715,8 @@ class ProductPage(QWidget):
                     except:
                         pass
         except Exception as e:
-            QMessageBox.critical(self, "Export Error", f"Terjadi kesalahan: {str(e)}")
+            QMessageBox.critical(self, "Export Error",
+                                 f"Terjadi kesalahan: {str(e)}")
 
     def _on_import_clicked(self):
         """Handle import button click dengan custom dialog"""
@@ -2629,22 +2724,25 @@ class ProductPage(QWidget):
             # Show custom dialog
             dialog = ImportExportDialog(dialog_type="import", parent=self)
             result = dialog.exec()
-            
+
             if result == QDialog.DialogCode.Accepted and dialog.imported_data:
                 # Show confirmation
                 msg_box = QMessageBox(self)
                 msg_box.setWindowTitle("Konfirmasi Import")
-                msg_box.setText(f"Siap mengimport {len(dialog.imported_data)} produk")
+                msg_box.setText(
+                    f"Siap mengimport {len(dialog.imported_data)} produk")
                 msg_box.setInformativeText(f"File: {dialog.result_message}")
-                msg_box.setStandardButtons(QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel)
+                msg_box.setStandardButtons(
+                    QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel)
                 msg_box.setDefaultButton(QMessageBox.StandardButton.Ok)
                 msg_box.setIcon(QMessageBox.Icon.Information)
-                
+
                 if msg_box.exec() == QMessageBox.StandardButton.Ok:
                     self._import_products(dialog.imported_data)
-        
+
         except Exception as e:
-            QMessageBox.critical(self, "Import Error", f"Terjadi kesalahan: {str(e)}")
+            QMessageBox.critical(self, "Import Error",
+                                 f"Terjadi kesalahan: {str(e)}")
 
     def _import_products(self, products_data: list):
         """Process imported products"""
@@ -2654,18 +2752,20 @@ class ProductPage(QWidget):
             error_count = 0
             errors = []
             imported_products = []
-            
+
             for idx, product_dict in enumerate(products_data, 1):
                 try:
                     # Check if SKU already exists
                     existing_products = ProductController.fetch()
-                    sku_exists = any(p.sku == product_dict.get('sku') for p in existing_products)
-                    
+                    sku_exists = any(p.sku == product_dict.get('sku')
+                                     for p in existing_products)
+
                     if sku_exists:
                         skip_count += 1
-                        errors.append(f"Produk '{product_dict.get('name')}' (SKU: {product_dict.get('sku')}) - SKU sudah ada")
+                        errors.append(
+                            f"Produk '{product_dict.get('name')}' (SKU: {product_dict.get('sku')}) - SKU sudah ada")
                         continue
-                    
+
                     ProductController.add(
                         name=product_dict.get('name', '').strip(),
                         brand=product_dict.get('brand', '').strip(),
@@ -2678,10 +2778,10 @@ class ProductPage(QWidget):
                 except Exception as e:
                     error_count += 1
                     errors.append(f"Produk #{idx} - {str(e)}")
-            
+
             # Reload products
             self._products = self._load_products()
-            
+
             # Emit signal untuk setiap produk yang diimport
             if import_count > 0:
                 imported_products = [p for p in self._products if any(
@@ -2689,43 +2789,45 @@ class ProductPage(QWidget):
                 )]
                 if imported_products:
                     product_signals.products_imported.emit(imported_products)
-            
+
             self._refresh_stats()
             self._refresh_view()
-            
+
             # Show result
             result_msg = f"✓ Berhasil import: {import_count} produk"
             if skip_count > 0:
                 result_msg += f"\n⊘ Skip: {skip_count} produk (SKU duplikat)"
             if error_count > 0:
                 result_msg += f"\n✗ Error: {error_count} produk"
-            
+
             if errors:
                 result_msg += f"\n\nDetail:\n" + "\n".join(errors[:10])
                 if len(errors) > 10:
                     result_msg += f"\n... dan {len(errors) - 10} error lainnya"
-            
+
             if import_count > 0:
-                Toast.show_toast(f"Berhasil mengimport <b>{import_count}</b> produk", "success", self)
+                Toast.show_toast(
+                    f"Berhasil mengimport <b>{import_count}</b> produk", "success", self)
                 QMessageBox.information(self, "Import Selesai", result_msg)
             else:
                 QMessageBox.warning(self, "Import Failed", result_msg)
-                
+
         except Exception as e:
-            QMessageBox.critical(self, "Import Error", f"Terjadi kesalahan: {str(e)}")
+            QMessageBox.critical(self, "Import Error",
+                                 f"Terjadi kesalahan: {str(e)}")
 
     def showEvent(self, event):
         super().showEvent(event)
         if not self._grid_initialized or self._pending_refresh:
             self._grid_initialized = True
-            self._pending_refresh  = False
+            self._pending_refresh = False
             QTimer.singleShot(0, self._refresh_view)
-            
+
     def reload_products(self):
         self._products = self._load_products()
         self._refresh_stats()
         self._refresh_view()
-    
+
     # ── Signal handlers untuk sinkronisasi real-time dengan halaman lain ──────
     def _on_product_stock_changed_signal(self, product_id: int, new_stock: int):
         """Handle ketika stok produk berubah dari halaman Kasir"""
@@ -2746,14 +2848,14 @@ class ProductPage(QWidget):
                 break
         self._refresh_stats()
         self._refresh_view()
-    
+
     def _on_product_added_signal(self, product: Product):
         """Handle ketika produk baru ditambahkan dari halaman lain"""
         if product not in self._products:
             self._products.append(product)
             self._refresh_stats()
             self._refresh_view()
-    
+
     def _on_product_deleted_signal(self, product_id: int):
         """Handle ketika produk dihapus dari halaman lain"""
         original_count = len(self._products)
