@@ -13,19 +13,23 @@ from PyQt6.QtSvg import QSvgRenderer
 
 
 # ── Nav items ─────────────────────────────────────────────────────────────────
-NAV_ITEMS = [
+NAV_ITEMS_ADMIN = [
     {"key": "dashboard",    "label": "Dashboard", "icon": "grid"},
     {"key": "products",     "label": "Produk",    "icon": "box"},
     {"key": "cashier",      "label": "Kasir",     "icon": "shopping-cart"},
-    {"key": "transactions", "label": "Transaksi", "icon": "receipt"},       # ganti: tag → receipt
-    {"key": "receivables",  "label": "Hutang",    "icon": "credit-card"},   # ganti: tag → credit-card
+    {"key": "transactions", "label": "Transaksi", "icon": "receipt"},
+    {"key": "receivables",  "label": "Hutang",    "icon": "credit-card"},
     {"key": "suppliers",    "label": "Supplier",  "icon": "truck"},
     {"key": "purchases",    "label": "Pembelian", "icon": "shopping-bag"},
     {"key": "reports",      "label": "Laporan",   "icon": "bar-chart-2"},
     {"key": "users",        "label": "Pengguna",  "icon": "users"},
 ]
- 
-VALID_NAV_KEYS = {item["key"] for item in NAV_ITEMS}
+
+NAV_ITEMS_CASHIER = [
+    {"key": "cashier", "label": "Kasir", "icon": "shopping-cart"},
+]
+
+VALID_NAV_KEYS = {item["key"] for item in NAV_ITEMS_ADMIN}
  
  
 # ── SVG icons ─────────────────────────────────────────────────────────────────
@@ -243,7 +247,19 @@ class SidebarWidget(QWidget):
     def __init__(self, user: dict, active_key: str = "dashboard", parent=None):
         super().__init__(parent)
         self._user = user
-        self._active_key = active_key if active_key in VALID_NAV_KEYS else "dashboard"
+        self._role = user.get("role", "Admin")
+
+        # Pilih nav items sesuai role
+        if self._role == "Admin":
+            self._nav_list = NAV_ITEMS_ADMIN
+            default_active = "dashboard"
+        else:
+            self._nav_list = NAV_ITEMS_CASHIER
+            default_active = "cashier"
+
+        # Pastikan active_key valid untuk role ini
+        valid_keys = {item["key"] for item in self._nav_list}
+        self._active_key = active_key if active_key in valid_keys else default_active
         self._nav_items: dict[str, NavItem] = {}
 
         self.setFixedWidth(220)
@@ -287,7 +303,7 @@ class SidebarWidget(QWidget):
         root.addWidget(self._divider())
         root.addSpacing(10)
 
-        for item in NAV_ITEMS:
+        for item in self._nav_list:
             is_active = item["key"] == self._active_key
             nav = NavItem(item["key"], item["label"], item["icon"], active=is_active)
             nav.clicked.connect(self._on_nav_clicked)

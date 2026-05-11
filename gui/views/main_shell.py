@@ -23,7 +23,11 @@ from gui.views.screens.reports_page import ReportsPage
 
 
 ANIM_DURATION = 160
-INITIAL_PAGE_KEY = "dashboard"
+INITIAL_PAGE_KEY_ADMIN = "dashboard"
+INITIAL_PAGE_KEY_CASHIER = "cashier"
+
+# Halaman yang boleh diakses oleh kasir
+CASHIER_ALLOWED_PAGES = {"cashier"}
 
 
 # ── Placeholder page untuk menu lain ─────────────────────────────────────────
@@ -73,9 +77,15 @@ class MainShell(QWidget):
     def __init__(self, user: dict, parent=None):
         super().__init__(parent)
         self._user = user
+        self._role = user.get("role", "Admin")
         self._animating = False
         self._pending_key: str | None = None
-        self._current_key = INITIAL_PAGE_KEY
+
+        # Tentukan halaman awal berdasarkan role
+        if self._role == "Admin":
+            self._current_key = INITIAL_PAGE_KEY_ADMIN
+        else:
+            self._current_key = INITIAL_PAGE_KEY_CASHIER
 
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
         self.setStyleSheet("background: #F4F5F9;")
@@ -165,6 +175,10 @@ class MainShell(QWidget):
         return widget
 
     def _navigate_to(self, key: str):
+        # Guard: kasir hanya boleh akses halaman yang diizinkan
+        if self._role != "Admin" and key not in CASHIER_ALLOWED_PAGES:
+            return
+
         if key == self._current_key:
             self._sidebar.set_active(key)
             return

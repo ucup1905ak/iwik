@@ -30,6 +30,7 @@ from controllers.purchase import PurchaseController, Purchase
 from controllers.purchase_detail import PurchaseDetailController, PurchaseDetail
 from controllers.receivables import ReceivablesController, Receivables
 from gui.views.components.toast import Toast
+from gui.signals import sales_signals
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -715,6 +716,9 @@ class ReportsPage(QWidget):
         self._build_ui()
         self._load_data()
 
+        # Auto-refresh saat ada transaksi baru dari halaman Kasir
+        sales_signals.sales_completed.connect(self._on_sales_completed)
+
     # ── UI Build ──────────────────────────────────────────────────────────────
     def _build_ui(self):
         root = QVBoxLayout(self)
@@ -958,6 +962,10 @@ class ReportsPage(QWidget):
             self._refresh_report()
         except Exception as e:
             Toast.show_toast(f"Gagal memuat laporan: {str(e)}", "error", self)
+
+    def _on_sales_completed(self, sales_id: int):
+        """Dipanggil otomatis saat transaksi selesai dari halaman Kasir."""
+        self._load_data()
 
     def _set_period(self, period: Period):
         self._active_period = period
