@@ -6,10 +6,9 @@ Mengikuti tema UI Warung+ dengan rounded corners, warna primer biru, etc
 
 from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QFrame, QLabel, QPushButton,
-    QFileDialog, QMessageBox, QProgressBar, QWidget
+    QFileDialog, QProgressBar, QWidget
 )
 from PyQt6.QtCore import Qt, QTimer
-from PyQt6.QtGui import QColor, QFont
 from utils.generate_xlsx import export_to_xlsx, import_from_xlsx
 import os
 
@@ -252,7 +251,7 @@ class ImportExportDialog(QDialog):
         """Proses export ke Excel"""
         try:
             if not self.products_data:
-                QMessageBox.warning(self, "Export", "Tidak ada produk untuk diekspor.")
+                self._show_result(success=False, message="Tidak ada produk untuk diekspor.")
                 return
             
             # Show progress

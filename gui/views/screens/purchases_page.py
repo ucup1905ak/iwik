@@ -10,7 +10,6 @@ from PyQt6.QtWidgets import (
     QFrame,
     QComboBox,
     QDialog,
-    QMessageBox,
     QTableWidget,
     QTableWidgetItem,
     QHeaderView,
@@ -1340,7 +1339,7 @@ class PurchaseDetailDialog(QDialog):
     def _on_add_detail(self):
         product_id = self._new_product_combo.currentData()
         if product_id is None:
-            QMessageBox.warning(self, "Perhatian", "Pilih produk terlebih dahulu.")
+            Toast.show_toast("Pilih produk terlebih dahulu.", "error", self)
             return
 
         quantity       = self._new_qty_spin.value()
@@ -1385,7 +1384,7 @@ class PurchaseDetailDialog(QDialog):
             self.data_changed.emit()
 
         except Exception as e:
-            QMessageBox.critical(self, "Error", str(e))
+            Toast.show_toast(str(e), "error", self)
 
     def _on_remove_detail(self, detail_id: int):
         try:
@@ -1418,7 +1417,7 @@ class PurchaseDetailDialog(QDialog):
             self._refresh_meta()
             self.data_changed.emit()
         except Exception as e:
-            QMessageBox.critical(self, "Error", str(e))
+            Toast.show_toast(str(e), "error", self)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -2175,7 +2174,7 @@ class PurchasePage(QWidget):
             self._refresh_view()
             Toast.show_toast(f"Pembelian <b>#{data.get('id', '')}</b> berhasil ditambahkan.", "success", self)
         except Exception as e:
-            QMessageBox.critical(self, "Error", str(e))
+            Toast.show_toast(str(e), "error", self)
 
     def _edit_purchase(self, data: dict):
         try:
@@ -2191,7 +2190,7 @@ class PurchasePage(QWidget):
             self._refresh_view()
             Toast.show_toast(f"Pembelian <b>#{data['id']}</b> berhasil diperbarui.", "success", self)
         except Exception as e:
-            QMessageBox.critical(self, "Error", str(e))
+            Toast.show_toast(str(e), "error", self)
 
     def _delete_purchase(self, purchase):
         def do_delete():
@@ -2202,7 +2201,7 @@ class PurchasePage(QWidget):
                 self._refresh_view()
                 Toast.show_toast(f"Pembelian <b>#{purchase.id}</b> berhasil dihapus.", "success", self)
             except Exception as e:
-                QMessageBox.critical(self, "Error", str(e))
+                Toast.show_toast(str(e), "error", self)
 
         dlg = DeletePurchaseDialog(purchase=purchase, parent=self)
         dlg.confirmed.connect(do_delete)

@@ -14,7 +14,6 @@ from PyQt6.QtWidgets import (
     QFrame,
     QComboBox,
     QDialog,
-    QMessageBox,
     QTableWidget,
     QTableWidgetItem,
     QHeaderView,
@@ -1768,7 +1767,7 @@ class ReceivablesPage(QWidget):
             )
             Toast.show_toast(msg, "success", self)
         except Exception as e:
-            QMessageBox.critical(self, "Error", str(e))
+            Toast.show_toast(str(e), "error", self)
 
     # ── Data ──────────────────────────────────────────────────────────────────
     def _load_data(self):
@@ -2336,7 +2335,7 @@ class ReceivablesPage(QWidget):
             cust = self._customer_map.get(data["customer_id"], "Pelanggan")
             Toast.show_toast(f"Hutang <b>{cust}</b> berhasil ditambahkan.", "success", self)
         except Exception as e:
-            QMessageBox.critical(self, "Error", str(e))
+            Toast.show_toast(str(e), "error", self)
 
     def _record_payment(self, data: dict):
         try:
@@ -2390,7 +2389,7 @@ class ReceivablesPage(QWidget):
 
             Toast.show_toast(msg, "success", self)
         except Exception as e:
-            QMessageBox.critical(self, "Error", str(e))
+            Toast.show_toast(str(e), "error", self)
 
     def _delete_receivable(self, rec: Receivables):
         try:
@@ -2408,7 +2407,7 @@ class ReceivablesPage(QWidget):
                 self
             )
         except Exception as e:
-            QMessageBox.critical(self, "Error", str(e))
+            Toast.show_toast(str(e), "error", self)
 
     def _delete_all_receivables(self, records: list[Receivables]):
         try:
@@ -2434,7 +2433,7 @@ class ReceivablesPage(QWidget):
             )
 
         except Exception as e:
-            QMessageBox.critical(self, "Error", str(e))
+            Toast.show_toast(str(e), "error", self)
 
     def showEvent(self, event):
         super().showEvent(event)
