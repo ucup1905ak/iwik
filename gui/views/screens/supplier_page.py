@@ -8,7 +8,6 @@ from PyQt6.QtWidgets import (
     QLineEdit,
     QFrame,
     QDialog,
-    QMessageBox,
     QTableWidget,
     QTableWidgetItem,
     QHeaderView,
@@ -19,7 +18,7 @@ from PyQt6.QtWidgets import (
     QGridLayout,
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QTimer, QRegularExpression 
-from PyQt6.QtGui import QColor, QPainterPath, QRegion, QFont,  QRegularExpressionValidator
+from PyQt6.QtGui import QColor, QPainterPath, QRegion, QRegularExpressionValidator
 from gui.views.components.toast import Toast
 from gui.views.components import Avatar
 
@@ -1382,7 +1381,7 @@ class SupplierPage(QWidget):
             self._refresh_view()
             Toast.show_toast(f"Supplier <b>{data['name']}</b> berhasil diperbarui.", "success", self)
         except Exception as e:
-            QMessageBox.critical(self, "Error", str(e))
+            Toast.show_toast(str(e), "error", self)
 
     def _add_supplier(self, data: dict):
         try:
@@ -1396,7 +1395,7 @@ class SupplierPage(QWidget):
             self._refresh_view()
             Toast.show_toast(f"Supplier <b>{data['name']}</b> berhasil ditambahkan.", "success", self)
         except Exception as e:
-            QMessageBox.critical(self, "Error", str(e))
+            Toast.show_toast(str(e), "error", self)
 
     def _delete_supplier(self, supplier: Supplier):
         def do_delete():
@@ -1407,7 +1406,7 @@ class SupplierPage(QWidget):
                 self._refresh_view()
                 Toast.show_toast(f"Supplier <b>{supplier.name}</b> berhasil dihapus.", "success", self)
             except Exception as e:
-                QMessageBox.critical(self, "Error", str(e))
+                Toast.show_toast(str(e), "error", self)
 
         dlg = DeleteSupplierDialog(supplier=supplier, parent=self)
         dlg.confirmed.connect(do_delete)

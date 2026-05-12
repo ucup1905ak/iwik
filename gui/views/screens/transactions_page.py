@@ -12,9 +12,7 @@ from PyQt6.QtWidgets import (
     QPushButton,
     QLineEdit,
     QFrame,
-    QComboBox,
     QDialog,
-    QMessageBox,
     QTableWidget,
     QTableWidgetItem,
     QHeaderView,
@@ -1724,7 +1722,7 @@ class TransactionPage(QWidget):
                 self._refresh_view()
                 Toast.show_toast(f"Transaksi <b>#TX{tx['id']:04d}</b> berhasil dihapus.", "success", self)
             except Exception as e:
-                QMessageBox.critical(self, "Error", str(e))
+                Toast.show_toast(str(e), "error", self)
 
         dlg = DeleteTransactionDialog(tx=tx, parent=self)
         dlg.confirmed.connect(do_delete)

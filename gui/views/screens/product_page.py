@@ -1434,7 +1434,7 @@ class ProductDialog(QDialog):
         # Check file size
         is_valid, msg = ImageOptimizer.file_size_valid(file_path)
         if not is_valid:
-            QMessageBox.warning(self, "Ukuran Gambar Terlalu Besar", msg)
+            Toast.show_toast(msg, "error", self)
             return
 
         self._selected_image_path = file_path
@@ -1569,7 +1569,7 @@ class ProductDialog(QDialog):
             )
 
             if not success:
-                QMessageBox.warning(self, "Gagal Kompresi Gambar", msg)
+                Toast.show_toast(msg, "error", self)
                 return
 
             image_path = output_path
@@ -2594,7 +2594,7 @@ class ProductPage(QWidget):
             Toast.show_toast(
                 f"Produk <b>{data['name']}</b> berhasil ditambahkan.", "success", self)
         except TypeError as e:
-            QMessageBox.critical(self, "Error", str(e))
+            Toast.show_toast(str(e), "error", self)
 
     def _update_product(self, data: dict):
         try:
@@ -2647,7 +2647,7 @@ class ProductPage(QWidget):
             Toast.show_toast(
                 f"Produk <b>{data['name']}</b> berhasil diperbarui.", "success", self)
         except TypeError as e:
-            QMessageBox.critical(self, "Error", str(e))
+            Toast.show_toast(str(e), "error", self)
 
     def _delete_product(self, product: Product):
         def do_delete():
@@ -2668,9 +2668,9 @@ class ProductPage(QWidget):
                     f"Produk <b>{product.name}</b> berhasil dihapus.", "success", self)
             except ValueError as e:
                 # Foreign key constraint - produk masih ada referensi
-                QMessageBox.warning(self, "Tidak Bisa Dihapus", str(e))
+                Toast.show_toast(str(e), "error", self)
             except TypeError as e:
-                QMessageBox.critical(self, "Error", str(e))
+                Toast.show_toast(str(e), "error", self)
 
         dlg = DeleteProductDialog(product=product, parent=self)
         dlg.confirmed.connect(do_delete)
@@ -2679,8 +2679,7 @@ class ProductPage(QWidget):
     def _on_export_clicked(self):
         """Handle export button click dengan custom dialog"""
         if not self._products:
-            QMessageBox.warning(
-                self, "Export", "Tidak ada produk untuk diekspor.")
+            Toast.show_toast("Tidak ada produk untuk diekspor.", "error", self)
             return
 
         try:
@@ -2715,8 +2714,7 @@ class ProductPage(QWidget):
                     except:
                         pass
         except Exception as e:
-            QMessageBox.critical(self, "Export Error",
-                                 f"Terjadi kesalahan: {str(e)}")
+            Toast.show_toast(f"Terjadi kesalahan saat export: {str(e)}", "error", self)
 
     def _on_import_clicked(self):
         """Handle import button click dengan custom dialog"""
@@ -2741,8 +2739,7 @@ class ProductPage(QWidget):
                     self._import_products(dialog.imported_data)
 
         except Exception as e:
-            QMessageBox.critical(self, "Import Error",
-                                 f"Terjadi kesalahan: {str(e)}")
+            Toast.show_toast(f"Terjadi kesalahan saat import: {str(e)}", "error", self)
 
     def _import_products(self, products_data: list):
         """Process imported products"""
@@ -2806,15 +2803,12 @@ class ProductPage(QWidget):
                     result_msg += f"\n... dan {len(errors) - 10} error lainnya"
 
             if import_count > 0:
-                Toast.show_toast(
-                    f"Berhasil mengimport <b>{import_count}</b> produk", "success", self)
-                QMessageBox.information(self, "Import Selesai", result_msg)
+                Toast.show_toast(f"Berhasil mengimport <b>{import_count}</b> produk", "success", self)
             else:
-                QMessageBox.warning(self, "Import Failed", result_msg)
+                Toast.show_toast("Tidak ada produk yang berhasil diimport.", "error", self)
 
         except Exception as e:
-            QMessageBox.critical(self, "Import Error",
-                                 f"Terjadi kesalahan: {str(e)}")
+            Toast.show_toast(f"Terjadi kesalahan saat import: {str(e)}", "error", self)
 
     def showEvent(self, event):
         super().showEvent(event)

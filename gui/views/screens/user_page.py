@@ -9,7 +9,6 @@ from PyQt6.QtWidgets import (
     QFrame,
     QComboBox,
     QDialog,
-    QMessageBox,
     QTableWidget,
     QTableWidgetItem,
     QHeaderView,
@@ -1504,7 +1503,7 @@ class UserPage(QWidget):
             self._refresh_view()
             Toast.show_toast(f"Pengguna <b>{data['name']}</b> berhasil diperbarui.", "success", self)
         except Exception as e:
-            QMessageBox.critical(self, "Error", str(e))
+            Toast.show_toast(str(e), "error", self)
 
     def _add_user(self, data: dict):
         try:
@@ -1514,7 +1513,7 @@ class UserPage(QWidget):
             self._refresh_view()
             Toast.show_toast(f"Pengguna <b>{data['name']}</b> berhasil ditambahkan.", "success", self)
         except Exception as e:
-            QMessageBox.critical(self, "Error", str(e))
+            Toast.show_toast(str(e), "error", self)
 
     def _delete_user(self, user: tuple):
         def do_delete():
@@ -1525,7 +1524,7 @@ class UserPage(QWidget):
                 self._refresh_view()
                 Toast.show_toast(f"Pengguna <b>{user[1]}</b> berhasil dihapus.", "success", self)
             except Exception as e:
-                QMessageBox.critical(self, "Error", str(e))
+                Toast.show_toast(str(e), "error", self)
 
         dlg = DeleteUserDialog(user=user, parent=self)
         dlg.confirmed.connect(do_delete)
