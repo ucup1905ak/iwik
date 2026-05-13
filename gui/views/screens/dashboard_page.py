@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from typing import Literal
+import calendar
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor, QPainter, QPainterPath, QPen, QBrush
@@ -24,11 +25,11 @@ from PyQt6.QtWidgets import (
 from controllers.product import ProductController, Product
 from controllers.sales import SalesController, Sales
 from controllers.sales_detail import SalesDetailController, SalesDetail
+from controllers.receivables import ReceivablesController, Receivables
 from gui.views.components.toast import Toast
-from gui.signals import sales_signals, purchase_signals
+from gui.signals import sales_signals, purchase_signals, receivables_signals
 
 
-# ── Theme: disamakan dengan product_page.py / sales_page.py ──────────────────
 C_BG = "#F4F5F9"
 C_WHITE = "#FFFFFF"
 C_ACCENT = "#4F6EF7"
@@ -116,8 +117,8 @@ def _parse_datetime(value: str | None) -> datetime | None:
 def _period_start(period: Period) -> datetime:
     """Return the start datetime for filtering sales.
     - daily  : midnight today (calendar day)
-    - weekly : 7 days ago from now (rolling window)
-    - monthly: 30 days ago from now (rolling window)
+    - weekly : midnight Monday of this ISO week (Senin s/d Minggu)
+    - monthly: midnight 1st of this calendar month
     """
     now = datetime.now()
 
@@ -125,20 +126,28 @@ def _period_start(period: Period) -> datetime:
         return now.replace(hour=0, minute=0, second=0, microsecond=0)
 
     if period == "weekly":
-        # Rolling 7-day window — avoids the "Monday midnight" edge-case
-        # where calendar-week-start equals right now and all data falls out.
-        return (now - timedelta(days=6)).replace(hour=0, minute=0, second=0, microsecond=0)
+        # Senin minggu ini (weekday() == 0 = Senin)
+        days_since_monday = now.weekday()  # 0=Senin … 6=Minggu
+        monday = now - timedelta(days=days_since_monday)
+        return monday.replace(hour=0, minute=0, second=0, microsecond=0)
 
-    # monthly: rolling 30-day window
-    return (now - timedelta(days=29)).replace(hour=0, minute=0, second=0, microsecond=0)
+    # monthly: awal bulan kalender ini
+    return now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
 
 def _period_label(period: Period) -> str:
+    now = datetime.now()
     if period == "daily":
         return "Hari Ini"
     if period == "weekly":
-        return "7 Hari Terakhir"
-    return "30 Hari Terakhir"
+        # Hitung Senin minggu ini
+        days_since_monday = now.weekday()
+        monday = (now - timedelta(days=days_since_monday)).date()
+        sunday = (monday + timedelta(days=6))
+        return f"Minggu Ini ({monday.strftime('%d/%m')} – {sunday.strftime('%d/%m')})"
+    # monthly
+    month_name = now.strftime("%B %Y")
+    return f"Bulan {month_name}"
 
 
 def _same_period(time_value: str | None, period: Period) -> bool:
@@ -332,27 +341,42 @@ class CategoryCard(QFrame):
 
     def _build(self):
         theme = _cat_theme(self._category)
+        is_empty = self._stock_count == 0 and self._product_count > 0
+
         self.setObjectName("CategoryCard")
         self.setFixedHeight(86)
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
-        self.setStyleSheet(f"""
-            QFrame#CategoryCard {{
-                background: {C_WHITE};
-                border-radius: 12px;
-                border: 1.5px solid {C_BORDER};
-            }}
-        """)
+
+        if is_empty:
+            # Full red highlight — semua stok habis di kategori ini
+            self.setStyleSheet(f"""
+                QFrame#CategoryCard {{
+                    background: {C_DANGER};
+                    border-radius: 12px;
+                    border: 1.5px solid #C0392B;
+                }}
+            """)
+        else:
+            self.setStyleSheet(f"""
+                QFrame#CategoryCard {{
+                    background: {C_WHITE};
+                    border-radius: 12px;
+                    border: 1.5px solid {C_BORDER};
+                }}
+            """)
 
         root = QHBoxLayout(self)
         root.setContentsMargins(14, 12, 14, 12)
         root.setSpacing(12)
 
-        icon = QLabel(theme["emoji"])
+        icon_bg   = "rgba(255,255,255,0.25)" if is_empty else theme['bg']
+        icon_text = "#FFFFFF" if is_empty else theme['text']
+        icon = QLabel("🚫" if is_empty else theme["emoji"])
         icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
         icon.setFixedSize(42, 42)
         icon.setStyleSheet(f"""
-            background: {theme['bg']};
-            color: {theme['text']};
+            background: {icon_bg};
+            color: {icon_text};
             border-radius: 12px;
             border: none;
             font-size: 20px;
@@ -363,22 +387,30 @@ class CategoryCard(QFrame):
         info.setContentsMargins(0, 0, 0, 0)
         info.setSpacing(2)
 
+        name_color = "#FFFFFF" if is_empty else C_TEXT_PRI
         name = QLabel(self._category)
         name.setStyleSheet(f"""
             font-family: 'Segoe UI';
             font-size: 13px;
             font-weight: 700;
-            color: {C_TEXT_PRI};
+            color: {name_color};
             background: transparent;
             border: none;
         """)
         info.addWidget(name)
 
-        sub = QLabel(f"{_format_number(self._product_count)} produk • {_format_number(self._stock_count)} stok")
+        sub_color = "rgba(255,255,255,0.85)" if is_empty else C_TEXT_SEC
+        sub_text = (
+            f"{_format_number(self._product_count)} produk • Stok HABIS"
+            if is_empty
+            else f"{_format_number(self._product_count)} produk • {_format_number(self._stock_count)} stok"
+        )
+        sub = QLabel(sub_text)
         sub.setStyleSheet(f"""
             font-family: 'Segoe UI';
             font-size: 11px;
-            color: {C_TEXT_SEC};
+            font-weight: {'700' if is_empty else '400'};
+            color: {sub_color};
             background: transparent;
             border: none;
         """)
@@ -654,6 +686,7 @@ class DashboardPage(QWidget):
         self._products: list[Product] = []
         self._sales: list[Sales] = []
         self._sales_details: list[SalesDetail] = []
+        self._receivables: list[Receivables] = []
 
         self._period_buttons: dict[Period, QPushButton] = {}
 
@@ -666,6 +699,8 @@ class DashboardPage(QWidget):
         # ── Auto-refresh: setiap transaksi penjualan / pembelian selesai ───────
         sales_signals.sales_completed.connect(self._on_sales_completed)
         purchase_signals.purchase_completed.connect(self._on_purchase_completed)
+        receivables_signals.receivables_updated.connect(self._on_receivables_updated)
+        receivables_signals.receivables_paid.connect(self._on_receivables_paid)
 
     # ── Signal handlers ──────────────────────────────────────────────
     def _on_sales_completed(self, sales_id: int):
@@ -674,6 +709,14 @@ class DashboardPage(QWidget):
 
     def _on_purchase_completed(self, purchase_id: int):
         """Dipanggil otomatis setelah admin tambah/hapus detail pembelian."""
+        self._load_data()
+
+    def _on_receivables_updated(self, sales_id: int):
+        """Dipanggil otomatis ketika data piutang diupdate."""
+        self._load_data()
+
+    def _on_receivables_paid(self, receivables_id: int):
+        """Dipanggil otomatis ketika pembayaran piutang diproses."""
         self._load_data()
 
     # ── UI Build ──────────────────────────────────────────────────────────────
@@ -816,18 +859,20 @@ class DashboardPage(QWidget):
         grid.setHorizontalSpacing(12)
         grid.setVerticalSpacing(12)
 
-        self._revenue_card = MetricCard("Pendapatan", "Rp 0", "Hari Ini", "💰", C_ACCENT)
-        self._transaction_card = MetricCard("Transaksi", "0", "Total transaksi", "🧾", C_SUCCESS)
-        self._product_card = MetricCard("Total Produk", "0", "0 kategori aktif", "📦", C_ACCENT)
-        self._restock_card = MetricCard("Perlu Restock", "0", "Stok rendah / habis", "⚠️", C_WARNING)
+        # 1 card omset dinamis sesuai periode toggle
+        self._revenue_card     = MetricCard("Omset",         "Rp 0",  "Hari Ini",              "💰", C_ACCENT)
+        self._transaction_card = MetricCard("Transaksi",     "0",     "Total transaksi",       "🧾", C_SUCCESS)
+        self._receivable_card  = MetricCard("Total Piutang", "Rp 0",  "Belum dilunasi",        "💳", C_DANGER)
+        self._product_card     = MetricCard("Total Produk",  "0",     "0 kategori aktif",      "📦", C_ACCENT)
+        self._restock_card     = MetricCard("Perlu Restock", "0",     "Stok rendah / habis",   "⚠️", C_WARNING)
 
         cards = [
             self._revenue_card,
             self._transaction_card,
+            self._receivable_card,
             self._product_card,
             self._restock_card,
         ]
-
         for i, card in enumerate(cards):
             grid.addWidget(card, 0, i)
             grid.setColumnStretch(i, 1)
@@ -987,6 +1032,7 @@ class DashboardPage(QWidget):
             self._products = ProductController.fetch()
             self._sales = SalesController.fetch()
             self._sales_details = SalesDetailController.fetch()
+            self._receivables = ReceivablesController.fetch()
             self._refresh_dashboard()
         except Exception as e:
             Toast.show_toast(f"Gagal memuat dashboard: {str(e)}", "error", self)
@@ -1040,6 +1086,7 @@ class DashboardPage(QWidget):
         ]
 
         self._refresh_metrics(period_sales)
+        self._refresh_receivables()
         self._refresh_categories()
         self._refresh_chart(period_sales)
         self._refresh_insights(period_details)
@@ -1050,17 +1097,35 @@ class DashboardPage(QWidget):
         return [sale for sale in self._sales if _same_period(sale.time, self._active_period)]
 
     def _refresh_metrics(self, period_sales: list[Sales]):
-        revenue = sum(float(sale.total_price or 0) for sale in period_sales)
-        transaction_count = len(period_sales)
+        now = datetime.now()
         product_count = len(self._products)
         active_categories = len({p.category for p in self._products if p.category})
         low_stock_count = len([p for p in self._products if int(p.stock or 0) < LOW_STOCK_THRESHOLD])
         empty_stock_count = len([p for p in self._products if int(p.stock or 0) == 0])
 
-        label = _period_label(self._active_period)
-        # Show total sales for period on revenue card subtitle
-        self._revenue_card.set_values(_format_price(revenue), f"{label} • {_format_number(transaction_count)} transaksi")
-        self._transaction_card.set_values(_format_number(transaction_count), f"Transaksi {label.lower()}")
+        transaction_count = len(period_sales)
+        revenue = sum(float(sale.paid_amount or 0) for sale in period_sales)
+
+        # ── Label & subtitle omset sesuai periode aktif ───────────────
+        if self._active_period == "daily":
+            today_str = now.strftime("%d %B %Y")
+            subtitle  = f"Hari Ini ({today_str}) • {_format_number(transaction_count)} transaksi"
+
+        elif self._active_period == "weekly":
+            days_since_monday = now.weekday()
+            monday = (now - timedelta(days=days_since_monday)).date()
+            sunday = monday + timedelta(days=6)
+            subtitle = (
+                f"Senin {monday.strftime('%d/%m')} – Minggu {sunday.strftime('%d/%m')} "
+                f"• {_format_number(transaction_count)} transaksi"
+            )
+
+        else:  # monthly
+            month_name = now.strftime("%B %Y")
+            subtitle   = f"{month_name} • {_format_number(transaction_count)} transaksi"
+
+        self._revenue_card.set_values(_format_price(revenue), subtitle)
+        self._transaction_card.set_values(_format_number(transaction_count), f"Transaksi {_period_label(self._active_period)}")
         self._product_card.set_values(_format_number(product_count), f"{_format_number(active_categories)} kategori aktif")
         self._restock_card.set_values(_format_number(low_stock_count), f"{_format_number(empty_stock_count)} produk habis")
 
@@ -1083,16 +1148,32 @@ class DashboardPage(QWidget):
             self._category_grid.addWidget(card, 0, i)
             self._category_grid.setColumnStretch(i, 1)
 
+    def _refresh_receivables(self):
+        """Update metric card piutang dari data receivables yang belum lunas."""
+        unpaid = [r for r in self._receivables if str(r.status).lower() in ("unpaid", "pending", "belum lunas")]
+        total_piutang = sum(float(r.total_amount or 0) - float(r.amount_paid or 0) for r in unpaid)
+        jumlah_piutang = len(unpaid)
+        self._receivable_card.set_values(
+            _format_price(total_piutang),
+            f"{_format_number(jumlah_piutang)} transaksi belum lunas"
+        )
+
     def _refresh_chart(self, period_sales: list[Sales]):
         data = self._build_chart_data(period_sales)
         self._sales_chart.set_data(data)
 
+        now = datetime.now()
         if self._active_period == "daily":
-            self._chart_subtitle.setText("Pendapatan hari ini per jam")
+            self._chart_subtitle.setText(f"Pendapatan per jam — {now.strftime('%d %B %Y')}")
         elif self._active_period == "weekly":
-            self._chart_subtitle.setText("Pendapatan 7 hari terakhir per hari")
+            days_since_monday = now.weekday()
+            monday = now - timedelta(days=days_since_monday)
+            sunday = monday + timedelta(days=6)
+            self._chart_subtitle.setText(
+                f"Pendapatan per hari — Senin {monday.strftime('%d/%m')} s/d Minggu {sunday.strftime('%d/%m')}"
+            )
         else:
-            self._chart_subtitle.setText("Pendapatan 30 hari terakhir per tanggal")
+            self._chart_subtitle.setText(f"Pendapatan per bulan — {now.strftime('%Y')}")
 
     def _build_chart_data(self, period_sales: list[Sales]) -> list[tuple[str, float]]:
         buckets: dict[str, float] = defaultdict(float)
@@ -1112,13 +1193,13 @@ class DashboardPage(QWidget):
             return [(label, buckets[label]) for label in labels]
 
         if self._active_period == "weekly":
-            # Rolling 7-day window — one bucket per calendar day
-            days: list[datetime] = [
-                (now - timedelta(days=i)).replace(hour=0, minute=0, second=0, microsecond=0)
-                for i in range(6, -1, -1)  # oldest → newest
-            ]
-            labels = [d.strftime("%d/%m") for d in days]
-            date_to_label = {d.date(): lbl for d, lbl in zip(days, labels)}
+            # Senin s/d Minggu minggu ini — satu bucket per hari
+            days_since_monday = now.weekday()
+            monday = (now - timedelta(days=days_since_monday)).replace(hour=0, minute=0, second=0, microsecond=0)
+            week_days: list[datetime] = [monday + timedelta(days=i) for i in range(7)]
+            day_names = ["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"]
+            labels = [f"{day_names[i]}\n{d.strftime('%d/%m')}" for i, d in enumerate(week_days)]
+            date_to_label = {d.date(): lbl for d, lbl in zip(week_days, labels)}
             for label in labels:
                 buckets[label] = 0
 
@@ -1129,22 +1210,29 @@ class DashboardPage(QWidget):
 
             return [(label, buckets[label]) for label in labels]
 
-        # monthly — rolling 30-day window, one bucket per calendar day
-        days = [
-            (now - timedelta(days=i)).replace(hour=0, minute=0, second=0, microsecond=0)
-            for i in range(29, -1, -1)  # oldest → newest
-        ]
-        labels = [d.strftime("%d/%m") for d in days]
-        date_to_label = {d.date(): lbl for d, lbl in zip(days, labels)}
-        for label in labels:
-            buckets[label] = 0
-
-        for sale in period_sales:
+        # monthly — per bulan kalender (semua bulan yang ada data di tahun ini + tahun lalu bila perlu)
+        # Tampilkan bucket per bulan dari bulan-bulan yang memiliki data di semua _sales
+        # Agar lebih informatif: tampilkan 12 bulan terakhir sebagai bucket
+        month_buckets: dict[tuple, float] = defaultdict(float)
+        for sale in self._sales:  # gunakan SEMUA sales agar chart bulan terisi
             dt = _parse_datetime(sale.time)
-            if dt and dt.date() in date_to_label:
-                buckets[date_to_label[dt.date()]] += float(sale.total_price or 0)
+            if not dt:
+                continue
+            key = (dt.year, dt.month)
+            month_buckets[key] += float(sale.total_price or 0)
 
-        return [(label, buckets[label]) for label in labels]
+        # Buat 12 bulan ke belakang sebagai sumbu x
+        month_list: list[tuple] = []
+        for i in range(11, -1, -1):
+            year  = now.year  - ((now.month - 1 - i) < 0)
+            month = ((now.month - 1 - i) % 12) + 1
+            month_list.append((year, month))
+
+        id_months = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"]
+        labels    = [f"{id_months[m-1]}\n'{str(y)[2:]}" for y, m in month_list]
+        values    = [month_buckets.get(key, 0.0) for key in month_list]
+
+        return list(zip(labels, values))
 
     # ── Product Insights ──────────────────────────────────────────────────────
     def _refresh_insights(self, period_details: list[SalesDetail]):
@@ -1272,7 +1360,7 @@ class DashboardPage(QWidget):
             if not dt:
                 continue
 
-            omset = float(sale.total_price or 0)
+            omset = float(sale.paid_amount or 0)
 
             if self._active_period == "weekly":
                 iso_year, iso_week, _ = dt.isocalendar()

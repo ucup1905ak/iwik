@@ -1,7 +1,7 @@
 from controllers.sales import SalesController
 from controllers.sales_detail import SalesDetailController
 from database.db_master import DatabaseManager
-from gui.signals import sales_signals
+from gui.signals import sales_signals, receivables_signals
 from controllers.receivables import ReceivablesController
 
 from PyQt6.QtWidgets import (
@@ -1197,6 +1197,8 @@ class TransactionPage(QWidget):
         self.setStyleSheet(f"background: {C_BG};")
         self._build_ui()
         sales_signals.sales_completed.connect(self._on_sales_completed)
+        receivables_signals.receivables_updated.connect(self._on_sales_completed)
+        receivables_signals.receivables_paid.connect(self._on_sales_completed)
     
     def _on_sales_completed(self, sales_id: int):
         self._transactions = self._load_transactions()

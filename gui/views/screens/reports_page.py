@@ -30,7 +30,7 @@ from controllers.purchase import PurchaseController, Purchase
 from controllers.purchase_detail import PurchaseDetailController, PurchaseDetail
 from controllers.receivables import ReceivablesController, Receivables
 from gui.views.components.toast import Toast
-from gui.signals import sales_signals
+from gui.signals import sales_signals, purchase_signals, receivables_signals
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -121,6 +121,26 @@ def _period_label(period: Period) -> str:
     if period == "weekly":
         return "7 Hari Terakhir"
     return "30 Hari Terakhir"
+
+
+def _format_period_label(period: Period, tx_count: int = 0) -> str:
+    """Format label periode sesuai format dashboard"""
+    now = datetime.now()
+    
+    if period == "daily":
+        today_str = now.strftime("%d %B %Y")
+        return f"Hari Ini ({today_str})" if tx_count == 0 else f"Hari Ini ({today_str}) • {_format_number(tx_count)} transaksi"
+    
+    if period == "weekly":
+        days_since_monday = now.weekday()
+        monday = (now - timedelta(days=days_since_monday)).date()
+        sunday = monday + timedelta(days=6)
+        date_range = f"Senin {monday.strftime('%d/%m')} – Minggu {sunday.strftime('%d/%m')}"
+        return date_range if tx_count == 0 else f"{date_range} • {_format_number(tx_count)} transaksi"
+    
+    # monthly
+    month_name = now.strftime("%B %Y")
+    return month_name if tx_count == 0 else f"{month_name} • {_format_number(tx_count)} transaksi"
 
 
 def _period_date_range(period: Period) -> tuple[datetime, datetime]:
@@ -716,8 +736,11 @@ class ReportsPage(QWidget):
         self._build_ui()
         self._load_data()
 
-        # Auto-refresh saat ada transaksi baru dari halaman Kasir
+        # Auto-refresh saat ada transaksi baru dari halaman Kasir, Pembelian, atau Piutang
         sales_signals.sales_completed.connect(self._on_sales_completed)
+        purchase_signals.purchase_completed.connect(self._on_purchase_completed)
+        receivables_signals.receivables_updated.connect(self._on_receivables_updated)
+        receivables_signals.receivables_paid.connect(self._on_receivables_updated)
 
     # ── UI Build ──────────────────────────────────────────────────────────────
     def _build_ui(self):
@@ -880,12 +903,12 @@ class ReportsPage(QWidget):
         grid.setHorizontalSpacing(12)
         grid.setVerticalSpacing(12)
 
-        self._revenue_card = MetricCard("Omset", "Rp 0", "Total penjualan", "💰", C_ACCENT)
-        self._order_card = MetricCard("Transaksi", "0", "Total order", "🧾", C_SUCCESS)
+        self._profit_card = MetricCard("Profit", "Rp 0", "Laba bersih", "📈", C_SUCCESS)
+        self._order_card = MetricCard("Transaksi", "0", "Total order", "🧾", C_ACCENT)
         self._items_sold_card = MetricCard("Item Terjual", "0", "Total quantity", "📦", C_ACCENT)
-        self._avg_order_card = MetricCard("Rata-rata Order", "Rp 0", "Omset / transaksi", "📊", C_WARNING)
+        self._receivable_card = MetricCard("Total Piutang", "Rp 0", "Belum dilunasi", "💳", C_DANGER)
 
-        cards = [self._revenue_card, self._order_card, self._items_sold_card, self._avg_order_card]
+        cards = [self._profit_card, self._order_card, self._items_sold_card, self._receivable_card]
         for i, card in enumerate(cards):
             grid.addWidget(card, 0, i)
             grid.setColumnStretch(i, 1)
@@ -898,10 +921,10 @@ class ReportsPage(QWidget):
         grid.setHorizontalSpacing(12)
         grid.setVerticalSpacing(12)
 
-        self._revenue_chart = ChartCard("Tren Omset", "Omset berdasarkan periode aktif", "line")
+        self._profit_chart = ChartCard("Tren Profit", "Profit berdasarkan periode aktif", "line")
         self._payment_pie_chart = PieChartCard("Komposisi Pembayaran", "Distribusi metode pembayaran")
 
-        grid.addWidget(self._revenue_chart, 0, 0)
+        grid.addWidget(self._profit_chart, 0, 0)
         grid.addWidget(self._payment_pie_chart, 0, 1)
         grid.setColumnStretch(0, 3)
         grid.setColumnStretch(1, 2)
@@ -965,6 +988,14 @@ class ReportsPage(QWidget):
 
     def _on_sales_completed(self, sales_id: int):
         """Dipanggil otomatis saat transaksi selesai dari halaman Kasir."""
+        self._load_data()
+
+    def _on_purchase_completed(self, purchase_id: int):
+        """Dipanggil otomatis saat pembelian selesai dari halaman Pembelian."""
+        self._load_data()
+
+    def _on_receivables_updated(self, sales_id_or_rec_id: int):
+        """Dipanggil otomatis saat data piutang berubah atau pembayaran diproses."""
         self._load_data()
 
     def _set_period(self, period: Period):
@@ -1031,27 +1062,53 @@ class ReportsPage(QWidget):
         return [detail for detail in self._purchase_details if int(detail.purchase_id) in purchase_ids]
 
     def _refresh_metrics(self, period_sales: list[Sales], period_details: list[SalesDetail]):
-        revenue = sum(float(sale.total_price or 0) for sale in period_sales)
+        # ── Omset (Gross Revenue) ──
+        # Hanya hitung yang sudah dibayar (paid_amount), bukan hutang yang belum lunas
+        gross_revenue = sum(float(sale.paid_amount or 0) for sale in period_sales)
+        
+        # ── Biaya Operasional ──
+        # 1. Total modal pembelian dari supplier
+        period_purchases = self._filtered_purchases()
+        period_purchase_details = self._filtered_purchase_details(period_purchases)
+        total_purchase_cost = sum(
+            float(detail.purchase_price or 0) * int(detail.quantity or 0)
+            for detail in period_purchase_details
+        )
+        
+        # 2. Pajak UMKM 0.5% dari total omset
+        umkm_tax = gross_revenue * 0.005
+        
+        # 3. Total biaya operasional
+        total_operational_cost = total_purchase_cost + umkm_tax
+        
+        # ── Profit = Omset - Biaya Operasional ──
+        profit = gross_revenue - total_operational_cost
+        
+        # ── Total Piutang ──
+        period_receivables = [r for r in self._receivables if _same_period(r.due_date, self._active_period)] if self._receivables else []
+        unpaid_receivables = [r for r in period_receivables if str(r.status).lower() in ("unpaid", "pending")]
+        total_receivable = sum(float(r.total_amount or 0) - float(r.amount_paid or 0) for r in unpaid_receivables)
+        
+        # ── Metrics Display ──
         tx_count = len(period_sales)
         items_sold = sum(int(detail.quantity or 0) for detail in period_details)
-        avg_order = revenue / tx_count if tx_count else 0
 
-        label = _period_label(self._active_period)
-        self._revenue_card.set_values(_format_price(revenue), label)
-        self._order_card.set_values(_format_number(tx_count), f"Order {label.lower()}")
+        period_subtitle = _format_period_label(self._active_period, tx_count)
+        self._profit_card.set_values(_format_price(profit), period_subtitle)
+        self._order_card.set_values(_format_number(tx_count), f"Order {_period_label(self._active_period).lower()}")
         self._items_sold_card.set_values(_format_number(items_sold), "Total barang keluar")
-        self._avg_order_card.set_values(_format_price(avg_order), "Rata-rata nilai transaksi")
+        self._receivable_card.set_values(_format_price(total_receivable), f"Piutang {_period_label(self._active_period).lower()}")
 
     def _refresh_charts(self, period_sales: list[Sales], period_details: list[SalesDetail], period_purchases: list[Purchase]):
-        label = _period_label(self._active_period)
+        period_subtitle = _format_period_label(self._active_period, len(period_sales))
         payment_data = self._payment_series(period_sales)
 
-        self._revenue_chart.set_data(self._revenue_series(period_sales), f"Omset {label.lower()}")
+        self._profit_chart.set_data(self._profit_series(period_sales, period_purchases), f"Tren Profit ({period_subtitle.split(' • ')[0]})")
         self._payment_pie_chart.set_data(payment_data, "Distribusi metode pembayaran")
-        self._transaction_chart.set_data(self._transaction_series(period_sales), f"Jumlah order {label.lower()}")
+        self._transaction_chart.set_data(self._transaction_series(period_sales), f"Jumlah order ({period_subtitle.split(' • ')[0]})")
         self._product_chart.set_data(self._top_product_series(period_details), "Top 8 produk berdasarkan quantity terjual")
         self._category_chart.set_data(self._category_series(period_details), "Quantity terjual per kategori")
-        self._purchase_chart.set_data(self._purchase_series(period_purchases), f"Pembelian stok {label.lower()}")
+        self._purchase_chart.set_data(self._purchase_series(period_purchases), f"Pembelian stok ({period_subtitle.split(' • ')[0]})")
 
     # ── Series builders ───────────────────────────────────────────────────────
     def _time_labels(self) -> tuple[list[str], dict]:
@@ -1061,13 +1118,19 @@ class ReportsPage(QWidget):
             labels = [f"{hour:02d}" for hour in range(24)]
             return labels, {hour: f"{hour:02d}" for hour in range(24)}
 
-        days_back = 6 if self._active_period == "weekly" else 29
-        days = [
-            (now - timedelta(days=i)).replace(hour=0, minute=0, second=0, microsecond=0)
-            for i in range(days_back, -1, -1)
-        ]
+        if self._active_period == "weekly":
+            # Hanya 7 hari dari Senin minggu ini sampai Minggu
+            days_since_monday = now.weekday()  # 0=Senin, 6=Minggu
+            monday = (now - timedelta(days=days_since_monday)).replace(hour=0, minute=0, second=0, microsecond=0)
+            days = [monday + timedelta(days=i) for i in range(7)]
+            labels = [day.strftime("%d/%m") for day in days]
+            return labels, {day.date(): label for day, label in zip(days, labels)}
+
+        # monthly: dari hari 1 bulan ini sampai hari ini
+        first_day = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        days = [(first_day + timedelta(days=i)).date() for i in range((now.date() - first_day.date()).days + 1)]
         labels = [day.strftime("%d/%m") for day in days]
-        return labels, {day.date(): label for day, label in zip(days, labels)}
+        return labels, {day: label for day, label in zip(days, labels)}
 
     def _label_for_dt(self, dt: datetime, mapper: dict) -> str | None:
         if self._active_period == "daily":
@@ -1082,9 +1145,49 @@ class ReportsPage(QWidget):
             dt = _parse_datetime(sale.time)
             label = self._label_for_dt(dt, mapper) if dt else None
             if label:
-                buckets[label] += float(sale.total_price or 0)
+                # Hanya hitung yang sudah dibayar, bukan hutang
+                buckets[label] += float(sale.paid_amount or 0)
 
         return [(label, buckets[label]) for label in labels]
+
+    def _profit_series(self, period_sales: list[Sales], period_purchases: list[Purchase]) -> list[tuple[str, float]]:
+        """Hitung profit = omset - (total biaya operasional)
+        Biaya operasional = total pembelian + pajak UMKM 0.5% dari omset"""
+        
+        labels, mapper = self._time_labels()
+        omset_buckets = {label: 0.0 for label in labels}
+        purchase_buckets = {label: 0.0 for label in labels}
+
+        # Hitung omset per periode (hanya yang sudah dibayar)
+        for sale in period_sales:
+            dt = _parse_datetime(sale.time)
+            label = self._label_for_dt(dt, mapper) if dt else None
+            if label:
+                # Gunakan paid_amount bukan total_price (karena hutang belum masuk omset)
+                omset_buckets[label] += float(sale.paid_amount or 0)
+
+        # Hitung biaya pembelian per periode
+        period_purchase_details = self._filtered_purchase_details(period_purchases)
+        for detail in period_purchase_details:
+            # Cari purchase terkait
+            purchase = next((p for p in period_purchases if p.id == detail.purchase_id), None)
+            if purchase:
+                dt = _parse_datetime(purchase.time)
+                label = self._label_for_dt(dt, mapper) if dt else None
+                if label:
+                    purchase_buckets[label] += float(detail.purchase_price or 0) * int(detail.quantity or 0)
+
+        # Hitung profit per label (clamp negatif ke 0 untuk chart)
+        profit_buckets = {}
+        for label in labels:
+            omset = omset_buckets[label]
+            purchase_cost = purchase_buckets[label]
+            tax = omset * 0.005  # Pajak UMKM 0.5%
+            profit = omset - purchase_cost - tax
+            # Jika profit negatif, tampilkan 0 di chart (tetap stabil)
+            profit_buckets[label] = max(0, profit)
+
+        return [(label, profit_buckets[label]) for label in labels]
 
     def _transaction_series(self, period_sales: list[Sales]) -> list[tuple[str, float]]:
         labels, mapper = self._time_labels()
@@ -1247,9 +1350,11 @@ class ReportsPage(QWidget):
         tx_count = len(period_sales)
         items_sold = sum(int(detail.quantity or 0) for detail in period_details)
         avg_order = revenue / tx_count if tx_count else 0
+        
+        period_label = _format_period_label(self._active_period, 0)  # tanpa tx count untuk header
 
         items: list[tuple[str, str, str, str]] = [
-            ("Periode laporan", "Filter aktif yang sedang digunakan", _period_label(self._active_period), C_ACCENT),
+            ("Periode laporan", "Filter aktif yang sedang digunakan", period_label, C_ACCENT),
             ("Estimasi margin kasar", "Omset dikurangi pembelian stok periode ini", _format_price(revenue - purchases), C_SUCCESS if revenue >= purchases else C_DANGER),
             ("Rata-rata transaksi", f"{_format_number(tx_count)} transaksi - {_format_number(items_sold)} item", _format_price(avg_order), C_ACCENT),
         ]

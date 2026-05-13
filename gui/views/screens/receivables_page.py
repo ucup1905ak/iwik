@@ -29,6 +29,7 @@ from PyQt6.QtCore import Qt, pyqtSignal, QTimer, QDate
 from PyQt6.QtGui import QColor, QPainterPath, QRegion, QFont
 
 from gui.views.components.toast import Toast
+from gui.signals import receivables_signals
 
 # ── Color palette ──────────────────────────────────────────────────────────────
 C_BG        = "#F4F5F9"
@@ -1756,6 +1757,10 @@ class ReceivablesPage(QWidget):
                 due_date=data["due_date"],
                 status=rec.status,
             )
+            
+            # Emit signal untuk receivables update
+            receivables_signals.receivables_updated.emit(rec.sales_id or 0)
+            
             self._load_data()
             self._refresh_stats()
             self._refresh_view()
@@ -2359,6 +2364,9 @@ class ReceivablesPage(QWidget):
                         total_price=sale.total_price,
                     )
 
+            # ── Emit receivables signal ──
+            receivables_signals.receivables_paid.emit(rec.id)
+            
             # ── Trigger refresh transactions_page ──
             from gui.signals import sales_signals
             sales_signals.sales_completed.emit(rec.sales_id or 0)
@@ -2382,6 +2390,10 @@ class ReceivablesPage(QWidget):
     def _delete_receivable(self, rec: Receivables):
         try:
             ReceivablesController.remove(rec.id)
+            
+            # Emit receivables signal
+            receivables_signals.receivables_updated.emit(rec.sales_id or 0)
+            
             self._load_data()
             self._refresh_stats()
             self._refresh_view()
@@ -2404,6 +2416,7 @@ class ReceivablesPage(QWidget):
 
             for rec in records:
                 ReceivablesController.remove(rec.id)
+                receivables_signals.receivables_updated.emit(rec.sales_id or 0)
 
             self._load_data()
             self._refresh_stats()

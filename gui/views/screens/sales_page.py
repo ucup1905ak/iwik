@@ -529,7 +529,7 @@ class OrderItemCard(QFrame):
             self._quantity = self._product.stock
             Toast.show_toast(
                 f"Stok {self._product.name} hanya {self._product.stock} unit.",
-                "error",
+                "warning",
                 self.window()
             )
         else:
@@ -548,7 +548,7 @@ class OrderItemCard(QFrame):
         if self._quantity >= self._product.stock:
             Toast.show_toast(
                 f"Stok {self._product.name} hanya {self._product.stock} unit.",
-                "error",
+                "warning",
                 self.window()
             )
             return
@@ -1114,7 +1114,7 @@ class SalesPage(QWidget):
     # ── Cart logic ─────────────────────────────────────────────────────────────
     def _add_to_cart(self, product: Product):
         if product.stock <= 0:
-            Toast.show_toast("Produk habis.", "error", self)
+            Toast.show_toast("Produk habis.", "warning", self)
             return
 
         if product.id in self._cart:
@@ -1122,7 +1122,7 @@ class SalesPage(QWidget):
             if qty >= product.stock:
                 Toast.show_toast(
                     f"Jumlah {product.name} sudah mencapai batas stok ({product.stock}).",
-                    "error", self
+                    "warning", self
                 )
                 return
             self._cart[product.id] = (product, qty + 1)
@@ -1153,7 +1153,7 @@ class SalesPage(QWidget):
             if new_quantity > product.stock:
                 Toast.show_toast(
                     f"Tidak bisa melebihi stok yang tersedia ({product.stock}).",
-                    "error", self
+                    "warning", self
                 )
                 self._refresh_cart_display()
                 return
@@ -1194,7 +1194,7 @@ class SalesPage(QWidget):
     # ── Order ──────────────────────────────────────────────────────────────────
     def _on_order_clicked(self):
         if not self._cart:
-            Toast.show_toast("Cart kosong", "error", self)
+            Toast.show_toast("Keranjang kosong. Tambahkan produk terlebih dahulu.", "warning", self)
             return
 
         subtotal = sum(product.price * qty for product, qty in self._cart.values())
@@ -1233,9 +1233,12 @@ class SalesPage(QWidget):
                     Toast.show_toast(f"Produk {cart_product.name} tidak ditemukan.", "error", self)
                     return
                 if quantity > int(fresh.stock):
-                    Toast.show_toast(f"Stok {fresh.name} tidak cukup. Sisa: {fresh.stock}.", "error", self)
+                    Toast.show_toast(f"Stok {fresh.name} tidak cukup. Sisa: {fresh.stock}.", "warning", self)
                     return
 
+            # Hitung gross revenue (subtotal) = total + discount
+            gross_revenue = total + discount
+            
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             sales_id = SalesController.add_return_id(
                 customer_id=customer_id,
@@ -1243,7 +1246,7 @@ class SalesPage(QWidget):
                 time=timestamp,
                 payment=payment_method,
                 paid_amount=paid_amount,
-                total_price=total   # ← tambah
+                total_price=gross_revenue   # ← Simpan gross revenue (subtotal)
             )
 
             updated_stocks = {}
@@ -1278,7 +1281,7 @@ class SalesPage(QWidget):
                 ReceivablesController.add(
                     sales_id=sales_id,
                     customer_id=customer_id,
-                    total_amount=total,
+                    total_amount=gross_revenue,  # ← Gunakan gross revenue untuk piutang
                     due_date=None,
                     amount_paid=paid_amount,
                     status='unpaid',

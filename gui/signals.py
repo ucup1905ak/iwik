@@ -44,6 +44,16 @@ class PurchaseSignals(QObject):
     purchase_completed = pyqtSignal(int)  # purchase_id
 
 
+class ReceivablesSignals(QObject):
+    """Signals untuk perubahan data piutang/receivables"""
+    
+    # Signal ketika piutang ditambahkan atau di-update
+    receivables_updated = pyqtSignal(int)  # sales_id
+    
+    # Signal ketika pembayaran piutang diproses
+    receivables_paid = pyqtSignal(int)  # receivables_id
+
+
 class DashboardSignals(QObject):
     """Signals untuk update tampilan dashboard"""
     
@@ -55,4 +65,5 @@ class DashboardSignals(QObject):
 product_signals = ProductSignals()
 sales_signals = SalesSignals()
 purchase_signals = PurchaseSignals()
+receivables_signals = ReceivablesSignals()
 dashboard_signals = DashboardSignals()
