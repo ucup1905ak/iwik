@@ -26,6 +26,7 @@ from controllers.receivables import ReceivablesController
 # - Mengisi data dummy untuk mengetes Dashboard secara spesifik.
 # - Fokus pada 1 bulan terakhir agar filter harian, mingguan, dan bulanan
 #   mudah dicek.
+# - Data cukup untuk analisis moving average dan prediksi penjualan.
 # - Tetap menggunakan controller yang sudah ada.
 # - Tidak menjalankan ulang SQL schema.
 # - Tidak mengubah controller.
@@ -35,9 +36,12 @@ from controllers.receivables import ReceivablesController
 # - Customer
 # - Supplier
 # - Produk lengkap kategori/stok/harga
-# - Sales 30 hari terakhir, termasuk transaksi hari ini
+# - Sales 30 hari terakhir (480 transaksi), dengan:
+#   * Metode pembayaran: Tunai (60%) dan QRIS (40%)
+#   * Setiap metode bisa berstatus Lunas (90%) atau Hutang (10%)
+#   * Hutang = partially paid atau unpaid (paid_amount < total_price)
 # - SalesDetail
-# - Receivables untuk sebagian transaksi hutang
+# - Receivables untuk transaksi hutang yang belum lunas
 # - Purchases + PurchaseDetail 30 hari terakhir
 #
 # Cara pakai:
@@ -47,12 +51,12 @@ from controllers.receivables import ReceivablesController
 #   $env:WARUNG_DB_PATH="database\nama_database_kamu.db"
 #   py .\generateData.py
 #
-# Jika sebelumnya kamu sudah generate data 120 hari dan ingin reset transaksi:
+# Jika ingin reset transaksi lama dan buat baru:
 #   ubah RESET_TRANSACTION_DATA = True, lalu jalankan script ini sekali.
 # ============================================================
 
 
-RANDOM_SEED = 42
+RANDOM_SEED = 123  # Ubah seed untuk generate pola pembayaran yang berbeda
 random.seed(RANDOM_SEED)
 
 PROJECT_ROOT = Path(__file__).resolve().parent
@@ -65,12 +69,12 @@ ENV_DB_PATH = "WARUNG_DB_PATH"
 
 # Scope data dashboard.
 GENERATE_DAYS = 30
-SALES_TRANSACTION_COUNT = 180
+SALES_TRANSACTION_COUNT = 480  # Banyak data untuk moving average analysis
 PURCHASE_COUNT = 16
 
 # Aman default: tidak menghapus transaksi lama.
 # Set True hanya kalau ingin membersihkan data transaksi lama dari hasil dummy sebelumnya.
-RESET_TRANSACTION_DATA = False
+RESET_TRANSACTION_DATA = True  # Set True untuk reset data lama
 
 
 def _resolve_database_path() -> Path:
@@ -413,17 +417,22 @@ def _generate_sales(
         return
 
     cashier_ids = [user_ids["admin"], user_ids["kasir_1"], user_ids["kasir_2"]]
-    payment_methods = ["cash", "qris", "transfer", "hutang"]
+    # Hanya 2 metode pembayaran: Tunai dan QRIS
+    payment_methods = ["tunai", "qris"]
     sale_dates = _build_sale_dates(transaction_count)
 
     for sale_time in sale_dates:
+        # Pilih metode pembayaran: tunai atau qris
         payment = random.choices(
             population=payment_methods,
-            weights=[50, 25, 15, 10],
+            weights=[60, 40],  # Tunai 60%, QRIS 40%
             k=1,
         )[0]
 
-        if payment == "hutang":
+        # Tentukan apakah transaksi lunas atau hutang (90% lunas, 10% hutang)
+        is_hutang = random.choices([True, False], weights=[10, 90], k=1)[0]
+
+        if is_hutang:
             customer_id: Optional[int] = random.choice(customer_ids)
         else:
             customer_id = random.choice([None, None, None, *customer_ids])
@@ -438,7 +447,7 @@ def _generate_sales(
 
         total_price = max(0, subtotal - total_discount)
 
-        if payment == "hutang":
+        if is_hutang:
             paid_amount = random.choice([0, int(total_price * 0.25), int(total_price * 0.5)])
         else:
             paid_amount = total_price
@@ -460,7 +469,7 @@ def _generate_sales(
                 discount=discount,
             )
 
-        if payment == "hutang" and customer_id is not None:
+        if is_hutang and customer_id is not None:
             status = "paid" if paid_amount >= total_price else "unpaid"
             due_date = (sale_time + timedelta(days=random.choice([7, 14, 30]))).strftime("%Y-%m-%d")
 

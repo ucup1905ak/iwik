@@ -1141,13 +1141,28 @@ class ReportsPage(QWidget):
 
     def _payment_series(self, period_sales: list[Sales]) -> list[tuple[str, float]]:
         counts: dict[str, int] = defaultdict(int)
+        
+        # Payment label mapping - hanya Tunai dan QRIS
+        payment_labels = {
+            "tunai": "Tunai",
+            "qris": "QRIS",
+            None: "—",
+        }
 
         for sale in period_sales:
-            payment = (sale.payment or "lainnya").strip().lower()
+            payment = (sale.payment or "").strip().lower() if sale.payment else None
             counts[payment] += 1
 
-        order = ["cash", "qris", "transfer", "hutang", "lainnya"]
-        return [(payment.upper(), float(counts.get(payment, 0))) for payment in order]
+        order = ["tunai", "qris"]
+        result: list[tuple[str, float]] = []
+        
+        for payment_key in order:
+            label = payment_labels.get(payment_key, payment_key.upper() if payment_key else "—")
+            count = counts.get(payment_key, 0)
+            if count > 0:  # Hanya tampilkan jika ada transaksi
+                result.append((label, float(count)))
+        
+        return result
 
     # ── List builders ─────────────────────────────────────────────────────────
     def _refresh_lists(self, period_sales: list[Sales], period_details: list[SalesDetail], period_purchases: list[Purchase]):
@@ -1416,6 +1431,13 @@ class ReportsPage(QWidget):
             product_count_by_sale[int(detail.sales_id)] += int(detail.quantity or 0)
             discount_by_sale[int(detail.sales_id)] += float(detail.discount or 0)
 
+        # Payment label mapping - hanya Tunai dan QRIS
+        payment_labels = {
+            "tunai": "Tunai",
+            "qris": "QRIS",
+            None: "—",
+        }
+
         tx_data = [["No", "Tanggal", "Sales ID", "Payment", "Item", "Diskon", "Dibayar", "Total"]]
 
         sorted_sales = sorted(
@@ -1427,12 +1449,15 @@ class ReportsPage(QWidget):
         for idx, sale in enumerate(sorted_sales, start=1):
             dt = _parse_datetime(sale.time)
             date_text = dt.strftime("%d/%m/%Y %H:%M") if dt else str(sale.time)
+            
+            payment_key = (sale.payment or "").strip().lower() if sale.payment else None
+            payment_label = payment_labels.get(payment_key, str(payment_key).upper() if payment_key else "—")
 
             tx_data.append([
                 str(idx),
                 date_text,
                 f"#{sale.id}",
-                str(sale.payment or "-").upper(),
+                payment_label,
                 _format_number(product_count_by_sale.get(int(sale.id), 0)),
                 _format_price(discount_by_sale.get(int(sale.id), 0)),
                 _format_price(sale.paid_amount or 0),
