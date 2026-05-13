@@ -945,7 +945,7 @@ class TransactionDetailDialog(QDialog):
                 prod_lbl.setStyleSheet(f"font-size:12px;color:{C_TEXT_PRI};border:none;")
                 qty_lbl  = QLabel(f"x{item['quantity']}")
                 qty_lbl.setStyleSheet(f"font-size:12px;color:{C_TEXT_SEC};border:none;")
-                disc_lbl = QLabel(f"Diskon: {item['discount']:.0f}%" if item["discount"] else "")
+                disc_lbl = QLabel(f"Diskon: {item['discount']:.0f}" if item["discount"] else "")
                 disc_lbl.setStyleSheet(f"font-size:11px;color:#D08000;border:none;")
                 row.addWidget(prod_lbl)
                 row.addStretch()
