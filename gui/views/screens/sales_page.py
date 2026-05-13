@@ -1281,7 +1281,8 @@ class SalesPage(QWidget):
                     total_amount=total,
                     due_date=None,
                     amount_paid=paid_amount,
-                    status='unpaid'
+                    status='unpaid',
+                    payment_method='hutang'
                 )
 
             Toast.show_toast("Order berhasil disimpan", "success", self)

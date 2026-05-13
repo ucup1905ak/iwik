@@ -1,6 +1,7 @@
 from __future__ import annotations
 from database.db_master import DatabaseManager
 from typing import NamedTuple, Optional
+from datetime import datetime, timedelta
 
 import database.db_master as db_master
 
@@ -24,24 +25,39 @@ class ReceivablesController:
         sales_id: int,
         customer_id: int | None,
         total_amount: float,
-        due_date: str | None,
+        due_date: str | None = None,
         amount_paid: float = 0.0,
         status: str = 'unpaid',
+        payment_method: str | None = None,
     ) -> None:
-        """Ada Error Handling type nya, nanti dia bakal raise TypeError kalau salah.
+        """Tambah data receivable/piutang.
+
+        Jika payment_method adalah hutang/piutang, due_date otomatis 1 minggu
+        setelah tanggal checkout.
         """
         try:
             sales_id = int(sales_id)
             if customer_id is not None:
                 customer_id = int(customer_id)
+
             total_amount = float(total_amount)
             amount_paid = float(amount_paid)
+
         except (ValueError, TypeError):
             raise TypeError("Failed to add receivable: Invalid data types provided.")
- 
+
+        # Jika metode pembayaran hutang/piutang, due date otomatis H+7
+        if payment_method is not None and payment_method.lower() in ("hutang", "piutang", "credit", "tempo"):
+            checkout_date = datetime.now()
+            due_date = (checkout_date + timedelta(days=7)).strftime("%Y-%m-%d")
+
         conn, cursor = DatabaseManager.require_connection()
         cursor.execute(
-            "INSERT INTO Receivables (SalesID, CustomerID, AmountPaid, TotalAmount, DueDate, Status) VALUES (?, ?, ?, ?, ?, ?)",
+            """
+            INSERT INTO Receivables 
+            (SalesID, CustomerID, AmountPaid, TotalAmount, DueDate, Status) 
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
             (sales_id, customer_id, amount_paid, total_amount, due_date, status),
         )
         conn.commit()

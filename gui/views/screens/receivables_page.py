@@ -1805,22 +1805,10 @@ class ReceivablesPage(QWidget):
         title_col.addWidget(page_title)
         title_col.addWidget(page_sub)
 
-        add_btn = QPushButton("+ Tambah Hutang")
-        add_btn.setFixedHeight(42)
-        add_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        add_btn.setStyleSheet(f"""
-            QPushButton {{
-                background: {C_ACCENT}; color: #FFFFFF;
-                font-family: 'Segoe UI'; font-size: 13px; font-weight: 600;
-                border-radius: 10px; padding: 0 20px; border: none;
-            }}
-            QPushButton:hover {{ background: {C_ACCENT_H}; }}
-        """)
-        add_btn.clicked.connect(self._open_add_dialog)
+        
 
         header.addLayout(title_col)
         header.addStretch()
-        header.addWidget(add_btn)
         layout.addLayout(header)
         layout.addSpacing(20)
 
