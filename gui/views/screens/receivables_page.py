@@ -86,10 +86,10 @@ def _due_date_display(due_date: str | None) -> str:
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# Customer Detail Dialog — rincian semua transaksi hutang satu pelanggan
+# Customer Detail Dialog — rincian semua transaksi piutang satu pelanggan
 # ═══════════════════════════════════════════════════════════════════════════════
 class CustomerDetailDialog(QDialog):
-    """Menampilkan semua transaksi hutang milik satu pelanggan."""
+    """Menampilkan semua transaksi piutang milik satu pelanggan."""
 
     pay_clicked    = pyqtSignal(object)   # emits Receivables
     delete_clicked = pyqtSignal(object)   # emits Receivables
@@ -98,7 +98,7 @@ class CustomerDetailDialog(QDialog):
         super().__init__(parent)
         self._name    = customer_name
         self._records = records
-        self.setWindowTitle(f"Detail Hutang — {customer_name}")
+        self.setWindowTitle(f"Detail Piutang — {customer_name}")
         self.setModal(True)
         self.setFixedWidth(640)
         self.setWindowFlag(Qt.WindowType.MSWindowsFixedSizeDialogHint)
@@ -125,7 +125,7 @@ class CustomerDetailDialog(QDialog):
         logo.setTextFormat(Qt.TextFormat.RichText)
         logo.setStyleSheet("font-size:13px;color:#5F5E5A;font-weight:500;letter-spacing:1px;border:none;background:transparent;")
 
-        title = QLabel(f"Rincian Hutang  ·  {self._name}")
+        title = QLabel(f"Rincian Piutang  ·  {self._name}")
         title.setStyleSheet(f"font-size:16px;font-weight:700;color:{C_TEXT_PRI};border:none;background:transparent;")
 
         total_remaining = sum(r.total_amount - r.amount_paid for r in self._records)
@@ -272,7 +272,7 @@ class CustomerDetailDialog(QDialog):
         grid.setSpacing(0)
 
         for label, value, color in [
-            ("Total Hutang", _fmt_currency(rec.total_amount), C_TEXT_PRI),
+            ("Total Piutang", _fmt_currency(rec.total_amount), C_TEXT_PRI),
             ("Terbayar",     _fmt_currency(rec.amount_paid),  C_TEXT_SEC),
             ("Sisa",         _fmt_currency(remaining),        C_DANGER if remaining > 0 and status != "paid" else C_SUCCESS),
         ]:
@@ -317,7 +317,7 @@ class DeleteAllReceivablesDialog(QDialog):
         super().__init__(parent)
         self._records = records
         self._name    = customer_name
-        self.setWindowTitle("Hapus Semua Hutang")
+        self.setWindowTitle("Hapus Semua Piutang")
         self.setModal(True)
         self.setFixedWidth(400)
         self.setWindowFlag(Qt.WindowType.MSWindowsFixedSizeDialogHint)
@@ -346,13 +346,13 @@ class DeleteAllReceivablesDialog(QDialog):
         cl.addWidget(logo)
         cl.addSpacing(14)
 
-        title = QLabel("Hapus Semua Hutang?")
+        title = QLabel("Hapus Semua Piutang?")
         title.setStyleSheet("font-size:20px;font-weight:600;color:#1b1b1b;border:none;")
         cl.addWidget(title)
         cl.addSpacing(4)
 
         sub = QLabel(
-            f"Semua <b>{len(self._records)} transaksi hutang</b> atas nama "
+            f"Semua <b>{len(self._records)} transaksi piutang</b> atas nama "
             f"<b>{self._name}</b> dengan total <b>{_fmt_currency(total)}</b> "
             f"akan dihapus permanen. Tindakan ini tidak dapat dibatalkan."
         )
@@ -407,7 +407,7 @@ class DeleteAllReceivablesDialog(QDialog):
 # Receivable Card (Card View)
 # ═══════════════════════════════════════════════════════════════════════════════
 class ReceivableCard(QFrame):
-    """Satu kartu hutang pelanggan untuk tampilan grid/card view."""
+    """Satu kartu piutang pelanggan untuk tampilan grid/card view."""
 
     CARD_WIDTH = 290
 
@@ -559,7 +559,7 @@ class ReceivableCard(QFrame):
 
         remain_color = C_DANGER if remaining > 0 and status != "paid" else C_SUCCESS
 
-        amt_row.addLayout(_amt_col("Total Hutang", _fmt_currency(agg.total_amount), C_TEXT_PRI))
+        amt_row.addLayout(_amt_col("Total Piutang", _fmt_currency(agg.total_amount), C_TEXT_PRI))
         amt_row.addStretch()
 
         sep1 = QFrame()
@@ -772,7 +772,7 @@ class ReceivablesTableView(QTableWidget):
     detail_clicked     = pyqtSignal(str, list)    # emits (customer_name, [Receivables])
     delete_all_clicked = pyqtSignal(str, list)    # emits (customer_name, [Receivables])
 
-    COLUMNS    = ["      #", "Pelanggan", "Total Hutang", "Terbayar", "Sisa", "Status", "Aksi"]
+    COLUMNS    = ["      #", "Pelanggan", "Total Piutang", "Terbayar", "Sisa", "Status", "Aksi"]
     COL_NO     = 0
     COL_CUST   = 1
     COL_TOTAL  = 2
@@ -958,7 +958,7 @@ class ReceivablesTableView(QTableWidget):
         icon = QLabel("💳")
         icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
         icon.setStyleSheet("font-size: 46px;")
-        title = QLabel("Tidak ada data hutang")
+        title = QLabel("Tidak ada data piutang")
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         title.setStyleSheet(f"font-family:'Segoe UI';font-size:16px;font-weight:700;color:{C_TEXT_PRI};")
         sub = QLabel("Coba ubah filter atau kata kunci pencarian.")
@@ -1296,7 +1296,7 @@ class PayDialog(QDialog):
         cl.addWidget(logo)
         cl.addSpacing(14)
 
-        title = QLabel("Catat Pembayaran Hutang")
+        title = QLabel("Catat Pembayaran Piutang")
         title.setStyleSheet("font-size:20px;font-weight:600;color:#1b1b1b;border:none;")
         cl.addWidget(title)
         cl.addSpacing(4)
@@ -1319,7 +1319,7 @@ class PayDialog(QDialog):
         info_lay.setContentsMargins(16, 12, 16, 12)
         info_lay.setSpacing(0)
 
-        for label, value in [("Total Hutang", _fmt_currency(rec.total_amount)),
+        for label, value in [("Total Piutang", _fmt_currency(rec.total_amount)),
                               ("Terbayar",     _fmt_currency(rec.amount_paid)),
                               ("Sisa",         _fmt_currency(remaining))]:
             col = QVBoxLayout()
@@ -1422,7 +1422,7 @@ class PayDialog(QDialog):
             self._err_lbl.setVisible(True)
             return
         if amount > remaining + 0.01:
-            self._err_lbl.setText("Jumlah melebihi sisa hutang.")
+            self._err_lbl.setText("Jumlah melebihi sisa piutang.")
             self._err_lbl.setVisible(True)
             return
         self._err_lbl.setVisible(False)
@@ -1439,7 +1439,7 @@ class AddReceivableDialog(QDialog):
     def __init__(self, customers: list, parent=None):
         super().__init__(parent)
         self._customers = customers
-        self.setWindowTitle("Tambah Hutang")
+        self.setWindowTitle("Tambah Piutang")
         self.setModal(True)
         self.setFixedWidth(440)
         self.setWindowFlag(Qt.WindowType.MSWindowsFixedSizeDialogHint)
@@ -1471,12 +1471,12 @@ class AddReceivableDialog(QDialog):
         cl.addWidget(logo)
         cl.addSpacing(14)
 
-        title = QLabel("Tambah Hutang Baru")
+        title = QLabel("Tambah Piutang Baru")
         title.setStyleSheet("font-size:20px;font-weight:600;color:#1b1b1b;border:none;")
         cl.addWidget(title)
         cl.addSpacing(4)
 
-        sub = QLabel("Isi detail hutang pelanggan.")
+        sub = QLabel("Isi detail piutang pelanggan.")
         sub.setStyleSheet("font-size:12px;color:#888780;border:none;")
         cl.addWidget(sub)
         cl.addSpacing(16)
@@ -1511,7 +1511,7 @@ class AddReceivableDialog(QDialog):
         cl.addWidget(self._customer_combo)
         cl.addSpacing(12)
 
-        cl.addWidget(self._label("Total Hutang (Rp)"))
+        cl.addWidget(self._label("Total Piutang (Rp)"))
         cl.addSpacing(5)
         self._total_input = QDoubleSpinBox()
         self._total_input.setRange(1, 999_999_999)
@@ -1585,7 +1585,7 @@ class AddReceivableDialog(QDialog):
         """)
         cancel_btn.clicked.connect(self.reject)
 
-        save_btn = QPushButton("Tambah Hutang")
+        save_btn = QPushButton("Tambah Piutang")
         save_btn.setFixedHeight(40)
         save_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         save_btn.setStyleSheet(f"""
@@ -1606,7 +1606,7 @@ class AddReceivableDialog(QDialog):
     def _on_save(self):
         total = self._total_input.value()
         if total <= 0:
-            self._err_lbl.setText("Total hutang harus lebih dari 0.")
+            self._err_lbl.setText("Total piutang harus lebih dari 0.")
             self._err_lbl.setVisible(True)
             return
         self._err_lbl.setVisible(False)
@@ -1634,7 +1634,7 @@ class DeleteReceivableDialog(QDialog):
         super().__init__(parent)
         self._rec  = rec
         self._name = customer_name
-        self.setWindowTitle("Hapus Data Hutang")
+        self.setWindowTitle("Hapus Data Piutang")
         self.setModal(True)
         self.setFixedWidth(400)
         self.setWindowFlag(Qt.WindowType.MSWindowsFixedSizeDialogHint)
@@ -1661,13 +1661,13 @@ class DeleteReceivableDialog(QDialog):
         cl.addWidget(logo)
         cl.addSpacing(14)
 
-        title = QLabel("Hapus Data Hutang?")
+        title = QLabel("Hapus Data Piutang?")
         title.setStyleSheet("font-size:20px;font-weight:600;color:#1b1b1b;border:none;")
         cl.addWidget(title)
         cl.addSpacing(4)
 
         sub = QLabel(
-            f"Hutang atas nama <b>{self._name}</b> sebesar "
+            f"Piutang atas nama <b>{self._name}</b> sebesar "
             f"<b>{_fmt_currency(self._rec.total_amount)}</b> akan dihapus permanen."
         )
         sub.setTextFormat(Qt.TextFormat.RichText)
@@ -1745,7 +1745,7 @@ class ReceivablesPage(QWidget):
         try:
             rec = ReceivablesController.get(data["id"])
             if rec is None:
-                raise ValueError("Data hutang tidak ditemukan.")
+                raise ValueError("Data piutang tidak ditemukan.")
 
             ReceivablesController.edit(
                 receivable_id=rec.id,
@@ -1798,9 +1798,9 @@ class ReceivablesPage(QWidget):
         title_col = QVBoxLayout()
         title_col.setSpacing(2)
 
-        page_title = QLabel("Hutang Pelanggan")
+        page_title = QLabel("Piutang Pelanggan")
         page_title.setStyleSheet(f"font-family:'Segoe UI';font-size:27px;font-weight:700;color:{C_TEXT_PRI};background:transparent;")
-        page_sub = QLabel("Pantau dan kelola hutang pelanggan warungmu")
+        page_sub = QLabel("Pantau dan kelola piutang pelanggan warungmu")
         page_sub.setStyleSheet(f"font-family:'Segoe UI';font-size:13px;color:{C_TEXT_SEC};background:transparent;")
         title_col.addWidget(page_title)
         title_col.addWidget(page_sub)
@@ -1936,7 +1936,7 @@ class ReceivablesPage(QWidget):
         stats_def = [
             ("count_unpaid", "Belum / Sebagian Lunas",  "#E05252", "#FDEAEA", False),
             ("count_paid",   "Sudah Lunas",             "#27AE60", "#E8F8F0", False),
-            ("total_debt",   "Total Sisa Hutang",      "#4F6EF7", "#EEF1FE", True),
+            ("total_debt",   "Total Sisa Piutang",      "#4F6EF7", "#EEF1FE", True),
         ]
         vals = self._calc_stats()
         for key, label, color, bg, is_currency in stats_def:
@@ -2154,7 +2154,7 @@ class ReceivablesPage(QWidget):
             icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
             icon.setStyleSheet("font-size: 46px;")
 
-            etitle = QLabel("Tidak ada data hutang")
+            etitle = QLabel("Tidak ada data piutang")
             etitle.setAlignment(Qt.AlignmentFlag.AlignCenter)
             etitle.setStyleSheet(f"font-family:'Segoe UI';font-size:16px;font-weight:700;color:{C_TEXT_PRI};")
 
@@ -2321,7 +2321,7 @@ class ReceivablesPage(QWidget):
             self._refresh_stats()
             self._refresh_view()
             cust = self._customer_map.get(data["customer_id"], "Pelanggan")
-            Toast.show_toast(f"Hutang <b>{cust}</b> berhasil ditambahkan.", "success", self)
+            Toast.show_toast(f"Piutang <b>{cust}</b> berhasil ditambahkan.", "success", self)
         except Exception as e:
             Toast.show_toast(str(e), "error", self)
 
@@ -2329,7 +2329,7 @@ class ReceivablesPage(QWidget):
         try:
             rec = ReceivablesController.get(data["id"])
             if rec is None:
-                raise ValueError("Data hutang tidak ditemukan.")
+                raise ValueError("Data piutang tidak ditemukan.")
 
             new_paid   = rec.amount_paid + data["amount"]
             new_status = _resolve_status(new_paid, rec.total_amount)
@@ -2370,7 +2370,7 @@ class ReceivablesPage(QWidget):
             cust_name = customer.name if customer else "Pelanggan"
 
             msg = (
-                f"Hutang <b>{cust_name}</b> lunas!"
+                f"Piutang <b>{cust_name}</b> lunas!"
                 if new_status == "paid"
                 else f"Pembayaran <b>{cust_name}</b> tercatat."
             )
@@ -2390,7 +2390,7 @@ class ReceivablesPage(QWidget):
             customer = self._customer_map.get(rec.customer_id)
             cust_name = customer.name if customer else "Pelanggan"
             Toast.show_toast(
-                f"Hutang <b>{cust_name}</b> berhasil dihapus.",
+                f"Piutang <b>{cust_name}</b> berhasil dihapus.",
                 "success",
                 self
             )
@@ -2415,7 +2415,7 @@ class ReceivablesPage(QWidget):
                     sales_signals.sales_completed.emit(rec.sales_id)
 
             Toast.show_toast(
-                f"Semua hutang <b>{cust_name}</b> berhasil dihapus.",
+                f"Semua piutang <b>{cust_name}</b> berhasil dihapus.",
                 "success",
                 self
             )

@@ -89,7 +89,10 @@ class PurchaseDetailController:
     def fetch() -> list[PurchaseDetail]:
         """Bakal return **SEMUA** data purchase detail dalam bentuk list of PurchaseDetail."""
         _, cursor = DatabaseManager.require_connection()
-        cursor.execute("SELECT * FROM PurchaseDetail")
+        cursor.execute("""
+            SELECT * FROM PurchaseDetail
+            ORDER BY id DESC
+        """)
         rows = cursor.fetchall()
         return [PurchaseDetail(*row) for row in rows]
     

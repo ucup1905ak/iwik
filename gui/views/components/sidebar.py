@@ -18,7 +18,7 @@ NAV_ITEMS_ADMIN = [
     {"key": "products",     "label": "Produk",    "icon": "box"},
     {"key": "cashier",      "label": "Kasir",     "icon": "shopping-cart"},
     {"key": "transactions", "label": "Transaksi", "icon": "receipt"},
-    {"key": "receivables",  "label": "Hutang",    "icon": "credit-card"},
+    {"key": "receivables",  "label": "Piutang",    "icon": "credit-card"},
     {"key": "suppliers",    "label": "Supplier",  "icon": "truck"},
     {"key": "purchases",    "label": "Pembelian", "icon": "shopping-bag"},
     {"key": "reports",      "label": "Laporan",   "icon": "bar-chart-2"},

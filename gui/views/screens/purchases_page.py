@@ -1035,8 +1035,9 @@ class PurchaseDialog(QDialog):
         if self._is_edit:
             payload["id"] = self._purchase.id
 
-        self.saved.emit(payload)
         self.accept()
+        self.saved.emit(payload)
+        
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -2169,10 +2170,28 @@ class PurchasePage(QWidget):
                 time=data["time"],
                 total_amount=data["total_amount"],
             )
+
             self._purchases = self._load_purchases()
             self._refresh_stats()
             self._refresh_view()
-            Toast.show_toast(f"Pembelian <b>#{data.get('id', '')}</b> berhasil ditambahkan.", "success", self)
+
+            if self._purchases:
+                newest = self._purchases[0]
+
+                Toast.show_toast(
+                    f"Pembelian <b>#{newest.id}</b> berhasil ditambahkan.",
+                    "success",
+                    self
+                )
+
+                dlg = PurchaseDetailDialog(
+                    purchase=newest,
+                    parent=self
+                )
+
+                dlg.data_changed.connect(self._on_detail_changed)
+                dlg.exec()
+
         except Exception as e:
             Toast.show_toast(str(e), "error", self)
 
@@ -2195,6 +2214,26 @@ class PurchasePage(QWidget):
     def _delete_purchase(self, purchase):
         def do_delete():
             try:
+                # Kurangi stok produk dari semua detail pembelian ini
+                all_details = PurchaseDetailController.fetch()
+                details = [d for d in all_details if d.purchase_id == purchase.id]
+                
+                for detail in details:
+                    fresh = ProductController.get(detail.product_id)
+                    if fresh:
+                        new_stock = max(0, int(fresh.stock or 0) - detail.quantity)
+                        ProductController.edit(
+                            product_id=fresh.id,
+                            name=fresh.name,
+                            brand=fresh.brand,
+                            stock=new_stock,
+                            price=fresh.price,
+                            sku=fresh.sku,
+                            category=fresh.category,
+                            image_path=fresh.image_path,
+                        )
+                        product_signals.product_stock_changed.emit(detail.product_id, new_stock)
+
                 PurchaseController.remove(purchase.id)
                 self._purchases = self._load_purchases()
                 self._refresh_stats()

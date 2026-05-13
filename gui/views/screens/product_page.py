@@ -1251,6 +1251,20 @@ class ProductDialog(QDialog):
             cl, "Harga (Rp)",  "Contoh: 25000", input_type="number")
         self._stock_field, self._stock_err = self._make_field(
             cl, "Stok",        "Contoh: 10",    input_type="number")
+        if not self._edit_mode:
+            self._stock_field.setText("0")
+            self._stock_field.setReadOnly(True)
+            self._stock_field.setStyleSheet("""
+                QLineEdit {
+                    background:    #FFFFFF;
+                    border:        1px solid #EBEBEB;
+                    border-radius: 6px;
+                    padding:       0 10px;
+                    font-size:     12px;
+                    color:         #B8BCC8;
+                    font-family:   'Segoe UI';
+                }
+            """)
 
         # ── Image Upload Section ──────────────────────────────────────────────
         img_wrap = QWidget()
@@ -1412,6 +1426,20 @@ class ProductDialog(QDialog):
             if idx >= 0:
                 self._cat_combo.setCurrentIndex(idx)
 
+            # Stok tidak bisa diedit — hanya tampil nilai saat ini
+            self._stock_field.setReadOnly(True)
+            self._stock_field.setStyleSheet("""
+                QLineEdit {
+                    background:    #FFFFFF;
+                    border:        1px solid #EBEBEB;
+                    border-radius: 6px;
+                    padding:       0 10px;
+                    font-size:     12px;
+                    color:         #B8BCC8;
+                    font-family:   'Segoe UI';
+                }
+            """)
+
             if p.image_path and os.path.exists(p.image_path):
                 self._set_image_preview(p.image_path)
                 self._existing_image_path = p.image_path
@@ -1480,7 +1508,6 @@ class ProductDialog(QDialog):
             (self._brand_field, self._brand_err),
             (self._sku_field,   self._sku_err),
             (self._price_field, self._price_err),
-            (self._stock_field, self._stock_err),
         ]:
             self._clear_error(field, err)
         self._cat_err.setVisible(False)
@@ -1525,29 +1552,6 @@ class ProductDialog(QDialog):
             self._show_error(self._stock_field, self._stock_err,
                              "Stok tidak boleh kosong.")
             valid = False
-
-        if not self._edit_mode:
-            # Mode tambah produk → wajib upload gambar
-            if not self._selected_image_path:
-                self._image_err.setText("Gambar produk wajib diunggah.")
-                self._image_err.setVisible(True)
-                valid = False
-        else:
-            # Mode edit
-            no_existing = not self._existing_image_path
-            removed_without_new = self._image_removed and not self._selected_image_path
-
-            # Produk lama tidak punya gambar & user belum upload
-            if no_existing and not self._selected_image_path:
-                self._image_err.setText("Gambar produk wajib diunggah.")
-                self._image_err.setVisible(True)
-                valid = False
-
-            # User hapus gambar lama tapi tidak upload baru
-            elif removed_without_new:
-                self._image_err.setText("Gambar produk tidak boleh kosong.")
-                self._image_err.setVisible(True)
-                valid = False
 
         if not valid:
             self.adjustSize()

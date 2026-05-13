@@ -1854,6 +1854,7 @@ class OrderConfirmDialog(QDialog):
         self._customer_phone_input.setFixedHeight(34)
         self._customer_phone_input.setStyleSheet(self._input_style())
         self._customer_phone_input.hide()
+        self._phone_input.textChanged.connect(self._on_phone_lookup)
 
         # Stacked vertically but in pairs using a grid for tight layout
         self._customer_block = QWidget()
@@ -1957,6 +1958,40 @@ class OrderConfirmDialog(QDialog):
 
         # Initialize UI state
         self._on_payment_type_changed(0)
+        
+        
+    def _on_phone_lookup(self, phone: str):
+        phone = phone.strip()
+
+        if not phone:
+            self._buyer_input.setText("")
+            self._buyer_input.setReadOnly(False)
+            self._buyer_input.setStyleSheet(self._input_style())
+            self._selected_customer_id = None
+            return
+
+        try:
+            customer = CustomerController.get_by_phone(phone)
+
+            if customer:
+                self._buyer_input.setText(customer.name)
+                self._buyer_input.setReadOnly(True)
+
+                self._selected_customer_id = customer.id
+
+                self._buyer_input.setStyleSheet(
+                    self._input_style() +
+                    "QLineEdit { border: 1px solid #27AE60; }"
+                )
+
+            else:
+                self._selected_customer_id = None
+                self._buyer_input.setText("")
+                self._buyer_input.setReadOnly(False)   # ← tambahkan ini
+                self._buyer_input.setStyleSheet(self._input_style())
+
+        except Exception as e:
+            Toast.show_toast("No Telepon Error!", "error", self)
 
     # ── Dialog helpers ─────────────────────────────────────────────────────────
     def _make_divider(self) -> QFrame:
@@ -2274,6 +2309,7 @@ class OrderConfirmDialog(QDialog):
             # tampilkan no telepon
             self._phone_label.show()
             self._phone_input.show()
+            
 
             # cash field
             self._cash_label.setText("Uang yang Dibayarkan")
