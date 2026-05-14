@@ -1636,7 +1636,7 @@ class DeleteProductDialog(QDialog):
 
         cl = QVBoxLayout(card)
         cl.setContentsMargins(36, 30, 36, 30)  # ← samakan
-        cl.setSpacing(0)
+        cl.setSpacing(12)
 
         logo = QLabel("Warung<span style='color:#4F6EF7'>+</span>")
         logo.setTextFormat(Qt.TextFormat.RichText)
@@ -1648,6 +1648,7 @@ class DeleteProductDialog(QDialog):
         title.setStyleSheet(
             "font-size:20px;font-weight:600;color:#1b1b1b;border:none;")
         cl.addWidget(title)
+        cl.setSpacing(4)
 
         subtitle = QLabel(
             f"Anda akan menghapus produk <b>{self._product.name}</b>.<br>"
