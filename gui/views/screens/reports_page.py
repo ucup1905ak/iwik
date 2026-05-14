@@ -966,7 +966,7 @@ class ReportsPage(QWidget):
         grid.setHorizontalSpacing(12)
         grid.setVerticalSpacing(12)
 
-        self._profit_chart = ChartCard("Tren Profit", "Profit berdasarkan periode aktif", "line")
+        self._profit_chart = ChartCard("Tren Profit", "Profit berdasarkan periode aktif", "line", show_currency=True)
         self._payment_pie_chart = PieChartCard("Komposisi Pembayaran", "Distribusi metode pembayaran")
 
         grid.addWidget(self._profit_chart, 0, 0)
