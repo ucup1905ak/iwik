@@ -27,6 +27,8 @@ NAV_ITEMS_ADMIN = [
 
 NAV_ITEMS_CASHIER = [
     {"key": "cashier", "label": "Kasir", "icon": "shopping-cart"},
+    {"key": "transactions", "label": "Transaksi", "icon": "receipt"},
+    {"key": "receivables", "label": "Piutang", "icon": "credit-card"},
 ]
 
 VALID_NAV_KEYS = {item["key"] for item in NAV_ITEMS_ADMIN}

@@ -27,7 +27,7 @@ INITIAL_PAGE_KEY_ADMIN = "dashboard"
 INITIAL_PAGE_KEY_CASHIER = "cashier"
 
 # Halaman yang boleh diakses oleh kasir
-CASHIER_ALLOWED_PAGES = {"cashier"}
+CASHIER_ALLOWED_PAGES = {"cashier", "transactions", "receivables"}
 
 
 # ── Placeholder page untuk menu lain ─────────────────────────────────────────

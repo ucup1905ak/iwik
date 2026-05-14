@@ -171,9 +171,10 @@ class TransactionCard(QFrame):
     detail_clicked = pyqtSignal(object)
     delete_clicked = pyqtSignal(object)
 
-    def __init__(self, tx: dict, parent=None):
+    def __init__(self, tx: dict, user: dict = None, parent=None):
         super().__init__(parent)
         self._tx = tx
+        self._user = user or {}
         self._build()
 
     def _build(self):
@@ -407,19 +408,21 @@ class TransactionCard(QFrame):
         detail_btn.clicked.connect(lambda: self.detail_clicked.emit(self._tx))
         footer_lay.addWidget(detail_btn)
 
-        del_btn = QPushButton("Hapus")
-        del_btn.setFixedSize(72, 26)
-        del_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        del_btn.setStyleSheet(f"""
-            QPushButton {{
-                background: #FDEAEA; color: {C_DANGER};
-                font-family: 'Segoe UI'; font-size: 11px; font-weight: 600;
-                border-radius: 7px; border: none;
-            }}
-            QPushButton:hover {{ background: {C_DANGER}; color: #FFFFFF; }}
-        """)
-        del_btn.clicked.connect(lambda: self.delete_clicked.emit(self._tx))
-        footer_lay.addWidget(del_btn)
+        # Only show delete button for admin users
+        if self._user.get("role") == "Admin":
+            del_btn = QPushButton("Hapus")
+            del_btn.setFixedSize(72, 26)
+            del_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+            del_btn.setStyleSheet(f"""
+                QPushButton {{
+                    background: #FDEAEA; color: {C_DANGER};
+                    font-family: 'Segoe UI'; font-size: 11px; font-weight: 600;
+                    border-radius: 7px; border: none;
+                }}
+                QPushButton:hover {{ background: {C_DANGER}; color: #FFFFFF; }}
+            """)
+            del_btn.clicked.connect(lambda: self.delete_clicked.emit(self._tx))
+            footer_lay.addWidget(del_btn)
 
         root.addWidget(footer)
 
@@ -448,8 +451,9 @@ class TransactionTableView(QTableWidget):
     COL_AMT   = 7  # ← uang dibayar
     COL_ACT   = 8
 
-    def __init__(self, parent=None):
+    def __init__(self, user: dict = None, parent=None):
         super().__init__(parent)
+        self._user = user or {}
         self._setup_table()
 
     def _apply_viewport_clip(self):
@@ -822,19 +826,21 @@ class TransactionTableView(QTableWidget):
         detail_btn.clicked.connect(lambda: self.detail_clicked.emit(tx))
         lay.addWidget(detail_btn)
 
-        del_btn = QPushButton("Hapus")
-        del_btn.setFixedSize(60, 28)
-        del_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        del_btn.setStyleSheet(f"""
-            QPushButton {{
-                background: #FDEAEA; color: {C_DANGER};
-                font-family: 'Segoe UI'; font-size: 11px; font-weight: 600;
-                border-radius: 7px; border: none; padding: 0;
-            }}
-            QPushButton:hover {{ background: {C_DANGER}; color: #FFFFFF; }}
-        """)
-        del_btn.clicked.connect(lambda: self.delete_clicked.emit(tx))
-        lay.addWidget(del_btn)
+        # Only show delete button for admin users
+        if self._user.get("role") == "Admin":
+            del_btn = QPushButton("Hapus")
+            del_btn.setFixedSize(60, 28)
+            del_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+            del_btn.setStyleSheet(f"""
+                QPushButton {{
+                    background: #FDEAEA; color: {C_DANGER};
+                    font-family: 'Segoe UI'; font-size: 11px; font-weight: 600;
+                    border-radius: 7px; border: none; padding: 0;
+                }}
+                QPushButton:hover {{ background: {C_DANGER}; color: #FFFFFF; }}
+            """)
+            del_btn.clicked.connect(lambda: self.delete_clicked.emit(tx))
+            lay.addWidget(del_btn)
 
         return w
 
@@ -1339,7 +1345,7 @@ class TransactionPage(QWidget):
         table_layout.setContentsMargins(0, 0, 0, 0)
         table_layout.setSpacing(0)
 
-        self._table_view = TransactionTableView()
+        self._table_view = TransactionTableView(user=self._user)
         self._table_view.detail_clicked.connect(self._open_detail_dialog)
         self._table_view.delete_clicked.connect(self._delete_transaction)
         table_layout.addWidget(self._table_view)
@@ -1353,7 +1359,7 @@ class TransactionPage(QWidget):
     # ── Stats ───────────────────────────────────────────────────────────────────
     def _calc_stats(self) -> dict:
         txs = self._transactions
-        total_revenue = sum(t["paid_amount"] for t in txs if t["paid_amount"] is not None)
+        total_revenue = sum(t["total_price"] for t in txs if t["total_price"] is not None)
         return {
             "total":   str(len(txs)),
             "revenue": _fmt_currency(total_revenue),
@@ -1626,7 +1632,7 @@ class TransactionPage(QWidget):
             if token != self._render_token:
                 return
 
-            card = TransactionCard(tx)
+            card = TransactionCard(tx, user=self._user)
 
             card.detail_clicked.connect(self._open_detail_dialog)
             card.delete_clicked.connect(self._delete_transaction)
@@ -1654,7 +1660,7 @@ class TransactionPage(QWidget):
         for i in range(start, end):
             tx = txs[i]
 
-            card = TransactionCard(tx)
+            card = TransactionCard(tx, user=self._user)
 
             card.detail_clicked.connect(self._open_detail_dialog)
             card.delete_clicked.connect(self._delete_transaction)
@@ -1716,6 +1722,10 @@ class TransactionPage(QWidget):
         dlg.exec()
 
     def _delete_transaction(self, tx: dict):
+        if self._user.get("role") != "Admin":
+            Toast.show_toast("Hanya admin yang dapat menghapus transaksi.", "error", self)
+            return
+        
         # Cek piutang aktif SEBELUM dialog konfirmasi muncul
         all_receivables = ReceivablesController.fetch()
         piutang_aktif = [

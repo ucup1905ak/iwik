@@ -57,7 +57,7 @@ CAT_THEME = {
     "Lainnya": {"emoji": "📦", "bg": "#F1F3F8", "text": "#6C757D"},
 }
 
-Period = Literal["daily", "weekly", "monthly"]
+Period = Literal["daily", "weekly", "monthly", "yearly", "all_time"]
 
 
 def _cat_theme(category: str | None) -> dict:
@@ -119,6 +119,8 @@ def _period_start(period: Period) -> datetime:
     - daily  : midnight today (calendar day)
     - weekly : midnight Monday of this ISO week (Senin s/d Minggu)
     - monthly: midnight 1st of this calendar month
+    - yearly : midnight 1st January of this year
+    - all_time: January 1, 1900 (catch all data)
     """
     now = datetime.now()
 
@@ -131,8 +133,16 @@ def _period_start(period: Period) -> datetime:
         monday = now - timedelta(days=days_since_monday)
         return monday.replace(hour=0, minute=0, second=0, microsecond=0)
 
-    # monthly: awal bulan kalender ini
-    return now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    if period == "monthly":
+        # monthly: awal bulan kalender ini
+        return now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+
+    if period == "yearly":
+        # yearly: 1 Jan of this year
+        return now.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
+
+    # all_time: January 1, 1900
+    return datetime(1900, 1, 1, 0, 0, 0)
 
 
 def _period_label(period: Period) -> str:
@@ -145,9 +155,16 @@ def _period_label(period: Period) -> str:
         monday = (now - timedelta(days=days_since_monday)).date()
         sunday = (monday + timedelta(days=6))
         return f"Minggu Ini ({monday.strftime('%d/%m')} – {sunday.strftime('%d/%m')})"
-    # monthly
-    month_name = now.strftime("%B %Y")
-    return f"Bulan {month_name}"
+    if period == "monthly":
+        # monthly
+        month_name = now.strftime("%B %Y")
+        return f"Bulan {month_name}"
+    if period == "yearly":
+        # yearly
+        year = now.strftime("%Y")
+        return f"Tahun {year}"
+    # all_time
+    return "Sepanjang Waktu"
 
 
 def _same_period(time_value: str | None, period: Period) -> bool:
@@ -819,7 +836,7 @@ class DashboardPage(QWidget):
         period_layout.setContentsMargins(4, 4, 4, 4)
         period_layout.setSpacing(4)
 
-        for key, label in [("daily", "Hari Ini"), ("weekly", "Minggu"), ("monthly", "Bulan")]:
+        for key, label in [("daily", "Hari Ini"), ("weekly", "Minggu"), ("monthly", "Bulan"), ("yearly", "Tahun"), ("all_time", "Semua Waktu")]:
             btn = QPushButton(label)
             btn.setFixedHeight(30)
             btn.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -1104,7 +1121,7 @@ class DashboardPage(QWidget):
         empty_stock_count = len([p for p in self._products if int(p.stock or 0) == 0])
 
         transaction_count = len(period_sales)
-        revenue = sum(float(sale.paid_amount or 0) for sale in period_sales)
+        revenue = sum(float(sale.total_price or 0) for sale in period_sales)
 
         # ── Label & subtitle omset sesuai periode aktif ───────────────
         if self._active_period == "daily":
@@ -1360,7 +1377,7 @@ class DashboardPage(QWidget):
             if not dt:
                 continue
 
-            omset = float(sale.paid_amount or 0)
+            omset = float(sale.total_price or 0)
 
             if self._active_period == "weekly":
                 iso_year, iso_week, _ = dt.isocalendar()

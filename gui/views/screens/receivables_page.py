@@ -95,10 +95,11 @@ class CustomerDetailDialog(QDialog):
     pay_clicked    = pyqtSignal(object)   # emits Receivables
     delete_clicked = pyqtSignal(object)   # emits Receivables
 
-    def __init__(self, customer_name: str, records: list[Receivables], parent=None):
+    def __init__(self, customer_name: str, records: list[Receivables], user: dict = None, parent=None):
         super().__init__(parent)
         self._name    = customer_name
         self._records = records
+        self._user    = user or {}
         self.setWindowTitle(f"Detail Piutang — {customer_name}")
         self.setModal(True)
         self.setFixedWidth(640)
@@ -247,19 +248,21 @@ class CustomerDetailDialog(QDialog):
             pay_btn.clicked.connect(lambda _=False, r=rec: self.pay_clicked.emit(r))
             top.addWidget(pay_btn)
 
-        del_btn = QPushButton("Hapus")
-        del_btn.setFixedSize(62, 26)
-        del_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        del_btn.setStyleSheet(f"""
-            QPushButton {{
-                background: #FDEAEA; color: {C_DANGER};
-                font-size: 11px; font-weight: 600;
-                border-radius: 6px; border: none;
-            }}
-            QPushButton:hover {{ background: {C_DANGER}; color: #FFFFFF; }}
-        """)
-        del_btn.clicked.connect(lambda _=False, r=rec: self.delete_clicked.emit(r))
-        top.addWidget(del_btn)
+        # Only show delete button for admin users
+        if self._user.get("role") == "Admin":
+            del_btn = QPushButton("Hapus")
+            del_btn.setFixedSize(62, 26)
+            del_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+            del_btn.setStyleSheet(f"""
+                QPushButton {{
+                    background: #FDEAEA; color: {C_DANGER};
+                    font-size: 11px; font-weight: 600;
+                    border-radius: 6px; border: none;
+                }}
+                QPushButton:hover {{ background: {C_DANGER}; color: #FFFFFF; }}
+            """)
+            del_btn.clicked.connect(lambda _=False, r=rec: self.delete_clicked.emit(r))
+            top.addWidget(del_btn)
         lay.addLayout(top)
 
         # ── Divider ──
@@ -423,6 +426,7 @@ class ReceivableCard(QFrame):
         cust_name: str,
         phone: str,
         all_for_cust: list[Receivables],
+        user: dict = None,
         parent=None,
     ):
         super().__init__(parent)
@@ -430,6 +434,7 @@ class ReceivableCard(QFrame):
         self._cust_name    = cust_name
         self._phone        = phone
         self._all_for_cust = all_for_cust
+        self._user         = user or {}
         self._build()
 
     def _build(self):
@@ -635,22 +640,24 @@ class ReceivableCard(QFrame):
             )
             footer_lay.addWidget(detail_btn)
 
-            del_all_btn = QPushButton("Hapus")
-            del_all_btn.setFixedSize(68, 26)
-            del_all_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-            del_all_btn.setStyleSheet(f"""
-                QPushButton {{
-                    background: #FDEAEA; color: {C_DANGER};
-                    font-family: 'Segoe UI'; font-size: 11px; font-weight: 600;
-                    border-radius: 7px; border: none;
-                }}
-                QPushButton:hover {{ background: {C_DANGER}; color: #FFFFFF; }}
-            """)
-            del_all_btn.clicked.connect(
-                lambda _=False, n=self._cust_name, rs=self._all_for_cust:
-                    self.delete_all_clicked.emit(n, rs)
-            )
-            footer_lay.addWidget(del_all_btn)
+            # Only show delete button for admin users
+            if self._user.get("role") == "Admin":
+                del_all_btn = QPushButton("Hapus")
+                del_all_btn.setFixedSize(68, 26)
+                del_all_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+                del_all_btn.setStyleSheet(f"""
+                    QPushButton {{
+                        background: #FDEAEA; color: {C_DANGER};
+                        font-family: 'Segoe UI'; font-size: 11px; font-weight: 600;
+                        border-radius: 7px; border: none;
+                    }}
+                    QPushButton:hover {{ background: {C_DANGER}; color: #FFFFFF; }}
+                """)
+                del_all_btn.clicked.connect(
+                    lambda _=False, n=self._cust_name, rs=self._all_for_cust:
+                        self.delete_all_clicked.emit(n, rs)
+                )
+                footer_lay.addWidget(del_all_btn)
 
         else:
             actual_rec = self._all_for_cust[0] if self._all_for_cust else self._agg_rec
@@ -670,19 +677,21 @@ class ReceivableCard(QFrame):
                 pay_btn.clicked.connect(lambda _=False, r=actual_rec: self.pay_clicked.emit(r))
                 footer_lay.addWidget(pay_btn)
 
-            del_btn = QPushButton("Hapus")
-            del_btn.setFixedSize(68, 26)
-            del_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-            del_btn.setStyleSheet(f"""
-                QPushButton {{
-                    background: #FDEAEA; color: {C_DANGER};
-                    font-family: 'Segoe UI'; font-size: 11px; font-weight: 600;
-                    border-radius: 7px; border: none;
-                }}
-                QPushButton:hover {{ background: {C_DANGER}; color: #FFFFFF; }}
-            """)
-            del_btn.clicked.connect(lambda _=False, r=actual_rec: self.delete_clicked.emit(r))
-            footer_lay.addWidget(del_btn)
+            # Only show delete button for admin users
+            if self._user.get("role") == "Admin":
+                del_btn = QPushButton("Hapus")
+                del_btn.setFixedSize(68, 26)
+                del_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+                del_btn.setStyleSheet(f"""
+                    QPushButton {{
+                        background: #FDEAEA; color: {C_DANGER};
+                        font-family: 'Segoe UI'; font-size: 11px; font-weight: 600;
+                        border-radius: 7px; border: none;
+                    }}
+                    QPushButton:hover {{ background: {C_DANGER}; color: #FFFFFF; }}
+                """)
+                del_btn.clicked.connect(lambda _=False, r=actual_rec: self.delete_clicked.emit(r))
+                footer_lay.addWidget(del_btn)
 
         root.addWidget(footer)
 
@@ -783,8 +792,9 @@ class ReceivablesTableView(QTableWidget):
     COL_ACTION = 6
     ROW_H = 52
 
-    def __init__(self, parent=None):
+    def __init__(self, user: dict = None, parent=None):
         super().__init__(parent)
+        self._user = user or {}
         self._setup_table()
 
     def _apply_viewport_clip(self):
@@ -1188,6 +1198,7 @@ class ReceivablesTableView(QTableWidget):
         lay.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
 
         multi = len(all_for_cust) > 1
+        is_admin = self._user.get("role") == "Admin"
 
         if multi:
             detail_btn = QPushButton("Detail")
@@ -1206,21 +1217,22 @@ class ReceivablesTableView(QTableWidget):
             )
             lay.addWidget(detail_btn)
 
-            del_all_btn = QPushButton("Hapus")
-            del_all_btn.setFixedSize(62, 28)
-            del_all_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-            del_all_btn.setStyleSheet(f"""
-                QPushButton {{
-                    background: #FDEAEA; color: {C_DANGER};
-                    font-family: 'Segoe UI'; font-size: 11px; font-weight: 600;
-                    border-radius: 7px; border: none;
-                }}
-                QPushButton:hover {{ background: {C_DANGER}; color: #FFFFFF; }}
-            """)
-            del_all_btn.clicked.connect(
-                lambda _=False, n=cust_name, rs=all_for_cust: self.delete_all_clicked.emit(n, rs)
-            )
-            lay.addWidget(del_all_btn)
+            if is_admin:
+                del_all_btn = QPushButton("Hapus")
+                del_all_btn.setFixedSize(62, 28)
+                del_all_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+                del_all_btn.setStyleSheet(f"""
+                    QPushButton {{
+                        background: #FDEAEA; color: {C_DANGER};
+                        font-family: 'Segoe UI'; font-size: 11px; font-weight: 600;
+                        border-radius: 7px; border: none;
+                    }}
+                    QPushButton:hover {{ background: {C_DANGER}; color: #FFFFFF; }}
+                """)
+                del_all_btn.clicked.connect(
+                    lambda _=False, n=cust_name, rs=all_for_cust: self.delete_all_clicked.emit(n, rs)
+                )
+                lay.addWidget(del_all_btn)
 
         else:
             if status != "paid":
@@ -1239,21 +1251,21 @@ class ReceivablesTableView(QTableWidget):
                 pay_btn.clicked.connect(lambda _=False, r=actual_rec: self.pay_clicked.emit(r))
                 lay.addWidget(pay_btn)
 
-            del_btn = QPushButton("Hapus")
-            del_btn.setFixedSize(62, 28)
-            del_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-            del_btn.setStyleSheet(f"""
-                QPushButton {{
-                    background: #FDEAEA; color: {C_DANGER};
-                    font-family: 'Segoe UI'; font-size: 11px; font-weight: 600;
-                    border-radius: 7px; border: none;
-                }}
-                QPushButton:hover {{ background: {C_DANGER}; color: #FFFFFF; }}
-            """)
-            actual_rec = all_for_cust[0] if all_for_cust else rec
-            del_btn.clicked.connect(lambda _=False, r=actual_rec: self.delete_clicked.emit(r))
-            lay.addWidget(del_btn)
-
+            if is_admin:
+                del_btn = QPushButton("Hapus")
+                del_btn.setFixedSize(62, 28)
+                del_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+                del_btn.setStyleSheet(f"""
+                    QPushButton {{
+                        background: #FDEAEA; color: {C_DANGER};
+                        font-family: 'Segoe UI'; font-size: 11px; font-weight: 600;
+                        border-radius: 7px; border: none;
+                    }}
+                    QPushButton:hover {{ background: {C_DANGER}; color: #FFFFFF; }}
+                """)
+                actual_rec = all_for_cust[0] if all_for_cust else rec
+                del_btn.clicked.connect(lambda _=False, r=actual_rec: self.delete_clicked.emit(r))
+                lay.addWidget(del_btn)
         return w
 
 
@@ -1919,7 +1931,7 @@ class ReceivablesPage(QWidget):
         table_page_layout.setContentsMargins(0, 0, 0, 0)
         table_page_layout.setSpacing(0)
 
-        self._table = ReceivablesTableView()
+        self._table = ReceivablesTableView(user=self._user)    
         self._table.pay_clicked.connect(self._open_pay_dialog)
         self._table.delete_clicked.connect(self._open_delete_dialog)
         self._table.detail_clicked.connect(self._open_detail_dialog)
@@ -2207,7 +2219,7 @@ class ReceivablesPage(QWidget):
                 return
             customer  = self._customer_map.get(agg_rec.customer_id)
             phone     = customer.phone if customer else ""
-            card = ReceivableCard(agg_rec, cust_name, phone, all_for_cust)
+            card = ReceivableCard(agg_rec, cust_name, phone, all_for_cust, user=self._user)
             card.pay_clicked.connect(self._open_pay_dialog)
             card.delete_clicked.connect(self._open_delete_dialog)
             card.detail_clicked.connect(self._open_detail_dialog)
@@ -2230,7 +2242,7 @@ class ReceivablesPage(QWidget):
             agg_rec, cust_name, all_for_cust = rows[i]
             customer = self._customer_map.get(agg_rec.customer_id)
             phone    = customer.phone if customer else ""
-            card = ReceivableCard(agg_rec, cust_name, phone, all_for_cust)
+            card = ReceivableCard(agg_rec, cust_name, phone, all_for_cust, user=self._user)
             card.pay_clicked.connect(self._open_pay_dialog)
             card.delete_clicked.connect(self._open_delete_dialog)
             card.detail_clicked.connect(self._open_detail_dialog)
@@ -2301,7 +2313,7 @@ class ReceivablesPage(QWidget):
         dlg.exec()
 
     def _open_detail_dialog(self, customer_name: str, records: list[Receivables]):
-        dlg = CustomerDetailDialog(customer_name=customer_name, records=records, parent=self)
+        dlg = CustomerDetailDialog(customer_name=customer_name, records=records, user=self._user, parent=self)
         dlg.pay_clicked.connect(lambda rec: (dlg.accept(), self._open_pay_dialog(rec)))
         dlg.delete_clicked.connect(lambda rec: (dlg.accept(), self._open_delete_dialog(rec)))
         dlg.exec()

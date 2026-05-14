@@ -1236,9 +1236,6 @@ class SalesPage(QWidget):
                     Toast.show_toast(f"Stok {fresh.name} tidak cukup. Sisa: {fresh.stock}.", "warning", self)
                     return
 
-            # Hitung gross revenue (subtotal) = total + discount
-            gross_revenue = total + discount
-            
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             sales_id = SalesController.add_return_id(
                 customer_id=customer_id,
@@ -1246,7 +1243,7 @@ class SalesPage(QWidget):
                 time=timestamp,
                 payment=payment_method,
                 paid_amount=paid_amount,
-                total_price=gross_revenue   # ← Simpan gross revenue (subtotal)
+                total_price=total   # ← Simpan total JUAL (setelah diskon)
             )
 
             updated_stocks = {}
@@ -1281,7 +1278,7 @@ class SalesPage(QWidget):
                 ReceivablesController.add(
                     sales_id=sales_id,
                     customer_id=customer_id,
-                    total_amount=gross_revenue,  # ← Gunakan gross revenue untuk piutang
+                    total_amount=total,  # ← Gunakan total JUAL (setelah diskon)
                     due_date=None,
                     amount_paid=paid_amount,
                     status='unpaid',

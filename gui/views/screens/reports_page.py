@@ -66,7 +66,7 @@ ENABLE_CARD_SHADOWS = False
 RADIUS = 14
 LOW_STOCK_THRESHOLD = 20
 
-Period = Literal["daily", "weekly", "monthly"]
+Period = Literal["daily", "weekly", "monthly", "yearly", "all_time"]
 ChartType = Literal["bar", "line"]
 
 
@@ -108,7 +108,15 @@ def _period_start(period: Period) -> datetime:
     if period == "weekly":
         return (now - timedelta(days=6)).replace(hour=0, minute=0, second=0, microsecond=0)
 
-    return (now - timedelta(days=29)).replace(hour=0, minute=0, second=0, microsecond=0)
+    if period == "monthly":
+        return (now - timedelta(days=29)).replace(hour=0, minute=0, second=0, microsecond=0)
+
+    if period == "yearly":
+        # yearly: 1 Jan of this year
+        return now.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
+
+    # all_time: January 1, 1900
+    return datetime(1900, 1, 1, 0, 0, 0)
 
 
 def _period_end() -> datetime:
@@ -120,7 +128,15 @@ def _period_label(period: Period) -> str:
         return "Hari Ini"
     if period == "weekly":
         return "7 Hari Terakhir"
-    return "30 Hari Terakhir"
+    if period == "monthly":
+        return "30 Hari Terakhir"
+    if period == "yearly":
+        # yearly
+        now = datetime.now()
+        year = now.strftime("%Y")
+        return f"Tahun {year}"
+    # all_time
+    return "Sepanjang Waktu"
 
 
 def _format_period_label(period: Period, tx_count: int = 0) -> str:
@@ -138,9 +154,17 @@ def _format_period_label(period: Period, tx_count: int = 0) -> str:
         date_range = f"Senin {monday.strftime('%d/%m')} – Minggu {sunday.strftime('%d/%m')}"
         return date_range if tx_count == 0 else f"{date_range} • {_format_number(tx_count)} transaksi"
     
-    # monthly
-    month_name = now.strftime("%B %Y")
-    return month_name if tx_count == 0 else f"{month_name} • {_format_number(tx_count)} transaksi"
+    if period == "monthly":
+        month_name = now.strftime("%B %Y")
+        return month_name if tx_count == 0 else f"{month_name} • {_format_number(tx_count)} transaksi"
+    
+    if period == "yearly":
+        # yearly
+        year_str = now.strftime("1 Jan - 31 Des %Y")
+        return year_str if tx_count == 0 else f"{year_str} • {_format_number(tx_count)} transaksi"
+    
+    # all_time
+    return "Sepanjang Waktu" if tx_count == 0 else f"Sepanjang Waktu • {_format_number(tx_count)} transaksi"
 
 
 def _period_date_range(period: Period) -> tuple[datetime, datetime]:
@@ -842,7 +866,7 @@ class ReportsPage(QWidget):
         period_layout.setContentsMargins(4, 4, 4, 4)
         period_layout.setSpacing(4)
 
-        for key, label in [("daily", "Hari Ini"), ("weekly", "Minggu"), ("monthly", "Bulan")]:
+        for key, label in [("daily", "Hari Ini"), ("weekly", "Minggu"), ("monthly", "Bulan"), ("yearly", "Tahun"), ("all_time", "Semua Waktu")]:
             btn = QPushButton(label)
             btn.setFixedHeight(30)
             btn.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -1063,8 +1087,9 @@ class ReportsPage(QWidget):
 
     def _refresh_metrics(self, period_sales: list[Sales], period_details: list[SalesDetail]):
         # ── Omset (Gross Revenue) ──
-        # Hanya hitung yang sudah dibayar (paid_amount), bukan hutang yang belum lunas
-        gross_revenue = sum(float(sale.paid_amount or 0) for sale in period_sales)
+        # Hitung berdasarkan total_price (harga jual), bukan paid_amount (uang dibayar)
+        # Jika pembayaran tunai dan uang lebih, omset tetap dari harga jual, kembalian dari kas
+        gross_revenue = sum(float(sale.total_price or 0) for sale in period_sales)
         
         # ── Biaya Operasional ──
         # 1. Total modal pembelian dari supplier
@@ -1126,15 +1151,43 @@ class ReportsPage(QWidget):
             labels = [day.strftime("%d/%m") for day in days]
             return labels, {day.date(): label for day, label in zip(days, labels)}
 
-        # monthly: dari hari 1 bulan ini sampai hari ini
-        first_day = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-        days = [(first_day + timedelta(days=i)).date() for i in range((now.date() - first_day.date()).days + 1)]
-        labels = [day.strftime("%d/%m") for day in days]
-        return labels, {day: label for day, label in zip(days, labels)}
+        if self._active_period == "monthly":
+            # monthly: dari hari 1 bulan ini sampai hari ini
+            first_day = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            days = [(first_day + timedelta(days=i)).date() for i in range((now.date() - first_day.date()).days + 1)]
+            labels = [day.strftime("%d/%m") for day in days]
+            return labels, {day: label for day, label in zip(days, labels)}
+
+        if self._active_period == "yearly":
+            # yearly: Semua 12 bulan dalam tahun ini
+            labels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+            month_map = {i: label for i, label in enumerate(labels, start=1)}
+            return labels, month_map
+
+        # all_time: Group per tahun, tahun 0 untuk data tanpa tahun valid
+        # Kumpulkan semua tahun yang ada di data
+        all_sales = self._sales
+        years = set()
+        for sale in all_sales:
+            dt = _parse_datetime(sale.time)
+            if dt:
+                years.add(dt.year)
+            else:
+                years.add(0)
+        
+        # Sort tahun dari terkecil, tapi 0 paling belakang
+        sorted_years = sorted([y for y in years if y != 0]) + ([0] if 0 in years else [])
+        labels = [str(year) for year in sorted_years]
+        year_map = {year: str(year) for year in sorted_years}
+        return labels, year_map
 
     def _label_for_dt(self, dt: datetime, mapper: dict) -> str | None:
         if self._active_period == "daily":
             return mapper.get(dt.hour)
+        if self._active_period == "yearly":
+            return mapper.get(dt.month)
+        if self._active_period == "all_time":
+            return mapper.get(dt.year)
         return mapper.get(dt.date())
 
     def _revenue_series(self, period_sales: list[Sales]) -> list[tuple[str, float]]:
@@ -1145,8 +1198,8 @@ class ReportsPage(QWidget):
             dt = _parse_datetime(sale.time)
             label = self._label_for_dt(dt, mapper) if dt else None
             if label:
-                # Hanya hitung yang sudah dibayar, bukan hutang
-                buckets[label] += float(sale.paid_amount or 0)
+                # Hitung berdasarkan total_price (harga jual sebenarnya), bukan paid_amount
+                buckets[label] += float(sale.total_price or 0)
 
         return [(label, buckets[label]) for label in labels]
 
@@ -1158,13 +1211,13 @@ class ReportsPage(QWidget):
         omset_buckets = {label: 0.0 for label in labels}
         purchase_buckets = {label: 0.0 for label in labels}
 
-        # Hitung omset per periode (hanya yang sudah dibayar)
+        # Hitung omset per periode berdasarkan total_price (harga jual sebenarnya)
         for sale in period_sales:
             dt = _parse_datetime(sale.time)
             label = self._label_for_dt(dt, mapper) if dt else None
             if label:
-                # Gunakan paid_amount bukan total_price (karena hutang belum masuk omset)
-                omset_buckets[label] += float(sale.paid_amount or 0)
+                # Gunakan total_price (harga jual), bukan paid_amount (uang dibayar user)
+                omset_buckets[label] += float(sale.total_price or 0)
 
         # Hitung biaya pembelian per periode
         period_purchase_details = self._filtered_purchase_details(period_purchases)
