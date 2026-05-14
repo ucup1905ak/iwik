@@ -1114,7 +1114,7 @@ class SalesPage(QWidget):
     # ── Cart logic ─────────────────────────────────────────────────────────────
     def _add_to_cart(self, product: Product):
         if product.stock <= 0:
-            Toast.show_toast("Produk habis.", "warning", self)
+            Toast.show_toast("Produk habis!", "info", self)
             return
 
         if product.id in self._cart:

@@ -2354,26 +2354,26 @@ class ReceivablesPage(QWidget):
                 from controllers.sales import SalesController
                 sale = SalesController.get(rec.sales_id)
                 if sale:
+                    # Jika lunas, paid_amount = total_price; jika sebagian, pakai new_paid
+                    paid_amount_for_sale = sale.total_price if new_status == "paid" else new_paid
+
                     SalesController.edit(
                         sale_id=sale.id,
                         customer_id=sale.customer_id,
                         cashier_id=sale.cashier_id,
                         time=sale.time,
                         payment=sale.payment,
-                        paid_amount=new_paid,
+                        paid_amount=paid_amount_for_sale,
                         total_price=sale.total_price,
                     )
 
-            # ── Emit receivables signal ──
-            receivables_signals.receivables_paid.emit(rec.id)
-            
-            # ── Trigger refresh transactions_page ──
             from gui.signals import sales_signals
             sales_signals.sales_completed.emit(rec.sales_id or 0)
 
             self._load_data()
             self._refresh_stats()
             self._refresh_view()
+
             customer = self._customer_map.get(rec.customer_id)
             cust_name = customer.name if customer else "Pelanggan"
 
@@ -2382,8 +2382,8 @@ class ReceivablesPage(QWidget):
                 if new_status == "paid"
                 else f"Pembayaran <b>{cust_name}</b> tercatat."
             )
-
             Toast.show_toast(msg, "success", self)
+
         except Exception as e:
             Toast.show_toast(str(e), "error", self)
 

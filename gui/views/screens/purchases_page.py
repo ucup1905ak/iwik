@@ -1,5 +1,10 @@
 from controllers.purchase import PurchaseController
 from controllers.purchase_detail import PurchaseDetailController
+from gui.views.screens.product_page import ProductDialog
+from utils.image_optimizer import ImageOptimizer
+import os
+import random
+import string
 from PyQt6.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -1181,17 +1186,60 @@ class PurchaseDetailDialog(QDialog):
         self._new_qty_spin   = _spin(min_v=1)
         self._new_price_spin = _spin(is_float=False, max_v=999_999_999)
 
+        # ── Kolom Produk: label + tombol "+ Produk Baru" sejajar di atas dropdown ──
+        produk_col = QVBoxLayout()
+        produk_col.setSpacing(5)
+
+        produk_header = QHBoxLayout()
+        produk_header.setContentsMargins(0, 0, 0, 0)
+        produk_header.setSpacing(6)
+
+        produk_lbl = QLabel("Produk")
+        produk_lbl.setStyleSheet(f"font-size:11px;font-weight:500;color:{C_TEXT_SEC};border:none;")
+
+        new_product_btn = QPushButton("+ Produk Baru")
+        new_product_btn.setFixedHeight(20)
+        new_product_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        new_product_btn.setStyleSheet(f"""
+            QPushButton {{
+                background:    {C_TAG_BG};
+                color:         {C_ACCENT};
+                font-family:   'Segoe UI';
+                font-size:     10px;
+                font-weight:   600;
+                border-radius: 4px;
+                border:        none;
+                padding:       0 6px;
+            }}
+            QPushButton:hover {{
+                background:    {C_ACCENT};
+                color:         #FFFFFF;
+            }}
+        """)
+        new_product_btn.clicked.connect(self._on_add_product)
+
+        produk_header.addWidget(produk_lbl)
+        produk_header.addStretch()
+        produk_header.addWidget(new_product_btn)
+
+        produk_col.addLayout(produk_header)
+        produk_col.addWidget(self._new_product_combo)
+        add_row.addLayout(produk_col)
+
+        # ── Kolom Qty & Harga ──────────────────────────────────────────────────
         for lbl_text, widget in [
-            ("Produk",      self._new_product_combo),
-            ("Qty",         self._new_qty_spin),
-            ("Harga (Rp)",  self._new_price_spin),
+            ("Qty",        self._new_qty_spin),
+            ("Harga (Rp)", self._new_price_spin),
         ]:
-            col = QVBoxLayout(); col.setSpacing(5)
+            col = QVBoxLayout()
+            col.setSpacing(5)
             lbl = QLabel(lbl_text)
             lbl.setStyleSheet(f"font-size:11px;font-weight:500;color:{C_TEXT_SEC};border:none;")
-            col.addWidget(lbl); col.addWidget(widget)
+            col.addWidget(lbl)
+            col.addWidget(widget)
             add_row.addLayout(col)
 
+        # ── Tombol Tambah ──────────────────────────────────────────────────────
         add_item_btn = QPushButton("+ Tambah")
         add_item_btn.setFixedSize(90, 36)
         add_item_btn.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -1206,10 +1254,10 @@ class PurchaseDetailDialog(QDialog):
         add_item_btn.clicked.connect(self._on_add_detail)
 
         add_col = QVBoxLayout()
-        add_col.setSpacing(3)
+        add_col.setSpacing(5)
         add_col.setContentsMargins(0, 0, 0, 0)
-
-        add_col.addWidget(add_item_btn, alignment=Qt.AlignmentFlag.AlignBottom)
+        add_col.addStretch()
+        add_col.addWidget(add_item_btn)
         add_row.addLayout(add_col)
 
         cl.addLayout(add_row)
@@ -1279,6 +1327,83 @@ class PurchaseDetailDialog(QDialog):
         cl.addLayout(btn_row)
 
         root.addWidget(card)
+        
+    def _on_add_product(self):
+        """Buka dialog tambah produk baru, persis seperti di ProductPage."""
+        dlg = ProductDialog(parent=self)
+        dlg.saved.connect(self._add_product)
+        dlg.exec()
+
+    def _add_product(self, data: dict):
+        """Simpan produk baru ke DB, identik dengan ProductPage._add_product."""
+        try:
+            ProductController.add(
+                name=data["name"],
+                price=data["price"],
+                stock=data["stock"],
+                brand=data.get("brand"),
+                sku=data["sku"],
+                category=data["category"],
+                image_path=data.get("image_path"),
+            )
+
+            # Jika gambar di-upload dengan product_id=0, rename ke nama asli + random suffix
+            if data.get("image_path"):
+                all_products = ProductController.fetch()
+                if all_products:
+                    last_product = all_products[-1]
+                    image_path = data.get("image_path")
+                    if os.path.exists(image_path) and "product_0" in os.path.basename(image_path):
+                        old_path = image_path
+                        ext = os.path.splitext(old_path)[1]
+                        original_name = data.get("original_image_name") or os.path.splitext(
+                            os.path.basename(old_path))[0]
+                        random_suffix = ''.join(
+                            random.choices(string.ascii_lowercase, k=5))
+                        new_filename = f"{original_name}_{random_suffix}{ext}"
+                        new_path = os.path.join(
+                            os.path.dirname(old_path), new_filename)
+                        try:
+                            if os.path.exists(old_path):
+                                os.rename(old_path, new_path)
+                                ProductController.edit(
+                                    product_id=last_product.id,
+                                    name=last_product.name,
+                                    brand=last_product.brand,
+                                    stock=last_product.stock,
+                                    price=last_product.price,
+                                    sku=last_product.sku,
+                                    category=last_product.category,
+                                    image_path=new_path,
+                                )
+                        except Exception as e:
+                            print(f"Error renaming image: {e}")
+
+            # Refresh dropdown produk di form tambah detail
+            all_products = ProductController.fetch()
+            self._products = all_products
+            self._new_product_combo.clear()
+            for p in self._products:
+                label = f"{p.name}" + (f" ({p.brand})" if p.brand else "")
+                self._new_product_combo.addItem(label, userData=p.id)
+
+            # Otomatis pilih produk yang baru saja ditambahkan
+            if self._products:
+                self._new_product_combo.setCurrentIndex(
+                    len(self._products) - 1)
+
+            # Emit signal agar halaman lain (ProductPage, dll.) ikut ter-refresh
+            from gui.signals import product_signals as ps
+            if all_products:
+                ps.product_added.emit(all_products[-1])
+
+            Toast.show_toast(
+                f"Produk <b>{data['name']}</b> berhasil ditambahkan.",
+                "success", self
+            )
+
+        except TypeError as e:
+            Toast.show_toast(str(e), "error", self)
 
     def _load_details(self):
         all_details = PurchaseDetailController.fetch()

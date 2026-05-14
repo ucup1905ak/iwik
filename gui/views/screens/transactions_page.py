@@ -1716,9 +1716,37 @@ class TransactionPage(QWidget):
         dlg.exec()
 
     def _delete_transaction(self, tx: dict):
+        # Cek piutang aktif SEBELUM dialog konfirmasi muncul
+        all_receivables = ReceivablesController.fetch()
+        piutang_aktif = [
+            r for r in all_receivables
+            if r.sales_id == tx["id"] and r.status != "paid"
+        ]
+        if piutang_aktif:
+            Toast.show_toast(
+                f"Transaksi <b>#TX{tx['id']:04d}</b> tidak bisa dihapus karena masih ada piutang yang belum lunas.",
+                "error", self
+            )
+            return
+
         def do_delete():
             try:
+                sale = SalesController.get(tx["id"])
+                customer_id = sale.customer_id if sale else None
+
                 SalesController.remove(tx["id"])
+
+                if customer_id is not None:
+                    all_sales = SalesController.fetch()
+                    sisa_sales = [s for s in all_sales if s.customer_id == customer_id]
+
+                    all_receivables = ReceivablesController.fetch()
+                    sisa_receivables = [r for r in all_receivables if r.customer_id == customer_id]
+
+                    if not sisa_sales and not sisa_receivables:
+                        from controllers.customer import CustomerController
+                        CustomerController.remove(customer_id)
+
                 self._transactions = self._load_transactions()
                 self._refresh_stats()
                 self._refresh_view()
