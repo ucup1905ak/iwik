@@ -30,7 +30,7 @@ from controllers.purchase import PurchaseController, Purchase
 from controllers.purchase_detail import PurchaseDetailController, PurchaseDetail
 from controllers.receivables import ReceivablesController, Receivables
 from gui.views.components.toast import Toast
-from gui.signals import sales_signals, purchase_signals, receivables_signals
+from gui.signals import sales_signals, purchase_signals, receivables_signals, product_signals
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -348,10 +348,17 @@ class PieChartWidget(QWidget):
         rect = int(x), int(y), int(size), int(size)
 
         start_angle = 0
-        for idx, (_, value) in enumerate(self._data):
+        for idx, (label, value) in enumerate(self._data):
             span_angle = int((value / total) * 360 * 16)
+
+            color_map = {
+                "Tunai": "#27AE60",  # hijau
+                "QRIS": "#4F6EF7",   # biru
+            }
+            color = color_map.get(label, CHART_COLORS[idx % len(CHART_COLORS)])
+
             painter.setPen(Qt.PenStyle.NoPen)
-            painter.setBrush(QBrush(QColor(CHART_COLORS[idx % len(CHART_COLORS)])))
+            painter.setBrush(QBrush(QColor(color)))
             painter.drawPie(*rect, start_angle, span_angle)
             start_angle += span_angle
 
@@ -362,9 +369,15 @@ class PieChartWidget(QWidget):
         font.setPointSize(9)
         painter.setFont(font)
 
+        color_map = {
+            "Tunai": "#27AE60",  # hijau
+            "QRIS": "#4F6EF7",   # biru
+        }
+
         for idx, (label, value) in enumerate(self._data[:6]):
             cy = legend_y + idx * 26
-            color = QColor(CHART_COLORS[idx % len(CHART_COLORS)])
+            color = QColor(color_map.get(label, CHART_COLORS[idx % len(CHART_COLORS)]))
+
             painter.setPen(Qt.PenStyle.NoPen)
             painter.setBrush(QBrush(color))
             painter.drawRoundedRect(legend_x, cy + 3, 12, 12, 3, 3)
@@ -765,6 +778,7 @@ class ReportsPage(QWidget):
         purchase_signals.purchase_completed.connect(self._on_purchase_completed)
         receivables_signals.receivables_updated.connect(self._on_receivables_updated)
         receivables_signals.receivables_paid.connect(self._on_receivables_updated)
+        product_signals.product_stock_changed.connect(self._on_product_stock_changed)
 
     # ── UI Build ──────────────────────────────────────────────────────────────
     def _build_ui(self):
@@ -1020,6 +1034,10 @@ class ReportsPage(QWidget):
 
     def _on_receivables_updated(self, sales_id_or_rec_id: int):
         """Dipanggil otomatis saat data piutang berubah atau pembayaran diproses."""
+        self._load_data()
+
+    def _on_product_stock_changed(self, product_id: int, new_stock: int):
+        """Dipanggil otomatis saat stok produk berubah (dari pembelian atau penjualan)."""
         self._load_data()
 
     def _set_period(self, period: Period):
