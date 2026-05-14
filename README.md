@@ -1,39 +1,39 @@
-# IWIK - Store Management Desktop App
+# IWIK (Warung+) - Store Management Desktop App
 
-IWIK is a Python desktop application for managing store operational data:
+IWIK (codenamed Warung+) is a Python desktop application for managing store operational data:
 
-- Cashiers
+- Authentication & Role Management (Admin/Cashier)
+- Suppliers & Purchases
 - Customers
-- Products
-- Sales transactions
-- Sales details
-- Sales report export (CSV and PDF)
+- Products & Inventory
+- Sales transactions & details
+- Reports & Receivables
+- Data export (CSV, PDF, and XLSX)
 
 The app uses:
 
-- Tkinter for GUI
-- SQLite for local database
-- ReportLab for PDF report generation
+- **PyQt6** for a modern, responsive GUI
+- **SQLite3** for the local database
+- **ReportLab** for PDF report generation
+- **OpenPyXL** for Excel report generation
 
 ## Features
 
-- CRUD-style management for master data (cashier, customer, product)
-- Sales input page with multi-item detail
-- Built-in reports page
-- Export report to CSV and PDF
-- Environment mode via CLI flag:
-  - `--dev` uses `dev_data.db`
-  - default (production) uses `appdata.db`
+- Secure login and user selection system
+- CRUD-style management for master data (cashiers, customers, products, suppliers, purchases)
+- Complete POS (Point of Sale) sales interface with multi-item cart management
+- Built-in business intelligence reports and charts
+- Export capabilities to CSV, PDF, and Excel formats
 
 ## Project Structure
 
-- `main.py` - application entry point
-- `api/` - database access and CRUD functions
-- `gui/` - Tkinter pages and main app window
-- `sql/` - database schema scripts
-- `utils/` - export helpers (CSV/PDF)
-- `assets/` - generated output files
-- `docs/` - detailed technical documentation
+- `main.py` - Application entry point
+- `controllers/` - Backend business logic and CRUD wrappers for data models (using `NamedTuple`)
+- `database/` - SQLite connection manager and SQL initialization scripts (`appdata.db`)
+- `gui/` - Contains all PyQt6 views, standardized components, and screens
+- `utils/` - Helpers for file exports (CSV/PDF/XLSX) and sample data generation
+- `assets/` - Storage for generated output files and images
+- `docs/` - System documentation and feature guides
 
 ## Quick Start
 
@@ -45,49 +45,40 @@ pip install -r requirements.txt
 
 ### 2) Run application
 
-Production mode:
-
 ```bash
 python main.py
-```
-
-Development mode:
-
-```bash
-python main.py --dev
 ```
 
 ## Database Behavior
 
 On startup, the app will:
 
-1. Connect to the selected SQLite database file.
-2. Run initialization SQL from `sql/init.sql`.
-
-Database file selection:
-
-- Production: `appdata.db`
-- Development: `dev_data.db`
+1. Connect to the SQLite database file at `database/appdata.db`.
+2. Run the initialization SQL script from `database/sql/init.sql` if the schema does not exist yet.
 
 ## Export Output
 
 - CSV files are generated in `assets/csv/`
 - PDF files are generated in `assets/pdf/`
+- Excel files are generated in `assets/xlsx/`
+- Images are managed under `assets/image/`
 
 ## Detailed Documentation
 
 See documents in `docs/`:
 
-- `docs/01-setup-and-run.md`
-- `docs/02-database-schema.md`
-- `docs/03-api-reference.md`
-- `docs/04-gui-flow.md`
+- [docs/01-features-overview.md](docs/01-features-overview.md) - High-level functional breakdown
+- [docs/04-gui-flow.md](docs/04-gui-flow.md) - Visual navigation and interaction mapping
+- [docs/05-database-controllers.md](docs/05-database-controllers.md) - Database schema mapping and backend logic APIs
 
 ## Requirements
 
 From `requirements.txt`:
 
-- `SQLAlchemy>=2.0`
+- `PyQt6`
 - `reportlab>=3.6.0`
+- `openpyxl>=3.10.0`
+- `Pillow>=9.0.0`
+- `SQLAlchemy>=2.0` (Optional/Legacy compatibility)
 
-> Note: current database layer is implemented with Python `sqlite3` module.
+> Note: The active database manager currently interfaces directly with the Python `sqlite3` module.
