@@ -554,7 +554,7 @@ class PurchaseTableView(QTableWidget):
     
     def _make_date_cell(self, text: str) -> QWidget:
         w, lay = self._wrap()
-        weight = "100"
+        weight = "400"
         lbl = QLabel(text)
         lbl.setStyleSheet(f"font-family:'Segoe UI';font-size:13px;font-weight:{weight};color:{C_TEXT_PRI};background:transparent;")
         lay.addWidget(lbl)
