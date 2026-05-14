@@ -1643,7 +1643,7 @@ class DeleteProductDialog(QDialog):
         logo.setStyleSheet(
             "font-size:14px;color:#5F5E5A;font-weight:500;letter-spacing:1px;border:none;")
         cl.addWidget(logo)
-        cl.setSpacing(10)
+        cl.addSpacing(12)
 
         title = QLabel("Hapus Produk?")
         title.setStyleSheet(
@@ -2720,7 +2720,8 @@ class ProductPage(QWidget):
                     except:
                         pass
         except Exception as e:
-            Toast.show_toast(f"Terjadi kesalahan saat export: {str(e)}", "error", self)
+            Toast.show_toast(
+                f"Terjadi kesalahan saat export: {str(e)}", "error", self)
 
     def _on_import_clicked(self):
         """Handle import button click dengan custom dialog"""
@@ -2745,7 +2746,8 @@ class ProductPage(QWidget):
                     self._import_products(dialog.imported_data)
 
         except Exception as e:
-            Toast.show_toast(f"Terjadi kesalahan saat import: {str(e)}", "error", self)
+            Toast.show_toast(
+                f"Terjadi kesalahan saat import: {str(e)}", "error", self)
 
     def _import_products(self, products_data: list):
         """Process imported products"""
@@ -2809,12 +2811,15 @@ class ProductPage(QWidget):
                     result_msg += f"\n... dan {len(errors) - 10} error lainnya"
 
             if import_count > 0:
-                Toast.show_toast(f"Berhasil mengimport <b>{import_count}</b> produk", "success", self)
+                Toast.show_toast(
+                    f"Berhasil mengimport <b>{import_count}</b> produk", "success", self)
             else:
-                Toast.show_toast("Tidak ada produk yang berhasil diimport.", "error", self)
+                Toast.show_toast(
+                    "Tidak ada produk yang berhasil diimport.", "error", self)
 
         except Exception as e:
-            Toast.show_toast(f"Terjadi kesalahan saat import: {str(e)}", "error", self)
+            Toast.show_toast(
+                f"Terjadi kesalahan saat import: {str(e)}", "error", self)
 
     def showEvent(self, event):
         super().showEvent(event)
