@@ -78,6 +78,11 @@ def _format_price(price: float | int | None) -> str:
     return f"Rp {value:,.0f}".replace(",", ".")
 
 
+def _format_price_no_currency(price: float | int | None) -> str:
+    value = float(price or 0)
+    return f"{value:,.0f}".replace(",", ".")
+
+
 def _format_number(value: int | float | None) -> str:
     return f"{int(value or 0):,}".replace(",", ".")
 
@@ -249,7 +254,7 @@ class SimpleChartWidget(QWidget):
         font = painter.font()
         font.setPointSize(8)
         painter.setFont(font)
-        painter.drawText(0, top - 2, left - 8, 16, Qt.AlignmentFlag.AlignRight, _format_price(max_value))
+        painter.drawText(0, top - 2, left - 8, 16, Qt.AlignmentFlag.AlignRight, _format_price_no_currency(max_value))
         painter.drawText(0, top + chart_h - 10, left - 8, 16, Qt.AlignmentFlag.AlignRight, "0")
 
         count = len(self._data)
