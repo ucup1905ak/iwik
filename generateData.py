@@ -173,26 +173,138 @@ def _ensure_suppliers() -> list[int]:
 
 def _ensure_products() -> dict[int, dict]:
     rows = [
-        ("Indomie Goreng",       "Indomie",          "MKN-001", "Makanan",  180,  3500, 25),
-        ("Nasi Goreng Spesial",  "Warung Nusantara", "MKN-002", "Makanan",   42, 18000, 14),
-        ("Ayam Geprek",          "GeprekZone",       "MKN-003", "Makanan",   35, 22000, 12),
-        ("Air Mineral 600ml",    "AquaFresh",        "MNM-001", "Minuman",  220,  4000, 28),
-        ("Es Teh Manis",         "Fresh Drink",      "MNM-002", "Minuman",  160,  5000, 24),
-        ("Kopi Susu Gula Aren",  "CoffeeDaily",      "MNM-003", "Minuman",   55, 18000, 10),
-        ("Keripik Singkong",     "SnackRasa",        "SNK-001", "Snack",      9,  8000,  7),
-        ("Biskuit Coklat",       "Crunchy",          "SNK-002", "Snack",     75, 12000,  9),
-        ("Wafer Keju",           "Cheezy",           "SNK-003", "Snack",     95, 10000, 11),
-        ("Beras Premium 5Kg",    "PanenMakmur",      "SMB-001", "Sembako",   24, 78000,  5),
-        ("Minyak Goreng 1L",     "Tropis",           "SMB-002", "Sembako",   16, 21000,  7),
-        ("Telur Ayam 1Kg",       "FarmFresh",        "SMB-003", "Sembako",   10, 29000,  6),
-        ("Sabun Cuci Piring",    "CleanMax",         "LNY-001", "Lainnya",   33, 14000,  4),
-        ("Tisu Gulung",          "SoftCare",         "LNY-002", "Lainnya",   60, 11000,  4),
-        ("Sambal Botol Pedas",   "HotTaste",         "LNY-003", "Lainnya",    8, 17000,  3),
+        # =========================
+        # MAKANAN - kemasan / instan, bukan siap saji
+        # =========================
+        ("Indomie Goreng", "Indomie", "MKN-001", "Makanan", 180, 3500, 25),
+        ("Indomie Soto", "Indomie", "MKN-002", "Makanan", 160, 3500, 22),
+        ("Indomie Ayam Bawang", "Indomie", "MKN-003", "Makanan", 150, 3500, 20),
+        ("Mie Sedaap Goreng", "Mie Sedaap", "MKN-004", "Makanan", 150, 3500, 20),
+        ("Mie Sedaap Soto", "Mie Sedaap", "MKN-005", "Makanan", 120, 3500, 18),
+        ("Sarimi Isi 2 Ayam Bawang", "Sarimi", "MKN-006", "Makanan", 90, 4500, 14),
+        ("Supermi Ayam Bawang", "Supermi", "MKN-007", "Makanan", 90, 3500, 12),
+        ("Bihun Jagung", "Padamu", "MKN-008", "Makanan", 45, 6500, 7),
+        ("Mie Telur 200gr", "Cap 3 Ayam", "MKN-009", "Makanan", 45, 7000, 7),
+        ("Sarden Kaleng Kecil", "ABC", "MKN-010", "Makanan", 30, 11500, 5),
+        ("Sarden Kaleng Besar", "ABC", "MKN-011", "Makanan", 20, 21000, 4),
+        ("Kornet Kaleng Kecil", "Pronas", "MKN-012", "Makanan", 22, 14500, 3),
+        ("Abon Sapi Sachet", "BonCabe", "MKN-013", "Makanan", 35, 5000, 4),
+        ("Bubur Instan Sachet", "Super Bubur", "MKN-014", "Makanan", 50, 3500, 6),
+        ("Agar-Agar Bubuk", "Swallow", "MKN-015", "Makanan", 40, 5000, 4),
+        ("Jelly Bubuk", "Nutrijell", "MKN-016", "Makanan", 45, 4500, 5),
+        ("Susu Kental Manis Sachet", "Frisian Flag", "MKN-017", "Makanan", 100, 1500, 10),
+        ("Susu Kental Manis Kaleng", "Frisian Flag", "MKN-018", "Makanan", 25, 13000, 4),
+        ("Roti Tawar Kering Kemasan", "Sari Roti", "MKN-019", "Makanan", 25, 12000, 4),
+        ("Meses Coklat Sachet", "Ceres", "MKN-020", "Makanan", 40, 3000, 4),
+
+        # =========================
+        # MINUMAN
+        # =========================
+        ("Kopi Kapal Api Sachet", "Kapal Api", "MNM-001", "Minuman", 180, 1500, 25),
+        ("Kopi ABC Susu Sachet", "ABC", "MNM-002", "Minuman", 160, 2000, 22),
+        ("Kopi Good Day Cappuccino", "Good Day", "MNM-003", "Minuman", 120, 2500, 18),
+        ("Kopi Luwak White Koffie", "Luwak", "MNM-004", "Minuman", 140, 2000, 20),
+        ("Torabika Cappuccino Sachet", "Torabika", "MNM-005", "Minuman", 110, 2500, 16),
+        ("Indocafe Coffeemix Sachet", "Indocafe", "MNM-006", "Minuman", 100, 2000, 15),
+        ("Energen Coklat Sachet", "Energen", "MNM-007", "Minuman", 90, 2500, 12),
+        ("Energen Vanila Sachet", "Energen", "MNM-008", "Minuman", 85, 2500, 12),
+        ("Milo Sachet", "Milo", "MNM-009", "Minuman", 75, 3000, 10),
+        ("Dancow Sachet", "Dancow", "MNM-010", "Minuman", 60, 4000, 8),
+        ("Nutrisari Jeruk Sachet", "Nutrisari", "MNM-011", "Minuman", 130, 1500, 18),
+        ("Nutrisari Mangga Sachet", "Nutrisari", "MNM-012", "Minuman", 120, 1500, 16),
+        ("Marimas Jeruk Sachet", "Marimas", "MNM-013", "Minuman", 150, 1000, 20),
+        ("Marimas Anggur Sachet", "Marimas", "MNM-014", "Minuman", 145, 1000, 18),
+        ("Pop Ice Coklat Sachet", "Pop Ice", "MNM-015", "Minuman", 90, 1500, 12),
+        ("Pop Ice Strawberry Sachet", "Pop Ice", "MNM-016", "Minuman", 90, 1500, 12),
+        ("Teh Celup Isi 25", "Sariwangi", "MNM-017", "Minuman", 40, 9000, 7),
+        ("Teh Celup Isi 30", "Sosro", "MNM-018", "Minuman", 35, 8500, 6),
+        ("Air Mineral 600ml", "Aqua", "MNM-019", "Minuman", 120, 4000, 16),
+        ("Air Mineral 1.5L", "Aqua", "MNM-020", "Minuman", 70, 7000, 10),
+
+        # =========================
+        # SNACK
+        # =========================
+        ("Biskuit Roma Kelapa", "Roma", "SNK-001", "Snack", 70, 8500, 12),
+        ("Biskuit Roma Malkist", "Roma", "SNK-002", "Snack", 65, 9000, 10),
+        ("Biskuit Khong Guan", "Khong Guan", "SNK-003", "Snack", 40, 13000, 6),
+        ("Wafer Tango Coklat", "Tango", "SNK-004", "Snack", 75, 10000, 10),
+        ("Wafer Nabati Keju", "Nabati", "SNK-005", "Snack", 90, 2500, 15),
+        ("Wafer Nabati Coklat", "Nabati", "SNK-006", "Snack", 90, 2500, 15),
+        ("Chitato Sapi Panggang", "Chitato", "SNK-007", "Snack", 35, 12000, 5),
+        ("Qtela Singkong", "Qtela", "SNK-008", "Snack", 45, 9000, 6),
+        ("Taro Net", "Taro", "SNK-009", "Snack", 50, 7000, 7),
+        ("Momogi Jagung Bakar", "Momogi", "SNK-010", "Snack", 80, 1000, 14),
+        ("Kacang Garuda", "Garuda", "SNK-011", "Snack", 60, 2500, 10),
+        ("Kacang Dua Kelinci", "Dua Kelinci", "SNK-012", "Snack", 55, 3000, 9),
+        ("Permen Kopiko", "Kopiko", "SNK-013", "Snack", 100, 1000, 12),
+        ("Permen Relaxa", "Relaxa", "SNK-014", "Snack", 90, 1000, 10),
+        ("Coklat SilverQueen Mini", "SilverQueen", "SNK-015", "Snack", 35, 7000, 5),
+        ("Chocolatos Wafer Roll", "Chocolatos", "SNK-016", "Snack", 70, 2000, 12),
+        ("Beng-Beng", "Mayora", "SNK-017", "Snack", 75, 2500, 12),
+        ("Astor Mini", "Astor", "SNK-018", "Snack", 40, 8000, 5),
+        ("Keripik Singkong Balado", "Kusuka", "SNK-019", "Snack", 35, 8500, 5),
+        ("Kuaci Rebo", "Rebo", "SNK-020", "Snack", 50, 3000, 7),
+
+        # =========================
+        # SEMBAKO
+        # =========================
+        ("Beras Ramos 5kg", "Ramos", "SMB-001", "Sembako", 35, 72000, 18),
+        ("Beras Pandan Wangi 5kg", "Pandan Wangi", "SMB-002", "Sembako", 28, 78000, 15),
+        ("Beras Premium 10kg", "Makmur Jaya", "SMB-003", "Sembako", 20, 145000, 10),
+        ("Gula Pasir 1kg", "Gulaku", "SMB-004", "Sembako", 60, 17500, 20),
+        ("Gula Pasir 500gr", "Gulaku", "SMB-005", "Sembako", 45, 9500, 12),
+        ("Minyak Goreng 1L", "Sania", "SMB-006", "Sembako", 50, 18500, 18),
+        ("Minyak Goreng 2L", "Sania", "SMB-007", "Sembako", 35, 36000, 14),
+        ("Minyak Goreng 1L", "Bimoli", "SMB-008", "Sembako", 40, 20000, 12),
+        ("Tepung Terigu 1kg", "Segitiga Biru", "SMB-009", "Sembako", 38, 14500, 10),
+        ("Tepung Terigu 500gr", "Segitiga Biru", "SMB-010", "Sembako", 32, 8000, 8),
+        ("Garam Dapur 250gr", "Refina", "SMB-011", "Sembako", 70, 4000, 10),
+        ("Garam Dapur 500gr", "Refina", "SMB-012", "Sembako", 50, 7000, 8),
+        ("Kecap Manis Sachet", "Bango", "SMB-013", "Sembako", 120, 1500, 18),
+        ("Kecap Manis Botol 275ml", "Bango", "SMB-014", "Sembako", 30, 18000, 8),
+        ("Saus Sambal Sachet", "ABC", "SMB-015", "Sembako", 130, 1000, 16),
+        ("Saus Sambal Botol 275ml", "ABC", "SMB-016", "Sembako", 28, 16000, 7),
+        ("Penyedap Rasa Sachet", "Masako", "SMB-017", "Sembako", 160, 1000, 18),
+        ("Penyedap Rasa Sachet", "Royco", "SMB-018", "Sembako", 150, 1000, 18),
+        ("Merica Bubuk Sachet", "Ladaku", "SMB-019", "Sembako", 80, 1500, 8),
+        ("Santan Instan 65ml", "Kara", "SMB-020", "Sembako", 55, 4500, 8),
+
+        # =========================
+        # LAINNYA
+        # =========================
+        ("Sabun Mandi Batang", "Lifebuoy", "LNY-001", "Lainnya", 55, 4500, 8),
+        ("Sabun Mandi Batang", "Lux", "LNY-002", "Lainnya", 45, 5000, 7),
+        ("Shampoo Sachet", "Sunsilk", "LNY-003", "Lainnya", 150, 1000, 18),
+        ("Shampoo Sachet", "Clear", "LNY-004", "Lainnya", 130, 1000, 16),
+        ("Pasta Gigi 75gr", "Pepsodent", "LNY-005", "Lainnya", 40, 9500, 7),
+        ("Sikat Gigi Dewasa", "Formula", "LNY-006", "Lainnya", 35, 6000, 4),
+        ("Detergen Bubuk Sachet", "Rinso", "LNY-007", "Lainnya", 120, 2000, 18),
+        ("Detergen Bubuk Sachet", "Daia", "LNY-008", "Lainnya", 110, 1500, 16),
+        ("Sabun Cuci Piring Sachet", "Sunlight", "LNY-009", "Lainnya", 140, 1000, 18),
+        ("Sabun Cuci Piring 210ml", "Sunlight", "LNY-010", "Lainnya", 45, 6000, 8),
+        ("Pewangi Pakaian Sachet", "Molto", "LNY-011", "Lainnya", 100, 1000, 12),
+        ("Pewangi Pakaian Sachet", "Downy", "LNY-012", "Lainnya", 90, 1500, 10),
+        ("Tisu Gulung", "Nice", "LNY-013", "Lainnya", 50, 5000, 6),
+        ("Korek Api Gas", "Tokai", "LNY-014", "Lainnya", 80, 3000, 8),
+        ("Lilin Putih Isi 6", "Cap Gajah", "LNY-015", "Lainnya", 45, 8000, 4),
+        ("Baterai AA Isi 2", "ABC", "LNY-016", "Lainnya", 40, 9000, 5),
+        ("Lampu LED 5 Watt", "Philips", "LNY-017", "Lainnya", 20, 18000, 3),
+        ("Pulpen Biru", "Standard", "LNY-018", "Lainnya", 50, 3000, 3),
+        ("Buku Tulis 38 Lembar", "Sidu", "LNY-019", "Lainnya", 40, 5000, 3),
+        ("Obat Nyamuk Bakar", "Baygon", "LNY-020", "Lainnya", 45, 5000, 4),
     ]
+
     product_map: dict[int, dict] = {}
+
     for name, brand, sku, cat, stock, price, weight in rows:
         pid = _get_or_create_product(name, brand, sku, cat, stock, price)
-        product_map[pid] = {"name": name, "price": int(price), "weight": int(weight)}
+        product_map[pid] = {
+            "name": name,
+            "price": int(price),
+            "weight": int(weight),
+        }
+
+    print(f"  Products generated/updated: {len(product_map)}")
     return product_map
 
 
