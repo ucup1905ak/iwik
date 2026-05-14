@@ -32,17 +32,17 @@ from gui.views.components.toast import Toast
 from gui.signals import receivables_signals
 
 # ── Color palette ──────────────────────────────────────────────────────────────
-C_BG        = "#F4F5F9"
-C_WHITE     = "#FFFFFF"
-C_ACCENT    = "#4F6EF7"
-C_ACCENT_H  = "#3A57E8"
-C_TEXT_PRI  = "#1A1D2E"
-C_TEXT_SEC  = "#6B6F80"
-C_BORDER    = "#E4E6EE"
-C_DANGER    = "#E05252"
-C_TAG_BG    = "#EEF1FE"
-C_SUCCESS   = "#27AE60"
-C_WARNING   = "#F39C12"
+C_BG = "#F4F5F9"
+C_WHITE = "#FFFFFF"
+C_ACCENT = "#4F6EF7"
+C_ACCENT_H = "#3A57E8"
+C_TEXT_PRI = "#1A1D2E"
+C_TEXT_SEC = "#6B6F80"
+C_BORDER = "#E4E6EE"
+C_DANGER = "#E05252"
+C_TAG_BG = "#EEF1FE"
+C_SUCCESS = "#27AE60"
+C_WARNING = "#F39C12"
 
 RADIUS = 14
 
@@ -55,18 +55,20 @@ STATUS_CONFIG = {
 
 FILTER_STATUS = ["Semua", "🔴 Belum Lunas", "🟡 Sebagian", "🟢 Lunas"]
 
-C_ROW_ALT    = "#FAFBFF"
-C_HEADER_BG  = "#FFFFFF"
+C_ROW_ALT = "#FAFBFF"
+C_HEADER_BG = "#FFFFFF"
 C_HEADER_TEXT = "#9EA3B8"
-C_DIVIDER    = "#F0F1F7"
+C_DIVIDER = "#F0F1F7"
 
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
 def _fmt_currency(amount: float) -> str:
     return f"Rp {amount:,.0f}".replace(",", ".")
 
+
 def _status_cfg(status: str) -> dict:
     return STATUS_CONFIG.get(status, STATUS_CONFIG["unpaid"])
+
 
 def _resolve_status(amount_paid: float, total_amount: float) -> str:
     if amount_paid <= 0:
@@ -75,10 +77,12 @@ def _resolve_status(amount_paid: float, total_amount: float) -> str:
         return "paid"
     return "partial"
 
+
 def _customer_name(customer_id: int | None, customer_map: dict) -> str:
     if customer_id is None:
         return "—"
     return customer_map.get(customer_id, f"ID #{customer_id}")
+
 
 def _due_date_display(due_date: str | None) -> str:
     if not due_date:
@@ -92,21 +96,23 @@ def _due_date_display(due_date: str | None) -> str:
 class CustomerDetailDialog(QDialog):
     """Menampilkan semua transaksi piutang milik satu pelanggan."""
 
-    pay_clicked    = pyqtSignal(object)   # emits Receivables
+    pay_clicked = pyqtSignal(object)   # emits Receivables
     delete_clicked = pyqtSignal(object)   # emits Receivables
 
     def __init__(self, customer_name: str, records: list[Receivables], user: dict = None, parent=None):
         super().__init__(parent)
-        self._name    = customer_name
+        self._name = customer_name
         self._records = records
-        self._user    = user or {}
+        self._user = user or {}
         self.setWindowTitle(f"Detail Piutang — {customer_name}")
         self.setModal(True)
         self.setFixedWidth(640)
         self.setWindowFlag(Qt.WindowType.MSWindowsFixedSizeDialogHint)
-        self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Minimum)
+        self.setSizePolicy(QSizePolicy.Policy.Fixed,
+                           QSizePolicy.Policy.Minimum)
         self.setSizeGripEnabled(False)
-        self.setStyleSheet(f"QDialog {{ background: {C_WHITE}; font-family: 'Segoe UI'; }}")
+        self.setStyleSheet(
+            f"QDialog {{ background: {C_WHITE}; font-family: 'Segoe UI'; }}")
         self._build_ui()
         self.adjustSize()
         self.setMaximumHeight(620)
@@ -118,21 +124,26 @@ class CustomerDetailDialog(QDialog):
 
         # ── Header ──
         header = QFrame()
-        header.setStyleSheet(f"QFrame {{ background: #FAFAF8; border-bottom: 1px solid #DDD9D2; }}")
+        header.setStyleSheet(
+            f"QFrame {{ background: #FAFAF8; border-bottom: 1px solid #DDD9D2; }}")
         hl = QHBoxLayout(header)
         hl.setContentsMargins(28, 18, 28, 18)
         hl.setSpacing(12)
 
         logo = QLabel("Warung<span style='color:#4F6EF7'>+</span>")
         logo.setTextFormat(Qt.TextFormat.RichText)
-        logo.setStyleSheet("font-size:13px;color:#5F5E5A;font-weight:500;letter-spacing:1px;border:none;background:transparent;")
+        logo.setStyleSheet(
+            "font-size:13px;color:#5F5E5A;font-weight:500;letter-spacing:1px;border:none;background:transparent;")
 
         title = QLabel(f"Rincian Piutang  ·  {self._name}")
-        title.setStyleSheet(f"font-size:16px;font-weight:700;color:{C_TEXT_PRI};border:none;background:transparent;")
+        title.setStyleSheet(
+            f"font-size:16px;font-weight:700;color:{C_TEXT_PRI};border:none;background:transparent;")
 
-        total_remaining = sum(r.total_amount - r.amount_paid for r in self._records)
+        total_remaining = sum(
+            r.total_amount - r.amount_paid for r in self._records)
         total_lbl = QLabel(_fmt_currency(total_remaining))
-        total_lbl.setStyleSheet(f"font-size:14px;font-weight:700;color:{C_DANGER};border:none;background:transparent;")
+        total_lbl.setStyleSheet(
+            f"font-size:14px;font-weight:700;color:{C_DANGER};border:none;background:transparent;")
 
         col = QVBoxLayout()
         col.setSpacing(2)
@@ -146,7 +157,8 @@ class CustomerDetailDialog(QDialog):
         right.setSpacing(2)
         right.setAlignment(Qt.AlignmentFlag.AlignRight)
         sub = QLabel("Total Sisa")
-        sub.setStyleSheet(f"font-size:10px;color:{C_TEXT_SEC};border:none;background:transparent;")
+        sub.setStyleSheet(
+            f"font-size:10px;color:{C_TEXT_SEC};border:none;background:transparent;")
         sub.setAlignment(Qt.AlignmentFlag.AlignRight)
         total_lbl.setAlignment(Qt.AlignmentFlag.AlignRight)
         right.addWidget(sub)
@@ -158,7 +170,8 @@ class CustomerDetailDialog(QDialog):
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QFrame.Shape.NoFrame)
-        scroll.setStyleSheet("QScrollArea { background: transparent; border: none; }")
+        scroll.setStyleSheet(
+            "QScrollArea { background: transparent; border: none; }")
 
         container = QWidget()
         container.setStyleSheet(f"background: {C_BG};")
@@ -176,7 +189,8 @@ class CustomerDetailDialog(QDialog):
 
         # ── Footer ──
         footer = QFrame()
-        footer.setStyleSheet("QFrame { background: #FAFAF8; border-top: 1px solid #DDD9D2; }")
+        footer.setStyleSheet(
+            "QFrame { background: #FAFAF8; border-top: 1px solid #DDD9D2; }")
         fl = QHBoxLayout(footer)
         fl.setContentsMargins(28, 14, 28, 14)
 
@@ -197,8 +211,8 @@ class CustomerDetailDialog(QDialog):
         root.addWidget(footer)
 
     def _make_transaction_card(self, index: int, rec: Receivables) -> QFrame:
-        status    = _resolve_status(rec.amount_paid, rec.total_amount)
-        cfg       = _status_cfg(status)
+        status = _resolve_status(rec.amount_paid, rec.total_amount)
+        cfg = _status_cfg(status)
         remaining = rec.total_amount - rec.amount_paid
 
         card = QFrame()
@@ -220,7 +234,8 @@ class CustomerDetailDialog(QDialog):
         top.setSpacing(8)
 
         num_lbl = QLabel(f"Transaksi #{index}")
-        num_lbl.setStyleSheet(f"font-size:12px;font-weight:600;color:{C_TEXT_PRI};")
+        num_lbl.setStyleSheet(
+            f"font-size:12px;font-weight:600;color:{C_TEXT_PRI};")
 
         badge = QLabel(cfg["label"])
         badge.setStyleSheet(f"""
@@ -245,7 +260,8 @@ class CustomerDetailDialog(QDialog):
                 }}
                 QPushButton:hover {{ background: {C_SUCCESS}; color: #FFFFFF; }}
             """)
-            pay_btn.clicked.connect(lambda _=False, r=rec: self.pay_clicked.emit(r))
+            pay_btn.clicked.connect(
+                lambda _=False, r=rec: self.pay_clicked.emit(r))
             top.addWidget(pay_btn)
 
         # Only show delete button for admin users
@@ -261,7 +277,8 @@ class CustomerDetailDialog(QDialog):
                 }}
                 QPushButton:hover {{ background: {C_DANGER}; color: #FFFFFF; }}
             """)
-            del_btn.clicked.connect(lambda _=False, r=rec: self.delete_clicked.emit(r))
+            del_btn.clicked.connect(
+                lambda _=False, r=rec: self.delete_clicked.emit(r))
             top.addWidget(del_btn)
         lay.addLayout(top)
 
@@ -278,7 +295,8 @@ class CustomerDetailDialog(QDialog):
         for label, value, color in [
             ("Total Piutang", _fmt_currency(rec.total_amount), C_TEXT_PRI),
             ("Terbayar",     _fmt_currency(rec.amount_paid),  C_TEXT_SEC),
-            ("Sisa",         _fmt_currency(remaining),        C_DANGER if remaining > 0 and status != "paid" else C_SUCCESS),
+            ("Sisa",         _fmt_currency(remaining),
+             C_DANGER if remaining > 0 and status != "paid" else C_SUCCESS),
         ]:
             col = QVBoxLayout()
             col.setSpacing(3)
@@ -320,17 +338,19 @@ class DeleteAllReceivablesDialog(QDialog):
     def __init__(self, records: list[Receivables], customer_name: str, parent=None):
         super().__init__(parent)
         self._records = records
-        self._name    = customer_name
+        self._name = customer_name
         self.setWindowTitle("Hapus Semua Piutang")
         self.setModal(True)
         self.setFixedWidth(400)
         self.setWindowFlag(Qt.WindowType.MSWindowsFixedSizeDialogHint)
-        self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Minimum)
+        self.setSizePolicy(QSizePolicy.Policy.Fixed,
+                           QSizePolicy.Policy.Minimum)
         self.setSizeGripEnabled(False)
-        self.setStyleSheet(f"QDialog {{ background: {C_WHITE}; font-family: 'Segoe UI'; }}")
+        self.setStyleSheet(
+            f"QDialog {{ background: {C_WHITE}; font-family: 'Segoe UI'; }}")
         self._build_ui()
         self.adjustSize()
-        self.setMaximumSize(400, self.height())
+        self.setMaximumSize(500, self.height())
 
     def _build_ui(self):
         total = sum(r.total_amount for r in self._records)
@@ -339,19 +359,22 @@ class DeleteAllReceivablesDialog(QDialog):
         root.setContentsMargins(0, 0, 0, 0)
 
         card = QFrame()
-        card.setStyleSheet("QFrame { background-color: #FAFAF8; border: 1px solid #DDD9D2; }")
+        card.setStyleSheet(
+            "QFrame { background-color: #FAFAF8; border: 1px solid #DDD9D2; }")
         cl = QVBoxLayout(card)
         cl.setContentsMargins(36, 30, 36, 30)
         cl.setSpacing(0)
 
         logo = QLabel("Warung<span style='color:#4F6EF7'>+</span>")
         logo.setTextFormat(Qt.TextFormat.RichText)
-        logo.setStyleSheet("font-size:14px;color:#5F5E5A;font-weight:500;letter-spacing:1px;border:none;")
+        logo.setStyleSheet(
+            "font-size:14px;color:#5F5E5A;font-weight:500;letter-spacing:1px;border:none;")
         cl.addWidget(logo)
         cl.addSpacing(14)
 
         title = QLabel("Hapus Semua Piutang?")
-        title.setStyleSheet("font-size:20px;font-weight:600;color:#1b1b1b;border:none;")
+        title.setStyleSheet(
+            "font-size:20px;font-weight:600;color:#1b1b1b;border:none;")
         cl.addWidget(title)
         cl.addSpacing(4)
 
@@ -415,10 +438,12 @@ class ReceivableCard(QFrame):
 
     CARD_WIDTH = 290
 
-    pay_clicked        = pyqtSignal(object)       # emits Receivables (agg)
-    delete_clicked     = pyqtSignal(object)       # emits Receivables (agg)
-    detail_clicked     = pyqtSignal(str, list)    # emits (customer_name, [Receivables])
-    delete_all_clicked = pyqtSignal(str, list)    # emits (customer_name, [Receivables])
+    pay_clicked = pyqtSignal(object)       # emits Receivables (agg)
+    delete_clicked = pyqtSignal(object)       # emits Receivables (agg)
+    # emits (customer_name, [Receivables])
+    detail_clicked = pyqtSignal(str, list)
+    # emits (customer_name, [Receivables])
+    delete_all_clicked = pyqtSignal(str, list)
 
     def __init__(
         self,
@@ -430,26 +455,27 @@ class ReceivableCard(QFrame):
         parent=None,
     ):
         super().__init__(parent)
-        self._agg_rec      = agg_rec
-        self._cust_name    = cust_name
-        self._phone        = phone
+        self._agg_rec = agg_rec
+        self._cust_name = cust_name
+        self._phone = phone
         self._all_for_cust = all_for_cust
-        self._user         = user or {}
+        self._user = user or {}
         self._build()
 
     def _build(self):
-        agg       = self._agg_rec
-        status    = _resolve_status(agg.amount_paid, agg.total_amount)
-        cfg       = _status_cfg(status)
+        agg = self._agg_rec
+        status = _resolve_status(agg.amount_paid, agg.total_amount)
+        cfg = _status_cfg(status)
         remaining = agg.total_amount - agg.amount_paid
-        multi     = len(self._all_for_cust) > 1
+        multi = len(self._all_for_cust) > 1
 
         # Border warna sesuai status
         border_color = cfg["dot"]
-        top_accent   = cfg["bg"]
+        top_accent = cfg["bg"]
 
         self.setObjectName("ReceivableCard")
-        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        self.setSizePolicy(QSizePolicy.Policy.Expanding,
+                           QSizePolicy.Policy.Fixed)
         self.setStyleSheet(f"""
             QFrame#ReceivableCard {{
                 background:    {C_WHITE};
@@ -556,16 +582,19 @@ class ReceivableCard(QFrame):
             col = QVBoxLayout()
             col.setSpacing(2)
             lbl = QLabel(label)
-            lbl.setStyleSheet(f"font-family:'Segoe UI';font-size:9px;color:{C_TEXT_SEC};background:transparent;border:none;")
+            lbl.setStyleSheet(
+                f"font-family:'Segoe UI';font-size:9px;color:{C_TEXT_SEC};background:transparent;border:none;")
             val = QLabel(value)
-            val.setStyleSheet(f"font-family:'Segoe UI';font-size:12px;font-weight:700;color:{color};background:transparent;border:none;")
+            val.setStyleSheet(
+                f"font-family:'Segoe UI';font-size:12px;font-weight:700;color:{color};background:transparent;border:none;")
             col.addWidget(lbl)
             col.addWidget(val)
             return col
 
         remain_color = C_DANGER if remaining > 0 and status != "paid" else C_SUCCESS
 
-        amt_row.addLayout(_amt_col("Total Piutang", _fmt_currency(agg.total_amount), C_TEXT_PRI))
+        amt_row.addLayout(
+            _amt_col("Total Piutang", _fmt_currency(agg.total_amount), C_TEXT_PRI))
         amt_row.addStretch()
 
         sep1 = QFrame()
@@ -574,7 +603,8 @@ class ReceivableCard(QFrame):
         amt_row.addWidget(sep1)
         amt_row.addSpacing(10)
 
-        amt_row.addLayout(_amt_col("Terbayar", _fmt_currency(agg.amount_paid), C_TEXT_SEC))
+        amt_row.addLayout(
+            _amt_col("Terbayar", _fmt_currency(agg.amount_paid), C_TEXT_SEC))
         amt_row.addStretch()
 
         sep2 = QFrame()
@@ -583,7 +613,8 @@ class ReceivableCard(QFrame):
         amt_row.addWidget(sep2)
         amt_row.addSpacing(10)
 
-        amt_row.addLayout(_amt_col("Sisa", _fmt_currency(remaining), remain_color))
+        amt_row.addLayout(
+            _amt_col("Sisa", _fmt_currency(remaining), remain_color))
 
         body.addLayout(amt_row)
 
@@ -595,7 +626,7 @@ class ReceivableCard(QFrame):
                 overdue = d.isValid() and d < today and status != "paid"
             except Exception:
                 overdue = False
-            due_color  = C_DANGER if overdue else C_TEXT_SEC
+            due_color = C_DANGER if overdue else C_TEXT_SEC
             due_prefix = "⚠  " if overdue else "📅  "
             due_lbl = QLabel(f"{due_prefix}Jatuh tempo: {agg.due_date}")
             due_lbl.setStyleSheet(f"""
@@ -674,7 +705,8 @@ class ReceivableCard(QFrame):
                     }}
                     QPushButton:hover {{ background: {C_SUCCESS}; color: #FFFFFF; }}
                 """)
-                pay_btn.clicked.connect(lambda _=False, r=actual_rec: self.pay_clicked.emit(r))
+                pay_btn.clicked.connect(
+                    lambda _=False, r=actual_rec: self.pay_clicked.emit(r))
                 footer_lay.addWidget(pay_btn)
 
             # Only show delete button for admin users
@@ -690,14 +722,15 @@ class ReceivableCard(QFrame):
                     }}
                     QPushButton:hover {{ background: {C_DANGER}; color: #FFFFFF; }}
                 """)
-                del_btn.clicked.connect(lambda _=False, r=actual_rec: self.delete_clicked.emit(r))
+                del_btn.clicked.connect(
+                    lambda _=False, r=actual_rec: self.delete_clicked.emit(r))
                 footer_lay.addWidget(del_btn)
 
         root.addWidget(footer)
 
         # Tinggi dinamis
         base_h = 36 + 10 + 22 + 1 + 10 + 38 + 1 + 10 + 40
-        extra  = 20 if agg.due_date else 0
+        extra = 20 if agg.due_date else 0
         self.setFixedHeight(base_h + extra)
 
 
@@ -706,8 +739,8 @@ class ReceivableCard(QFrame):
 # ═══════════════════════════════════════════════════════════════════════════════
 class ReceivablesViewToggle(QWidget):
     VIEW_TABLE = "table"
-    VIEW_CARD  = "card"
-    toggled    = pyqtSignal(str)
+    VIEW_CARD = "card"
+    toggled = pyqtSignal(str)
 
     def __init__(self, initial: str = VIEW_TABLE, parent=None):
         super().__init__(parent)
@@ -777,16 +810,19 @@ class ReceivablesViewToggle(QWidget):
 # Receivables Table View
 # ═══════════════════════════════════════════════════════════════════════════════
 class ReceivablesTableView(QTableWidget):
-    pay_clicked        = pyqtSignal(object)       # emits Receivables
-    delete_clicked     = pyqtSignal(object)       # emits Receivables
-    detail_clicked     = pyqtSignal(str, list)    # emits (customer_name, [Receivables])
-    delete_all_clicked = pyqtSignal(str, list)    # emits (customer_name, [Receivables])
+    pay_clicked = pyqtSignal(object)       # emits Receivables
+    delete_clicked = pyqtSignal(object)       # emits Receivables
+    # emits (customer_name, [Receivables])
+    detail_clicked = pyqtSignal(str, list)
+    # emits (customer_name, [Receivables])
+    delete_all_clicked = pyqtSignal(str, list)
 
-    COLUMNS    = ["      #", "Pelanggan", "Total Piutang", "Terbayar", "Sisa", "Status", "Aksi"]
-    COL_NO     = 0
-    COL_CUST   = 1
-    COL_TOTAL  = 2
-    COL_PAID   = 3
+    COLUMNS = ["      #", "Pelanggan", "Total Piutang",
+               "Terbayar", "Sisa", "Status", "Aksi"]
+    COL_NO = 0
+    COL_CUST = 1
+    COL_TOTAL = 2
+    COL_PAID = 3
     COL_REMAIN = 4
     COL_STATUS = 5
     COL_ACTION = 6
@@ -817,14 +853,15 @@ class ReceivablesTableView(QTableWidget):
         QTimer.singleShot(0, self._apply_viewport_clip)
 
     MIN_NAME_WIDTH = 300
-   
+
     def _setup_table(self):
         self.setColumnCount(len(self.COLUMNS))
         self.setHorizontalHeaderLabels(self.COLUMNS)
         self.setAlternatingRowColors(True)
         self.setShowGrid(True)
         self.setGridStyle(Qt.PenStyle.SolidLine)
-        self.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        self.setSelectionBehavior(
+            QAbstractItemView.SelectionBehavior.SelectRows)
         self.setSelectionMode(QAbstractItemView.SelectionMode.NoSelection)
         self.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
@@ -836,17 +873,25 @@ class ReceivablesTableView(QTableWidget):
 
         header = self.horizontalHeader()
         header.setHighlightSections(False)
-        header.setDefaultAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        header.setDefaultAlignment(
+            Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
         header.setStretchLastSection(False)
         header.setFixedHeight(42)
 
-        header.setSectionResizeMode(self.COL_NO,     QHeaderView.ResizeMode.Fixed)
-        header.setSectionResizeMode(self.COL_CUST,   QHeaderView.ResizeMode.Stretch)
-        header.setSectionResizeMode(self.COL_TOTAL,  QHeaderView.ResizeMode.Fixed)
-        header.setSectionResizeMode(self.COL_PAID,   QHeaderView.ResizeMode.Fixed)
-        header.setSectionResizeMode(self.COL_REMAIN, QHeaderView.ResizeMode.Fixed)
-        header.setSectionResizeMode(self.COL_STATUS, QHeaderView.ResizeMode.Fixed)
-        header.setSectionResizeMode(self.COL_ACTION, QHeaderView.ResizeMode.Fixed)
+        header.setSectionResizeMode(
+            self.COL_NO,     QHeaderView.ResizeMode.Fixed)
+        header.setSectionResizeMode(
+            self.COL_CUST,   QHeaderView.ResizeMode.Stretch)
+        header.setSectionResizeMode(
+            self.COL_TOTAL,  QHeaderView.ResizeMode.Fixed)
+        header.setSectionResizeMode(
+            self.COL_PAID,   QHeaderView.ResizeMode.Fixed)
+        header.setSectionResizeMode(
+            self.COL_REMAIN, QHeaderView.ResizeMode.Fixed)
+        header.setSectionResizeMode(
+            self.COL_STATUS, QHeaderView.ResizeMode.Fixed)
+        header.setSectionResizeMode(
+            self.COL_ACTION, QHeaderView.ResizeMode.Fixed)
 
         self.setColumnWidth(self.COL_NO,     44)
         self.setColumnWidth(self.COL_TOTAL,  130)
@@ -854,9 +899,10 @@ class ReceivablesTableView(QTableWidget):
         self.setColumnWidth(self.COL_REMAIN, 130)
         self.setColumnWidth(self.COL_STATUS, 170)
         self.setColumnWidth(self.COL_ACTION, 210)
-        
+
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
-        self.setHorizontalScrollMode(QAbstractItemView.ScrollMode.ScrollPerPixel)
+        self.setHorizontalScrollMode(
+            QAbstractItemView.ScrollMode.ScrollPerPixel)
 
         self.setStyleSheet(f"""
             QTableWidget {{
@@ -939,9 +985,11 @@ class ReceivablesTableView(QTableWidget):
         name_width = available - fixed_widths
 
         if name_width >= self.MIN_NAME_WIDTH:
-            header.setSectionResizeMode(self.COL_CUST, QHeaderView.ResizeMode.Stretch)
+            header.setSectionResizeMode(
+                self.COL_CUST, QHeaderView.ResizeMode.Stretch)
         else:
-            header.setSectionResizeMode(self.COL_CUST, QHeaderView.ResizeMode.Fixed)
+            header.setSectionResizeMode(
+                self.COL_CUST, QHeaderView.ResizeMode.Fixed)
             self.setColumnWidth(self.COL_CUST, self.MIN_NAME_WIDTH)
 
     def _show_empty_state(self):
@@ -960,7 +1008,8 @@ class ReceivablesTableView(QTableWidget):
 
         empty = QWidget()
         empty.setObjectName("EmptyState")
-        empty.setStyleSheet(f"QWidget#EmptyState {{ background: {C_WHITE}; border: none; }} QLabel {{ background: transparent; border: none; }}")
+        empty.setStyleSheet(
+            f"QWidget#EmptyState {{ background: {C_WHITE}; border: none; }} QLabel {{ background: transparent; border: none; }}")
         lay = QVBoxLayout(empty)
         lay.setAlignment(Qt.AlignmentFlag.AlignCenter)
         lay.setSpacing(8)
@@ -971,10 +1020,12 @@ class ReceivablesTableView(QTableWidget):
         icon.setStyleSheet("font-size: 46px;")
         title = QLabel("Tidak ada data piutang")
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        title.setStyleSheet(f"font-family:'Segoe UI';font-size:16px;font-weight:700;color:{C_TEXT_PRI};")
+        title.setStyleSheet(
+            f"font-family:'Segoe UI';font-size:16px;font-weight:700;color:{C_TEXT_PRI};")
         sub = QLabel("Coba ubah filter atau kata kunci pencarian.")
         sub.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        sub.setStyleSheet(f"font-family:'Segoe UI';font-size:12px;color:{C_TEXT_SEC};")
+        sub.setStyleSheet(
+            f"font-family:'Segoe UI';font-size:12px;color:{C_TEXT_SEC};")
 
         lay.addWidget(icon)
         lay.addWidget(title)
@@ -1006,8 +1057,8 @@ class ReceivablesTableView(QTableWidget):
                 self.setItem(row, col, ph)
 
             remaining = agg_rec.total_amount - agg_rec.amount_paid
-            status    = _resolve_status(agg_rec.amount_paid, agg_rec.total_amount)
-            multi     = len(all_for_cust) > 1
+            status = _resolve_status(agg_rec.amount_paid, agg_rec.total_amount)
+            multi = len(all_for_cust) > 1
 
             self.setCellWidget(row, self.COL_NO,     self._make_no_cell(i + 1))
             customer = customer_map.get(agg_rec.customer_id)
@@ -1024,13 +1075,16 @@ class ReceivablesTableView(QTableWidget):
                     len(all_for_cust) if multi else 0
                 )
             )
-            self.setCellWidget(row, self.COL_TOTAL,  self._make_currency_cell(_fmt_currency(agg_rec.total_amount)))
-            self.setCellWidget(row, self.COL_PAID,   self._make_currency_cell(_fmt_currency(agg_rec.amount_paid), muted=True))
+            self.setCellWidget(row, self.COL_TOTAL,  self._make_currency_cell(
+                _fmt_currency(agg_rec.total_amount)))
+            self.setCellWidget(row, self.COL_PAID,   self._make_currency_cell(
+                _fmt_currency(agg_rec.amount_paid), muted=True))
             self.setCellWidget(row, self.COL_REMAIN, self._make_currency_cell(
                 _fmt_currency(remaining), bold=True,
                 danger=remaining > 0 and status != "paid"
             ))
-            self.setCellWidget(row, self.COL_STATUS, self._make_status_badge(status))
+            self.setCellWidget(row, self.COL_STATUS,
+                               self._make_status_badge(status))
             self.setCellWidget(row, self.COL_ACTION, self._make_action_buttons(
                 agg_rec, status, cust_name, all_for_cust if multi else []
             ))
@@ -1046,7 +1100,8 @@ class ReceivablesTableView(QTableWidget):
         lay.setAlignment(Qt.AlignmentFlag.AlignCenter)
         lbl = QLabel(str(number))
         lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        lbl.setStyleSheet(f"font-family:'Segoe UI';font-size:12px;color:{C_TEXT_SEC};background:transparent;")
+        lbl.setStyleSheet(
+            f"font-family:'Segoe UI';font-size:12px;color:{C_TEXT_SEC};background:transparent;")
         lay.addWidget(lbl)
         return w
 
@@ -1057,7 +1112,8 @@ class ReceivablesTableView(QTableWidget):
         lay = QHBoxLayout(w)
         lay.setContentsMargins(10, 0, 10, 0)
         lay.setSpacing(8)
-        lay.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        lay.setAlignment(Qt.AlignmentFlag.AlignLeft |
+                         Qt.AlignmentFlag.AlignVCenter)
 
         parts = text.strip().split()
         if len(parts) >= 2:
@@ -1113,7 +1169,8 @@ class ReceivablesTableView(QTableWidget):
 
             badge_lay = QHBoxLayout(badge_wrap)
             badge_lay.setContentsMargins(0, 0, 0, 0)
-            badge_lay.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+            badge_lay.setAlignment(
+                Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
 
             badge = QLabel(f"🔴 {has_multiple} Transaksi")
             badge.setStyleSheet(f"""
@@ -1141,10 +1198,12 @@ class ReceivablesTableView(QTableWidget):
         w.setStyleSheet("background: transparent; border: none;")
         lay = QHBoxLayout(w)
         lay.setContentsMargins(10, 0, 10, 0)
-        lay.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        lay.setAlignment(Qt.AlignmentFlag.AlignLeft |
+                         Qt.AlignmentFlag.AlignVCenter)
         color = C_TEXT_SEC if muted else C_TEXT_PRI
         lbl = QLabel(text)
-        lbl.setStyleSheet(f"font-family:'Segoe UI';font-size:13px;color:{color};background:transparent;font-weight:{'400' if muted else '500'};")
+        lbl.setStyleSheet(
+            f"font-family:'Segoe UI';font-size:13px;color:{color};background:transparent;font-weight:{'400' if muted else '500'};")
         lay.addWidget(lbl)
         return w
 
@@ -1153,7 +1212,8 @@ class ReceivablesTableView(QTableWidget):
         w.setStyleSheet("background: transparent; border: none;")
         lay = QHBoxLayout(w)
         lay.setContentsMargins(10, 0, 10, 0)
-        lay.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        lay.setAlignment(Qt.AlignmentFlag.AlignLeft |
+                         Qt.AlignmentFlag.AlignVCenter)
         if danger:
             color = C_DANGER
         elif muted:
@@ -1162,7 +1222,8 @@ class ReceivablesTableView(QTableWidget):
             color = C_TEXT_PRI
         weight = "700" if bold else "400"
         lbl = QLabel(text)
-        lbl.setStyleSheet(f"font-family:'Segoe UI';font-size:13px;color:{color};background:transparent;font-weight:{weight};")
+        lbl.setStyleSheet(
+            f"font-family:'Segoe UI';font-size:13px;color:{color};background:transparent;font-weight:{weight};")
         lay.addWidget(lbl)
         return w
 
@@ -1172,7 +1233,8 @@ class ReceivablesTableView(QTableWidget):
         w.setStyleSheet("background: transparent; border: none;")
         lay = QHBoxLayout(w)
         lay.setContentsMargins(10, 0, 10, 0)
-        lay.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        lay.setAlignment(Qt.AlignmentFlag.AlignLeft |
+                         Qt.AlignmentFlag.AlignVCenter)
 
         badge = QLabel(cfg["label"])
         badge.setStyleSheet(f"""
@@ -1195,7 +1257,8 @@ class ReceivablesTableView(QTableWidget):
         lay = QHBoxLayout(w)
         lay.setContentsMargins(8, 0, 8, 0)
         lay.setSpacing(6)
-        lay.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        lay.setAlignment(Qt.AlignmentFlag.AlignLeft |
+                         Qt.AlignmentFlag.AlignVCenter)
 
         multi = len(all_for_cust) > 1
         is_admin = self._user.get("role") == "Admin"
@@ -1213,7 +1276,8 @@ class ReceivablesTableView(QTableWidget):
                 QPushButton:hover {{ background: {C_ACCENT}; color: #FFFFFF; }}
             """)
             detail_btn.clicked.connect(
-                lambda _=False, n=cust_name, rs=all_for_cust: self.detail_clicked.emit(n, rs)
+                lambda _=False, n=cust_name, rs=all_for_cust: self.detail_clicked.emit(
+                    n, rs)
             )
             lay.addWidget(detail_btn)
 
@@ -1230,7 +1294,8 @@ class ReceivablesTableView(QTableWidget):
                     QPushButton:hover {{ background: {C_DANGER}; color: #FFFFFF; }}
                 """)
                 del_all_btn.clicked.connect(
-                    lambda _=False, n=cust_name, rs=all_for_cust: self.delete_all_clicked.emit(n, rs)
+                    lambda _=False, n=cust_name, rs=all_for_cust: self.delete_all_clicked.emit(
+                        n, rs)
                 )
                 lay.addWidget(del_all_btn)
 
@@ -1248,7 +1313,8 @@ class ReceivablesTableView(QTableWidget):
                     QPushButton:hover {{ background: {C_SUCCESS}; color: #FFFFFF; }}
                 """)
                 actual_rec = all_for_cust[0] if all_for_cust else rec
-                pay_btn.clicked.connect(lambda _=False, r=actual_rec: self.pay_clicked.emit(r))
+                pay_btn.clicked.connect(
+                    lambda _=False, r=actual_rec: self.pay_clicked.emit(r))
                 lay.addWidget(pay_btn)
 
             if is_admin:
@@ -1264,7 +1330,8 @@ class ReceivablesTableView(QTableWidget):
                     QPushButton:hover {{ background: {C_DANGER}; color: #FFFFFF; }}
                 """)
                 actual_rec = all_for_cust[0] if all_for_cust else rec
-                del_btn.clicked.connect(lambda _=False, r=actual_rec: self.delete_clicked.emit(r))
+                del_btn.clicked.connect(
+                    lambda _=False, r=actual_rec: self.delete_clicked.emit(r))
                 lay.addWidget(del_btn)
         return w
 
@@ -1277,40 +1344,45 @@ class PayDialog(QDialog):
 
     def __init__(self, rec: Receivables, customer_name: str, parent=None):
         super().__init__(parent)
-        self._rec  = rec
+        self._rec = rec
         self._name = customer_name
         self.setWindowTitle("Catat Pembayaran")
         self.setModal(True)
         self.setFixedWidth(420)
         self.setWindowFlag(Qt.WindowType.MSWindowsFixedSizeDialogHint)
-        self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Minimum)
+        self.setSizePolicy(QSizePolicy.Policy.Fixed,
+                           QSizePolicy.Policy.Minimum)
         self.setSizeGripEnabled(False)
-        self.setStyleSheet(f"QDialog {{ background: {C_WHITE}; font-family: 'Segoe UI'; }}")
+        self.setStyleSheet(
+            f"QDialog {{ background: {C_WHITE}; font-family: 'Segoe UI'; }}")
         self._build_ui()
         self.adjustSize()
         self.setMaximumSize(420, self.height())
 
     def _build_ui(self):
-        rec       = self._rec
+        rec = self._rec
         remaining = rec.total_amount - rec.amount_paid
 
         root = QVBoxLayout(self)
         root.setContentsMargins(0, 0, 0, 0)
 
         card = QFrame()
-        card.setStyleSheet("QFrame { background-color: #FAFAF8; border: 1px solid #DDD9D2; }")
+        card.setStyleSheet(
+            "QFrame { background-color: #FAFAF8; border: 1px solid #DDD9D2; }")
         cl = QVBoxLayout(card)
         cl.setContentsMargins(36, 30, 36, 30)
         cl.setSpacing(0)
 
         logo = QLabel("Warung<span style='color:#4F6EF7'>+</span>")
         logo.setTextFormat(Qt.TextFormat.RichText)
-        logo.setStyleSheet("font-size:14px;color:#5F5E5A;font-weight:500;letter-spacing:1px;border:none;")
+        logo.setStyleSheet(
+            "font-size:14px;color:#5F5E5A;font-weight:500;letter-spacing:1px;border:none;")
         cl.addWidget(logo)
         cl.addSpacing(14)
 
         title = QLabel("Catat Pembayaran Piutang")
-        title.setStyleSheet("font-size:20px;font-weight:600;color:#1b1b1b;border:none;")
+        title.setStyleSheet(
+            "font-size:20px;font-weight:600;color:#1b1b1b;border:none;")
         cl.addWidget(title)
         cl.addSpacing(4)
 
@@ -1327,20 +1399,22 @@ class PayDialog(QDialog):
         cl.addSpacing(16)
 
         info = QFrame()
-        info.setStyleSheet("QFrame { background:#F7F9FC; border: 1px solid #E4E6EE; border-radius: 10px; } QLabel { border:none; background:transparent; }")
+        info.setStyleSheet(
+            "QFrame { background:#F7F9FC; border: 1px solid #E4E6EE; border-radius: 10px; } QLabel { border:none; background:transparent; }")
         info_lay = QHBoxLayout(info)
         info_lay.setContentsMargins(16, 12, 16, 12)
         info_lay.setSpacing(0)
 
         for label, value in [("Total Piutang", _fmt_currency(rec.total_amount)),
-                              ("Terbayar",     _fmt_currency(rec.amount_paid)),
-                              ("Sisa",         _fmt_currency(remaining))]:
+                             ("Terbayar",     _fmt_currency(rec.amount_paid)),
+                             ("Sisa",         _fmt_currency(remaining))]:
             col = QVBoxLayout()
             col.setSpacing(3)
             lbl = QLabel(label)
             lbl.setStyleSheet(f"font-size:11px;color:{C_TEXT_SEC};")
             val = QLabel(value)
-            val.setStyleSheet(f"font-size:14px;font-weight:700;color:{'#E05252' if label == 'Sisa' else C_TEXT_PRI};")
+            val.setStyleSheet(
+                f"font-size:14px;font-weight:700;color:{'#E05252' if label == 'Sisa' else C_TEXT_PRI};")
             col.addWidget(lbl)
             col.addWidget(val)
             info_lay.addLayout(col)
@@ -1351,7 +1425,8 @@ class PayDialog(QDialog):
         cl.addSpacing(18)
 
         lbl_bayar = QLabel("Jumlah Pembayaran")
-        lbl_bayar.setStyleSheet("font-size:12px;font-weight:500;color:#5F5E5A;border:none;")
+        lbl_bayar.setStyleSheet(
+            "font-size:12px;font-weight:500;color:#5F5E5A;border:none;")
         cl.addWidget(lbl_bayar)
         cl.addSpacing(5)
 
@@ -1374,7 +1449,8 @@ class PayDialog(QDialog):
         cl.addWidget(self._amount_input)
         cl.addSpacing(6)
 
-        lunas_btn = QPushButton("Lunasi semua  (" + _fmt_currency(remaining) + ")")
+        lunas_btn = QPushButton(
+            "Lunasi semua  (" + _fmt_currency(remaining) + ")")
         lunas_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         lunas_btn.setStyleSheet(f"""
             QPushButton {{
@@ -1384,11 +1460,13 @@ class PayDialog(QDialog):
             }}
             QPushButton:hover {{ color: {C_ACCENT_H}; }}
         """)
-        lunas_btn.clicked.connect(lambda: self._amount_input.setValue(remaining))
+        lunas_btn.clicked.connect(
+            lambda: self._amount_input.setValue(remaining))
         cl.addWidget(lunas_btn)
 
         self._err_lbl = QLabel("")
-        self._err_lbl.setStyleSheet(f"font-size:11px;color:{C_DANGER};font-family:'Segoe UI';border:none;")
+        self._err_lbl.setStyleSheet(
+            f"font-size:11px;color:{C_DANGER};font-family:'Segoe UI';border:none;")
         self._err_lbl.setVisible(False)
         cl.addWidget(self._err_lbl)
         cl.addSpacing(18)
@@ -1428,7 +1506,7 @@ class PayDialog(QDialog):
         root.addWidget(card)
 
     def _on_save(self):
-        amount    = self._amount_input.value()
+        amount = self._amount_input.value()
         remaining = self._rec.total_amount - self._rec.amount_paid
         if amount <= 0:
             self._err_lbl.setText("Jumlah pembayaran harus lebih dari 0.")
@@ -1456,16 +1534,19 @@ class AddReceivableDialog(QDialog):
         self.setModal(True)
         self.setFixedWidth(440)
         self.setWindowFlag(Qt.WindowType.MSWindowsFixedSizeDialogHint)
-        self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Minimum)
+        self.setSizePolicy(QSizePolicy.Policy.Fixed,
+                           QSizePolicy.Policy.Minimum)
         self.setSizeGripEnabled(False)
-        self.setStyleSheet(f"QDialog {{ background: {C_WHITE}; font-family: 'Segoe UI'; }}")
+        self.setStyleSheet(
+            f"QDialog {{ background: {C_WHITE}; font-family: 'Segoe UI'; }}")
         self._build_ui()
         self.adjustSize()
         self.setMaximumSize(440, self.height())
 
     def _label(self, text: str) -> QLabel:
         lbl = QLabel(text)
-        lbl.setStyleSheet("font-size:12px;font-weight:500;color:#5F5E5A;border:none;")
+        lbl.setStyleSheet(
+            "font-size:12px;font-weight:500;color:#5F5E5A;border:none;")
         return lbl
 
     def _build_ui(self):
@@ -1473,19 +1554,22 @@ class AddReceivableDialog(QDialog):
         root.setContentsMargins(0, 0, 0, 0)
 
         card = QFrame()
-        card.setStyleSheet("QFrame { background-color: #FAFAF8; border: 1px solid #DDD9D2; }")
+        card.setStyleSheet(
+            "QFrame { background-color: #FAFAF8; border: 1px solid #DDD9D2; }")
         cl = QVBoxLayout(card)
         cl.setContentsMargins(36, 30, 36, 30)
         cl.setSpacing(0)
 
         logo = QLabel("Warung<span style='color:#4F6EF7'>+</span>")
         logo.setTextFormat(Qt.TextFormat.RichText)
-        logo.setStyleSheet("font-size:14px;color:#5F5E5A;font-weight:500;letter-spacing:1px;border:none;")
+        logo.setStyleSheet(
+            "font-size:14px;color:#5F5E5A;font-weight:500;letter-spacing:1px;border:none;")
         cl.addWidget(logo)
         cl.addSpacing(14)
 
         title = QLabel("Tambah Piutang Baru")
-        title.setStyleSheet("font-size:20px;font-weight:600;color:#1b1b1b;border:none;")
+        title.setStyleSheet(
+            "font-size:20px;font-weight:600;color:#1b1b1b;border:none;")
         cl.addWidget(title)
         cl.addSpacing(4)
 
@@ -1577,7 +1661,8 @@ class AddReceivableDialog(QDialog):
         cl.addWidget(self._has_due)
 
         self._err_lbl = QLabel("")
-        self._err_lbl.setStyleSheet(f"font-size:11px;color:{C_DANGER};font-family:'Segoe UI';border:none;")
+        self._err_lbl.setStyleSheet(
+            f"font-size:11px;color:{C_DANGER};font-family:'Segoe UI';border:none;")
         self._err_lbl.setVisible(False)
         cl.addWidget(self._err_lbl)
         cl.addSpacing(18)
@@ -1624,7 +1709,7 @@ class AddReceivableDialog(QDialog):
             return
         self._err_lbl.setVisible(False)
         customer_id = self._customer_combo.currentData()
-        due_date    = (
+        due_date = (
             self._due_date.date().toString("yyyy-MM-dd")
             if self._has_due.isChecked()
             else None
@@ -1645,15 +1730,17 @@ class DeleteReceivableDialog(QDialog):
 
     def __init__(self, rec: Receivables, customer_name: str, parent=None):
         super().__init__(parent)
-        self._rec  = rec
+        self._rec = rec
         self._name = customer_name
         self.setWindowTitle("Hapus Data Piutang")
         self.setModal(True)
         self.setFixedWidth(400)
         self.setWindowFlag(Qt.WindowType.MSWindowsFixedSizeDialogHint)
-        self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Minimum)
+        self.setSizePolicy(QSizePolicy.Policy.Fixed,
+                           QSizePolicy.Policy.Minimum)
         self.setSizeGripEnabled(False)
-        self.setStyleSheet(f"QDialog {{ background: {C_WHITE}; font-family: 'Segoe UI'; }}")
+        self.setStyleSheet(
+            f"QDialog {{ background: {C_WHITE}; font-family: 'Segoe UI'; }}")
         self._build_ui()
         self.adjustSize()
         self.setMaximumSize(400, self.height())
@@ -1663,19 +1750,22 @@ class DeleteReceivableDialog(QDialog):
         root.setContentsMargins(0, 0, 0, 0)
 
         card = QFrame()
-        card.setStyleSheet("QFrame { background-color: #FAFAF8; border: 1px solid #DDD9D2; }")
+        card.setStyleSheet(
+            "QFrame { background-color: #FAFAF8; border: 1px solid #DDD9D2; }")
         cl = QVBoxLayout(card)
         cl.setContentsMargins(36, 30, 36, 30)
         cl.setSpacing(0)
 
         logo = QLabel("Warung<span style='color:#4F6EF7'>+</span>")
         logo.setTextFormat(Qt.TextFormat.RichText)
-        logo.setStyleSheet("font-size:14px;color:#5F5E5A;font-weight:500;letter-spacing:1px;border:none;")
+        logo.setStyleSheet(
+            "font-size:14px;color:#5F5E5A;font-weight:500;letter-spacing:1px;border:none;")
         cl.addWidget(logo)
         cl.addSpacing(14)
 
         title = QLabel("Hapus Data Piutang?")
-        title.setStyleSheet("font-size:20px;font-weight:600;color:#1b1b1b;border:none;")
+        title.setStyleSheet(
+            "font-size:20px;font-weight:600;color:#1b1b1b;border:none;")
         cl.addWidget(title)
         cl.addSpacing(4)
 
@@ -1736,16 +1826,16 @@ class DeleteReceivableDialog(QDialog):
 class ReceivablesPage(QWidget):
     def __init__(self, user: dict = None, parent=None):
         super().__init__(parent)
-        self._user              = user or {}
-        self._receivables       = []
-        self._customer_map      = {}
-        self._customers         = []
-        self._active_filter     = "Semua"
-        self._search_query      = ""
-        self._view_mode         = ReceivablesViewToggle.VIEW_TABLE
-        self._grid_initialized  = False
-        self._pending_refresh   = False
-        self._render_token      = 0
+        self._user = user or {}
+        self._receivables = []
+        self._customer_map = {}
+        self._customers = []
+        self._active_filter = "Semua"
+        self._search_query = ""
+        self._view_mode = ReceivablesViewToggle.VIEW_TABLE
+        self._grid_initialized = False
+        self._pending_refresh = False
+        self._render_token = 0
         self._stat_labels: dict[str, QLabel] = {}
         self._stat_dots:   dict[str, QLabel] = {}
 
@@ -1769,10 +1859,10 @@ class ReceivablesPage(QWidget):
                 due_date=data["due_date"],
                 status=rec.status,
             )
-            
+
             # Emit signal untuk receivables update
             receivables_signals.receivables_updated.emit(rec.sales_id or 0)
-            
+
             self._load_data()
             self._refresh_stats()
             self._refresh_view()
@@ -1796,9 +1886,12 @@ class ReceivablesPage(QWidget):
         }
 
     def _calc_stats(self) -> dict:
-        total_debt   = sum(r.total_amount - r.amount_paid for r in self._receivables if r.status != "paid")
-        count_unpaid = sum(1 for r in self._receivables if _resolve_status(r.amount_paid, r.total_amount) in ("unpaid", "partial"))
-        count_paid   = sum(1 for r in self._receivables if _resolve_status(r.amount_paid, r.total_amount) == "paid")
+        total_debt = sum(
+            r.total_amount - r.amount_paid for r in self._receivables if r.status != "paid")
+        count_unpaid = sum(1 for r in self._receivables if _resolve_status(
+            r.amount_paid, r.total_amount) in ("unpaid", "partial"))
+        count_paid = sum(1 for r in self._receivables if _resolve_status(
+            r.amount_paid, r.total_amount) == "paid")
         return {
             "total_debt":   _fmt_currency(total_debt),
             "count_unpaid": str(count_unpaid),
@@ -1816,13 +1909,13 @@ class ReceivablesPage(QWidget):
         title_col.setSpacing(2)
 
         page_title = QLabel("Piutang Pelanggan")
-        page_title.setStyleSheet(f"font-family:'Segoe UI';font-size:27px;font-weight:700;color:{C_TEXT_PRI};background:transparent;")
+        page_title.setStyleSheet(
+            f"font-family:'Segoe UI';font-size:27px;font-weight:700;color:{C_TEXT_PRI};background:transparent;")
         page_sub = QLabel("Pantau dan kelola piutang pelanggan warungmu")
-        page_sub.setStyleSheet(f"font-family:'Segoe UI';font-size:13px;color:{C_TEXT_SEC};background:transparent;")
+        page_sub.setStyleSheet(
+            f"font-family:'Segoe UI';font-size:13px;color:{C_TEXT_SEC};background:transparent;")
         title_col.addWidget(page_title)
         title_col.addWidget(page_sub)
-
-        
 
         header.addLayout(title_col)
         header.addStretch()
@@ -1864,7 +1957,8 @@ class ReceivablesPage(QWidget):
             fw_layout.addWidget(btn)
         fw_layout.addStretch()
 
-        self._view_toggle = ReceivablesViewToggle(initial=ReceivablesViewToggle.VIEW_TABLE)
+        self._view_toggle = ReceivablesViewToggle(
+            initial=ReceivablesViewToggle.VIEW_TABLE)
         self._view_toggle.toggled.connect(self._on_view_mode_changed)
 
         bar_and_toggle.addWidget(filter_widget, stretch=1)
@@ -1886,7 +1980,8 @@ class ReceivablesPage(QWidget):
         self._scroll = QScrollArea()
         self._scroll.setWidgetResizable(True)
         self._scroll.setFrameShape(QFrame.Shape.NoFrame)
-        self._scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self._scroll.setHorizontalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self._scroll.setStyleSheet(f"""
             QScrollArea {{ background: transparent; border: none; }}
             QScrollArea > QWidget > QWidget {{ background: transparent; }}
@@ -1919,7 +2014,8 @@ class ReceivablesPage(QWidget):
         self._grid_layout = QGridLayout(self._grid_container)
         self._grid_layout.setSpacing(14)
         self._grid_layout.setContentsMargins(0, 0, 0, 0)
-        self._grid_layout.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
+        self._grid_layout.setAlignment(
+            Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
 
         self._scroll.setWidget(self._grid_container)
         card_page_layout.addWidget(self._scroll)
@@ -1931,7 +2027,7 @@ class ReceivablesPage(QWidget):
         table_page_layout.setContentsMargins(0, 0, 0, 0)
         table_page_layout.setSpacing(0)
 
-        self._table = ReceivablesTableView(user=self._user)    
+        self._table = ReceivablesTableView(user=self._user)
         self._table.pay_clicked.connect(self._open_pay_dialog)
         self._table.delete_clicked.connect(self._open_delete_dialog)
         self._table.detail_clicked.connect(self._open_detail_dialog)
@@ -1952,20 +2048,23 @@ class ReceivablesPage(QWidget):
         row.setSpacing(14)
         stats_def = [
             ("count_unpaid", "Belum / Sebagian Lunas",  "#E05252", "#FDEAEA", False),
-            ("count_paid",   "Sudah Lunas",             "#27AE60", "#E8F8F0", False),
+            ("count_paid",   "Sudah Lunas",
+             "#27AE60", "#E8F8F0", False),
             ("total_debt",   "Total Sisa Piutang",      "#4F6EF7", "#EEF1FE", True),
         ]
         vals = self._calc_stats()
         for key, label, color, bg, is_currency in stats_def:
-            card, lbl, dot = self._stat_card(key, label, vals[key], color, bg, is_currency)
+            card, lbl, dot = self._stat_card(
+                key, label, vals[key], color, bg, is_currency)
             self._stat_labels[key] = lbl
-            self._stat_dots[key]   = dot
+            self._stat_dots[key] = dot
             row.addWidget(card)
         return row
 
     def _stat_card(self, key, label, value, color, bg, is_currency):
         card = QFrame()
-        card.setStyleSheet(f"QFrame {{ background: {C_WHITE}; border-radius: 12px; border: 1px solid {C_BORDER}; }}")
+        card.setStyleSheet(
+            f"QFrame {{ background: {C_WHITE}; border-radius: 12px; border: 1px solid {C_BORDER}; }}")
         card.setFixedHeight(76)
 
         lay = QHBoxLayout(card)
@@ -1974,7 +2073,8 @@ class ReceivablesPage(QWidget):
 
         indicator = QFrame()
         indicator.setFixedSize(40, 40)
-        indicator.setStyleSheet(f"background: {bg}; border-radius: 10px; border: none;")
+        indicator.setStyleSheet(
+            f"background: {bg}; border-radius: 10px; border: none;")
 
         ind_lay = QHBoxLayout(indicator)
         ind_lay.setContentsMargins(0, 0, 0, 0)
@@ -1983,19 +2083,23 @@ class ReceivablesPage(QWidget):
         dot = QLabel()
         if is_currency:
             dot.setText("🪙")
-            dot.setStyleSheet("font-size: 18px; background: transparent; border: none;")
+            dot.setStyleSheet(
+                "font-size: 18px; background: transparent; border: none;")
         else:
             dot.setText(value)
-            dot.setStyleSheet(f"font-size: 14px; font-weight: 700; color: {color}; background: transparent; border: none;")
+            dot.setStyleSheet(
+                f"font-size: 14px; font-weight: 700; color: {color}; background: transparent; border: none;")
         dot.setAlignment(Qt.AlignmentFlag.AlignCenter)
         ind_lay.addWidget(dot)
 
         val_lbl = QLabel(value)
         val_lbl.setFixedHeight(26)
-        val_lbl.setStyleSheet(f"font-family:'Segoe UI';font-size:22px;font-weight:700;color:{C_TEXT_PRI};background:transparent;border:none;")
+        val_lbl.setStyleSheet(
+            f"font-family:'Segoe UI';font-size:22px;font-weight:700;color:{C_TEXT_PRI};background:transparent;border:none;")
 
         lbl_lbl = QLabel(label)
-        lbl_lbl.setStyleSheet(f"font-family:'Segoe UI';font-size:11px;color:{C_TEXT_SEC};background:transparent;border:none;")
+        lbl_lbl.setStyleSheet(
+            f"font-family:'Segoe UI';font-size:11px;color:{C_TEXT_SEC};background:transparent;border:none;")
 
         text_w = QWidget()
         text_w.setStyleSheet("background: transparent; border: none;")
@@ -2029,7 +2133,8 @@ class ReceivablesPage(QWidget):
         btn.setFixedHeight(38)
         btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self._style_filter_btn(btn, active)
-        btn.clicked.connect(lambda _=False, s=label: self._on_filter_changed(s))
+        btn.clicked.connect(
+            lambda _=False, s=label: self._on_filter_changed(s))
         return btn
 
     def _style_filter_btn(self, btn: QPushButton, active: bool):
@@ -2075,11 +2180,11 @@ class ReceivablesPage(QWidget):
 
         rows = []
         for cid, recs in groups.items():
-            customer     = self._customer_map.get(cid)
-            cust_name    = customer.name if customer else "—"
+            customer = self._customer_map.get(cid)
+            cust_name = customer.name if customer else "—"
             total_amount = sum(r.total_amount for r in recs)
-            amount_paid  = sum(r.amount_paid  for r in recs)
-            agg_status   = _resolve_status(amount_paid, total_amount)
+            amount_paid = sum(r.amount_paid for r in recs)
+            agg_status = _resolve_status(amount_paid, total_amount)
 
             if self._active_filter == "🔴 Belum Lunas" and agg_status != "unpaid":
                 continue
@@ -2096,13 +2201,13 @@ class ReceivablesPage(QWidget):
             nearest_due = min(unpaid_dues) if unpaid_dues else rep.due_date
 
             agg_rec = Receivables(
-                id           = rep.id,
-                sales_id     = rep.sales_id,
-                customer_id  = cid,
-                total_amount = total_amount,
-                amount_paid  = amount_paid,
-                due_date     = nearest_due,
-                status       = agg_status,
+                id=rep.id,
+                sales_id=rep.sales_id,
+                customer_id=cid,
+                total_amount=total_amount,
+                amount_paid=amount_paid,
+                due_date=nearest_due,
+                status=agg_status,
             )
             rows.append((agg_rec, cust_name, recs))
 
@@ -2115,12 +2220,14 @@ class ReceivablesPage(QWidget):
             self._refresh_table()
 
     def _refresh_table(self):
-        self._table.populate(self._filtered_rows(), self._customer_map, self._receivables)
+        self._table.populate(self._filtered_rows(),
+                             self._customer_map, self._receivables)
 
     # ── Card grid ─────────────────────────────────────────────────────────────
     def _get_column_count(self) -> int:
         available = self._scroll.viewport().width()
-        cols = available // (ReceivableCard.CARD_WIDTH + self._grid_layout.spacing())
+        cols = available // (ReceivableCard.CARD_WIDTH +
+                             self._grid_layout.spacing())
         return max(2, min(4, int(cols)))
 
     def _refresh_grid(self):
@@ -2148,7 +2255,8 @@ class ReceivablesPage(QWidget):
             outer = QVBoxLayout(empty_wrap)
             outer.setContentsMargins(0, 43, 2, 0)
             outer.setSpacing(0)
-            outer.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter)
+            outer.setAlignment(Qt.AlignmentFlag.AlignTop |
+                               Qt.AlignmentFlag.AlignHCenter)
 
             empty_card = QFrame()
             empty_card.setFixedHeight(260)
@@ -2173,11 +2281,13 @@ class ReceivablesPage(QWidget):
 
             etitle = QLabel("Tidak ada data piutang")
             etitle.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            etitle.setStyleSheet(f"font-family:'Segoe UI';font-size:16px;font-weight:700;color:{C_TEXT_PRI};")
+            etitle.setStyleSheet(
+                f"font-family:'Segoe UI';font-size:16px;font-weight:700;color:{C_TEXT_PRI};")
 
             esub = QLabel("Coba ubah filter atau kata kunci pencarian.")
             esub.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            esub.setStyleSheet(f"font-family:'Segoe UI';font-size:12px;color:{C_TEXT_SEC};")
+            esub.setStyleSheet(
+                f"font-family:'Segoe UI';font-size:12px;color:{C_TEXT_SEC};")
 
             ec_layout.addStretch()
             ec_layout.addWidget(icon)
@@ -2217,9 +2327,10 @@ class ReceivablesPage(QWidget):
         for i, (agg_rec, cust_name, all_for_cust) in enumerate(rows):
             if token != self._render_token:
                 return
-            customer  = self._customer_map.get(agg_rec.customer_id)
-            phone     = customer.phone if customer else ""
-            card = ReceivableCard(agg_rec, cust_name, phone, all_for_cust, user=self._user)
+            customer = self._customer_map.get(agg_rec.customer_id)
+            phone = customer.phone if customer else ""
+            card = ReceivableCard(agg_rec, cust_name, phone,
+                                  all_for_cust, user=self._user)
             card.pay_clicked.connect(self._open_pay_dialog)
             card.delete_clicked.connect(self._open_delete_dialog)
             card.detail_clicked.connect(self._open_detail_dialog)
@@ -2236,13 +2347,14 @@ class ReceivablesPage(QWidget):
         if token != self._render_token:
             return
         cols = self._get_column_count()
-        end  = min(start + batch_size, len(rows))
+        end = min(start + batch_size, len(rows))
 
         for i in range(start, end):
             agg_rec, cust_name, all_for_cust = rows[i]
             customer = self._customer_map.get(agg_rec.customer_id)
-            phone    = customer.phone if customer else ""
-            card = ReceivableCard(agg_rec, cust_name, phone, all_for_cust, user=self._user)
+            phone = customer.phone if customer else ""
+            card = ReceivableCard(agg_rec, cust_name, phone,
+                                  all_for_cust, user=self._user)
             card.pay_clicked.connect(self._open_pay_dialog)
             card.delete_clicked.connect(self._open_delete_dialog)
             card.detail_clicked.connect(self._open_detail_dialog)
@@ -2308,18 +2420,23 @@ class ReceivablesPage(QWidget):
         customer = self._customer_map.get(rec.customer_id)
         cust_name = customer.name if customer else "—"
 
-        dlg = DeleteReceivableDialog(rec=rec, customer_name=cust_name, parent=self)
+        dlg = DeleteReceivableDialog(
+            rec=rec, customer_name=cust_name, parent=self)
         dlg.confirmed.connect(lambda: self._delete_receivable(rec))
         dlg.exec()
 
     def _open_detail_dialog(self, customer_name: str, records: list[Receivables]):
-        dlg = CustomerDetailDialog(customer_name=customer_name, records=records, user=self._user, parent=self)
-        dlg.pay_clicked.connect(lambda rec: (dlg.accept(), self._open_pay_dialog(rec)))
-        dlg.delete_clicked.connect(lambda rec: (dlg.accept(), self._open_delete_dialog(rec)))
+        dlg = CustomerDetailDialog(
+            customer_name=customer_name, records=records, user=self._user, parent=self)
+        dlg.pay_clicked.connect(lambda rec: (
+            dlg.accept(), self._open_pay_dialog(rec)))
+        dlg.delete_clicked.connect(lambda rec: (
+            dlg.accept(), self._open_delete_dialog(rec)))
         dlg.exec()
 
     def _open_delete_all_dialog(self, customer_name: str, records: list[Receivables]):
-        dlg = DeleteAllReceivablesDialog(records=records, customer_name=customer_name, parent=self)
+        dlg = DeleteAllReceivablesDialog(
+            records=records, customer_name=customer_name, parent=self)
         dlg.confirmed.connect(lambda: self._delete_all_receivables(records))
         dlg.exec()
 
@@ -2338,7 +2455,8 @@ class ReceivablesPage(QWidget):
             self._refresh_stats()
             self._refresh_view()
             cust = self._customer_map.get(data["customer_id"], "Pelanggan")
-            Toast.show_toast(f"Piutang <b>{cust}</b> berhasil ditambahkan.", "success", self)
+            Toast.show_toast(
+                f"Piutang <b>{cust}</b> berhasil ditambahkan.", "success", self)
         except Exception as e:
             Toast.show_toast(str(e), "error", self)
 
@@ -2348,7 +2466,7 @@ class ReceivablesPage(QWidget):
             if rec is None:
                 raise ValueError("Data piutang tidak ditemukan.")
 
-            new_paid   = rec.amount_paid + data["amount"]
+            new_paid = rec.amount_paid + data["amount"]
             new_status = _resolve_status(new_paid, rec.total_amount)
 
             ReceivablesController.edit(
@@ -2402,10 +2520,10 @@ class ReceivablesPage(QWidget):
     def _delete_receivable(self, rec: Receivables):
         try:
             ReceivablesController.remove(rec.id)
-            
+
             # Emit receivables signal
             receivables_signals.receivables_updated.emit(rec.sales_id or 0)
-            
+
             self._load_data()
             self._refresh_stats()
             self._refresh_view()
@@ -2454,7 +2572,7 @@ class ReceivablesPage(QWidget):
         self._refresh_stats()
         if not self._grid_initialized or self._pending_refresh:
             self._grid_initialized = True
-            self._pending_refresh  = False
+            self._pending_refresh = False
             QTimer.singleShot(0, self._refresh_view)
         else:
             self._refresh_view()

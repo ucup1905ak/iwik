@@ -35,22 +35,23 @@ import os
 from pathlib import Path
 
 # ── Color palette ──────────────────────────────────────────────────────────────
-C_BG       = "#F4F5F9"
-C_WHITE    = "#FFFFFF"
-C_ACCENT   = "#4F6EF7"
+C_BG = "#F4F5F9"
+C_WHITE = "#FFFFFF"
+C_ACCENT = "#4F6EF7"
 C_ACCENT_H = "#3A57E8"
 C_TEXT_PRI = "#1A1D2E"
 C_TEXT_SEC = "#6B6F80"
-C_BORDER   = "#E4E6EE"
-C_DANGER   = "#E05252"
-C_SUCCESS  = "#27AE60"
-C_TAG_BG   = "#EEF1FE"
+C_BORDER = "#E4E6EE"
+C_DANGER = "#E05252"
+C_SUCCESS = "#27AE60"
+C_TAG_BG = "#EEF1FE"
 C_TAG_TEXT = "#4F6EF7"
 
 ENABLE_CARD_SHADOWS = False
 RADIUS = 14
 
-SAMPLE_CATEGORIES = ["Semua", "Makanan", "Minuman", "Snack", "Sembako", "Lainnya"]
+SAMPLE_CATEGORIES = ["Semua", "Makanan",
+                     "Minuman", "Snack", "Sembako", "Lainnya"]
 
 CAT_THEME = {
     "Makanan": {"emoji": "🍽️", "bg": "#FFF4E8", "text": "#E67E22"},
@@ -60,36 +61,56 @@ CAT_THEME = {
     "Lainnya": {"emoji": "📦", "bg": "#F1F3F8", "text": "#6C757D"},
 }
 
-C_ROW_ALT    = "#FAFBFF"
-C_HEADER_BG  = "#FFFFFF"
+C_ROW_ALT = "#FAFBFF"
+C_HEADER_BG = "#FFFFFF"
 C_HEADER_TEXT = "#9EA3B8"
-C_DIVIDER    = "#F0F1F7"
+C_DIVIDER = "#F0F1F7"
 
 # ── Card dimensions ────────────────────────────────────────────────────────────
-CASHIER_CARD_WIDTH   = 320   # lebar minimum kolom grid
+CASHIER_CARD_WIDTH = 320   # lebar minimum kolom grid
 CASHIER_CARD_SPACING = 12
 
 SAMPLE_PRODUCTS = [
-    Product(id=1,  name="Nasi Goreng Spesial",   brand="Warung Nusantara", sku="MKN-001", category="Makanan", stock=10,  price=25000),
-    Product(id=2,  name="Es Teh Manis",           brand="Fresh Drink",      sku="MNM-001", category="Minuman", stock=120, price=5000),
-    Product(id=3,  name="Keripik Singkong",       brand="SnackRasa",        sku="SNK-001", category="Snack",   stock=1,   price=8000),
-    Product(id=4,  name="Mie Goreng",             brand="MieKu",            sku="MKN-002", category="Makanan", stock=0,   price=20000),
-    Product(id=5,  name="Ayam Geprek",            brand="GeprekZone",       sku="MKN-003", category="Makanan", stock=15,  price=22000),
-    Product(id=6,  name="Kopi Susu Gula Aren",   brand="CoffeeDaily",      sku="MNM-002", category="Minuman", stock=45,  price=18000),
-    Product(id=7,  name="Roti Bakar Coklat",     brand="BakeHouse",        sku="SNK-002", category="Snack",   stock=0,   price=15000),
-    Product(id=8,  name="Beras Premium 5Kg",     brand="PanenMakmur",      sku="SMB-001", category="Sembako", stock=18,  price=78000),
-    Product(id=9,  name="Minyak Goreng 1L",      brand="Tropis",           sku="SMB-002", category="Sembako", stock=40,  price=21000),
-    Product(id=10, name="Air Mineral 600ml",      brand="AquaFresh",        sku="MNM-003", category="Minuman", stock=200, price=4000),
-    Product(id=11, name="Susu Coklat Botol",     brand="MilkyDay",         sku="MNM-004", category="Minuman", stock=55,  price=9000),
-    Product(id=12, name="Biskuit Coklat",        brand="Crunchy",          sku="SNK-003", category="Snack",   stock=70,  price=12000),
-    Product(id=13, name="Indomie Ayam Bawang",   brand="Indomie",          sku="MKN-004", category="Makanan", stock=150, price=3500),
-    Product(id=14, name="Telur Ayam 1Kg",        brand="FarmFresh",        sku="SMB-003", category="Sembako", stock=12,  price=29000),
-    Product(id=15, name="Gula Pasir 1Kg",        brand="SweetSugar",       sku="SMB-004", category="Sembako", stock=25,  price=16000),
-    Product(id=16, name="Jus Jeruk Segar",       brand="FruitPress",       sku="MNM-005", category="Minuman", stock=14,  price=12000),
-    Product(id=17, name="Wafer Keju",            brand="Cheezy",           sku="SNK-004", category="Snack",   stock=90,  price=10000),
-    Product(id=18, name="Sabun Cuci Piring",     brand="CleanMax",         sku="LNY-001", category="Lainnya", stock=33,  price=14000),
-    Product(id=19, name="Tisu Gulung",           brand="SoftCare",         sku="LNY-002", category="Lainnya", stock=60,  price=11000),
-    Product(id=20, name="Sambal Botol Pedas",    brand="HotTaste",         sku="LNY-003", category="Lainnya", stock=8,   price=17000),
+    Product(id=1,  name="Nasi Goreng Spesial",   brand="Warung Nusantara",
+            sku="MKN-001", category="Makanan", stock=10,  price=25000),
+    Product(id=2,  name="Es Teh Manis",           brand="Fresh Drink",
+            sku="MNM-001", category="Minuman", stock=120, price=5000),
+    Product(id=3,  name="Keripik Singkong",       brand="SnackRasa",
+            sku="SNK-001", category="Snack",   stock=1,   price=8000),
+    Product(id=4,  name="Mie Goreng",             brand="MieKu",
+            sku="MKN-002", category="Makanan", stock=0,   price=20000),
+    Product(id=5,  name="Ayam Geprek",            brand="GeprekZone",
+            sku="MKN-003", category="Makanan", stock=15,  price=22000),
+    Product(id=6,  name="Kopi Susu Gula Aren",   brand="CoffeeDaily",
+            sku="MNM-002", category="Minuman", stock=45,  price=18000),
+    Product(id=7,  name="Roti Bakar Coklat",     brand="BakeHouse",
+            sku="SNK-002", category="Snack",   stock=0,   price=15000),
+    Product(id=8,  name="Beras Premium 5Kg",     brand="PanenMakmur",
+            sku="SMB-001", category="Sembako", stock=18,  price=78000),
+    Product(id=9,  name="Minyak Goreng 1L",      brand="Tropis",
+            sku="SMB-002", category="Sembako", stock=40,  price=21000),
+    Product(id=10, name="Air Mineral 600ml",      brand="AquaFresh",
+            sku="MNM-003", category="Minuman", stock=200, price=4000),
+    Product(id=11, name="Susu Coklat Botol",     brand="MilkyDay",
+            sku="MNM-004", category="Minuman", stock=55,  price=9000),
+    Product(id=12, name="Biskuit Coklat",        brand="Crunchy",
+            sku="SNK-003", category="Snack",   stock=70,  price=12000),
+    Product(id=13, name="Indomie Ayam Bawang",   brand="Indomie",
+            sku="MKN-004", category="Makanan", stock=150, price=3500),
+    Product(id=14, name="Telur Ayam 1Kg",        brand="FarmFresh",
+            sku="SMB-003", category="Sembako", stock=12,  price=29000),
+    Product(id=15, name="Gula Pasir 1Kg",        brand="SweetSugar",
+            sku="SMB-004", category="Sembako", stock=25,  price=16000),
+    Product(id=16, name="Jus Jeruk Segar",       brand="FruitPress",
+            sku="MNM-005", category="Minuman", stock=14,  price=12000),
+    Product(id=17, name="Wafer Keju",            brand="Cheezy",
+            sku="SNK-004", category="Snack",   stock=90,  price=10000),
+    Product(id=18, name="Sabun Cuci Piring",     brand="CleanMax",
+            sku="LNY-001", category="Lainnya", stock=33,  price=14000),
+    Product(id=19, name="Tisu Gulung",           brand="SoftCare",
+            sku="LNY-002", category="Lainnya", stock=60,  price=11000),
+    Product(id=20, name="Sambal Botol Pedas",    brand="HotTaste",
+            sku="LNY-003", category="Lainnya", stock=8,   price=17000),
 ]
 
 
@@ -181,6 +202,8 @@ def _style_cat_btn(btn: QPushButton, cat: str, active: bool):
 # ═══════════════════════════════════════════════════════════════════════════════
 # Cashier Product Card  –  horizontal compact layout
 # ═══════════════════════════════════════════════════════════════════════════════
+
+
 class CashierProductCard(QFrame):
     clicked = pyqtSignal(Product)
     CARD_WIDTH = CASHIER_CARD_WIDTH
@@ -192,11 +215,12 @@ class CashierProductCard(QFrame):
 
     def _build(self):
         product = self._product
-        stock   = product.stock
+        stock = product.stock
 
         self.setObjectName("CashierProductCard")
         self.setFixedHeight(180)
-        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        self.setSizePolicy(QSizePolicy.Policy.Expanding,
+                           QSizePolicy.Policy.Fixed)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
 
         self.setStyleSheet(f"""
@@ -245,7 +269,8 @@ class CashierProductCard(QFrame):
                 img_label.setPixmap(scaled)
             else:
                 img_label.setText("📦")
-                img_label.setStyleSheet(f"font-size: 40px; color: {C_TEXT_SEC};")
+                img_label.setStyleSheet(
+                    f"font-size: 40px; color: {C_TEXT_SEC};")
         else:
             img_label.setText("📦")
             img_label.setStyleSheet(f"font-size: 40px; color: {C_TEXT_SEC};")
@@ -356,8 +381,6 @@ class CashierProductCard(QFrame):
             border:      none;
         """)
 
-        
-
         bottom.addWidget(price_lbl)
 
         info_layout.addLayout(bottom)
@@ -391,7 +414,8 @@ class OrderItemCard(QFrame):
         """)
         # Fixed height agar semua item card sejajar
         self.setFixedHeight(64)
-        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        self.setSizePolicy(QSizePolicy.Policy.Expanding,
+                           QSizePolicy.Policy.Fixed)
 
         root = QHBoxLayout(self)
         root.setContentsMargins(12, 0, 10, 0)
@@ -511,7 +535,7 @@ class OrderItemCard(QFrame):
         """)
         remove_btn.clicked.connect(self._on_remove)
         root.addWidget(remove_btn)
-        
+
     def _on_qty_typed(self, text: str):
         # Update internal quantity saat mengetik tapi belum commit
         if text and text.isdigit():
@@ -529,7 +553,7 @@ class OrderItemCard(QFrame):
             self._quantity = self._product.stock
             Toast.show_toast(
                 f"Stok {self._product.name} hanya {self._product.stock} unit.",
-                "warning",
+                "info",
                 self.window()
             )
         else:
@@ -548,7 +572,7 @@ class OrderItemCard(QFrame):
         if self._quantity >= self._product.stock:
             Toast.show_toast(
                 f"Stok {self._product.name} hanya {self._product.stock} unit.",
-                "warning",
+                "info",
                 self.window()
             )
             return
@@ -590,7 +614,8 @@ class SalesPage(QWidget):
         product_signals.product_added.connect(self._on_product_added)
         product_signals.product_edited.connect(self._on_product_edited)
         product_signals.product_deleted.connect(self._on_product_deleted)
-        product_signals.product_stock_changed.connect(self._on_product_stock_changed)
+        product_signals.product_stock_changed.connect(
+            self._on_product_stock_changed)
         product_signals.products_imported.connect(self._on_products_imported)
 
     # ──────────────────────────────────────────────────────────────────────────
@@ -667,14 +692,16 @@ class SalesPage(QWidget):
         cat_layout = QHBoxLayout(cat_frame)
         cat_layout.setContentsMargins(0, 0, 0, 0)
         cat_layout.setSpacing(8)
-        cat_layout.setAlignment(Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft)
+        cat_layout.setAlignment(
+            Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft)
 
         self._cat_buttons = {}
         for cat in SAMPLE_CATEGORIES:
             btn = QPushButton(cat)
             btn.setFixedHeight(34)
             btn.setCursor(Qt.CursorShape.PointingHandCursor)
-            btn.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Fixed)
+            btn.setSizePolicy(QSizePolicy.Policy.Maximum,
+                              QSizePolicy.Policy.Fixed)
             btn.clicked.connect(lambda checked, c=cat: self._set_category(c))
             cat_layout.addWidget(btn)
             self._cat_buttons[cat] = btn
@@ -687,8 +714,10 @@ class SalesPage(QWidget):
         self._products_scroll = QScrollArea()
         self._products_scroll.setWidgetResizable(True)
         self._products_scroll.setFrameShape(QFrame.Shape.NoFrame)
-        self._products_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self._products_scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self._products_scroll.setHorizontalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self._products_scroll.setVerticalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self._products_scroll.setStyleSheet(f"""
             QScrollArea {{
                 background: transparent;
@@ -722,7 +751,8 @@ class SalesPage(QWidget):
         self._products_grid = QGridLayout(products_widget)
         self._products_grid.setSpacing(CASHIER_CARD_SPACING)
         self._products_grid.setContentsMargins(0, 0, 0, 0)
-        self._products_grid.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
+        self._products_grid.setAlignment(
+            Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
 
         self._products_scroll.setWidget(products_widget)
         left_layout.addWidget(self._products_scroll, stretch=1)
@@ -734,7 +764,8 @@ class SalesPage(QWidget):
         # ══════════════════════════════════════════════════════════════════════
         summary_frame = QFrame()
         summary_frame.setFixedWidth(340)
-        summary_frame.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Preferred)
+        summary_frame.setSizePolicy(
+            QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Preferred)
         summary_frame.setStyleSheet(f"""
             QFrame {{
                 background: {C_WHITE};
@@ -812,7 +843,8 @@ class SalesPage(QWidget):
             border: none;
         """)
         summary_layout.addLayout(
-            self._make_summary_row("Subtotal", self._subtotal_value, secondary=True)
+            self._make_summary_row(
+                "Subtotal", self._subtotal_value, secondary=True)
         )
 
         # Diskon label + inputs dalam satu blok rapat
@@ -896,12 +928,14 @@ class SalesPage(QWidget):
             self._discount_type.width() - 28, -8, 24, 40
         ))
 
-        self._discount_type.currentTextChanged.connect(self._on_discount_changed)
+        self._discount_type.currentTextChanged.connect(
+            self._on_discount_changed)
 
         self._discount_input = QLineEdit()
         self._discount_input.setPlaceholderText("0")
         self._discount_input.setFixedHeight(34)
-        self._discount_input.setValidator(QIntValidator(0, 999_999_999))  # ← tambahkan ini
+        self._discount_input.setValidator(
+            QIntValidator(0, 999_999_999))  # ← tambahkan ini
         self._discount_input.setStyleSheet(f"""
             QLineEdit {{
                 background: {C_TAG_BG};
@@ -933,7 +967,8 @@ class SalesPage(QWidget):
             border: none;
         """)
         summary_layout.addLayout(
-            self._make_summary_row("Potongan", self._discount_value, secondary=True)
+            self._make_summary_row(
+                "Potongan", self._discount_value, secondary=True)
         )
 
         # Divider sebelum total
@@ -1028,7 +1063,7 @@ class SalesPage(QWidget):
         row.addStretch()
         row.addWidget(value_widget)
         return row
-    
+
     def resizeEvent(self, event):
         super().resizeEvent(event)
         QTimer.singleShot(0, self._refresh_products_grid)
@@ -1042,7 +1077,8 @@ class SalesPage(QWidget):
             # Defer ke next event loop tick agar viewport sudah punya ukuran yang benar
             QTimer.singleShot(0, self._refresh_products_grid)
         except Exception as e:
-            Toast.show_toast(f"Error loading products: {str(e)}", "error", self)
+            Toast.show_toast(
+                f"Error loading products: {str(e)}", "error", self)
 
     # ── Category ───────────────────────────────────────────────────────────────
     def _set_category(self, category: str):
@@ -1102,7 +1138,8 @@ class SalesPage(QWidget):
 
         for idx, product in enumerate(self._filtered_products):
             card = CashierProductCard(product)
-            card.clicked.connect(lambda p, prod=product: self._add_to_cart(prod))
+            card.clicked.connect(
+                lambda p, prod=product: self._add_to_cart(prod))
             row = idx // cols
             col = idx % cols
             self._products_grid.addWidget(card, row, col)
@@ -1122,14 +1159,15 @@ class SalesPage(QWidget):
             if qty >= product.stock:
                 Toast.show_toast(
                     f"Jumlah {product.name} sudah mencapai batas stok ({product.stock}).",
-                    "warning", self
+                    "info", self
                 )
                 return
             self._cart[product.id] = (product, qty + 1)
         else:
             self._cart[product.id] = (product, 1)
 
-        self._recent_products[product.id] = self._recent_products.get(product.id, 0) + 1
+        self._recent_products[product.id] = self._recent_products.get(
+            product.id, 0) + 1
         self._refresh_cart_display()
 
     def _refresh_cart_display(self):
@@ -1143,7 +1181,8 @@ class SalesPage(QWidget):
             item_card = OrderItemCard(product, quantity)
             item_card.remove_clicked.connect(self._remove_from_cart)
             item_card.quantity_changed.connect(self._on_quantity_changed)
-            self._items_layout.insertWidget(self._items_layout.count() - 1, item_card)
+            self._items_layout.insertWidget(
+                self._items_layout.count() - 1, item_card)
 
         self._update_totals()
 
@@ -1153,7 +1192,7 @@ class SalesPage(QWidget):
             if new_quantity > product.stock:
                 Toast.show_toast(
                     f"Tidak bisa melebihi stok yang tersedia ({product.stock}).",
-                    "warning", self
+                    "info", self
                 )
                 self._refresh_cart_display()
                 return
@@ -1185,7 +1224,8 @@ class SalesPage(QWidget):
         return discount_amount, max(0, subtotal - discount_amount)
 
     def _update_totals(self):
-        subtotal = sum(product.price * qty for product, qty in self._cart.values())
+        subtotal = sum(product.price * qty for product,
+                       qty in self._cart.values())
         self._subtotal_value.setText(_format_price(subtotal))
         discount_amount, total = self._calculate_discount(subtotal)
         self._discount_value.setText(_format_price(discount_amount))
@@ -1194,10 +1234,12 @@ class SalesPage(QWidget):
     # ── Order ──────────────────────────────────────────────────────────────────
     def _on_order_clicked(self):
         if not self._cart:
-            Toast.show_toast("Keranjang kosong. Tambahkan produk terlebih dahulu.", "warning", self)
+            Toast.show_toast(
+                "Keranjang kosong. Tambahkan produk terlebih dahulu.", "info", self)
             return
 
-        subtotal = sum(product.price * qty for product, qty in self._cart.values())
+        subtotal = sum(product.price * qty for product,
+                       qty in self._cart.values())
         discount_amount, total = self._calculate_discount(subtotal)
 
         dialog = OrderConfirmDialog(
@@ -1230,10 +1272,12 @@ class SalesPage(QWidget):
             for product_id, (cart_product, quantity) in self._cart.items():
                 fresh = fresh_products.get(product_id)
                 if not fresh:
-                    Toast.show_toast(f"Produk {cart_product.name} tidak ditemukan.", "error", self)
+                    Toast.show_toast(
+                        f"Produk {cart_product.name} tidak ditemukan.", "error", self)
                     return
                 if quantity > int(fresh.stock):
-                    Toast.show_toast(f"Stok {fresh.name} tidak cukup. Sisa: {fresh.stock}.", "warning", self)
+                    Toast.show_toast(
+                        f"Stok {fresh.name} tidak cukup. Sisa: {fresh.stock}.", "info", self)
                     return
 
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -1278,7 +1322,8 @@ class SalesPage(QWidget):
                 ReceivablesController.add(
                     sales_id=sales_id,
                     customer_id=customer_id,
-                    total_amount=total,  # ← Gunakan total JUAL (setelah diskon)
+                    # ← Gunakan total JUAL (setelah diskon)
+                    total_amount=total,
                     due_date=None,
                     amount_paid=paid_amount,
                     status='unpaid',
@@ -1288,7 +1333,8 @@ class SalesPage(QWidget):
             Toast.show_toast("Order berhasil disimpan", "success", self)
 
             for product_id, new_stock in updated_stocks.items():
-                product_signals.product_stock_changed.emit(product_id, new_stock)
+                product_signals.product_stock_changed.emit(
+                    product_id, new_stock)
 
             sales_signals.sales_completed.emit(sales_id)
 
@@ -1354,7 +1400,8 @@ class ReceiptPreviewDialog(QDialog):
         self.setModal(True)
         self.setFixedWidth(400)
         self.setMaximumHeight(620)
-        self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Maximum)
+        self.setSizePolicy(QSizePolicy.Policy.Fixed,
+                           QSizePolicy.Policy.Maximum)
         self.setStyleSheet(f"""
             QDialog {{
                 background: #FAFAF8;
@@ -1383,7 +1430,8 @@ class ReceiptPreviewDialog(QDialog):
         header_lay.setSpacing(2)
 
         title = QLabel("Preview Struk")
-        title.setStyleSheet("font-size:16px;font-weight:600;color:#1b1b1b;border:none;")
+        title.setStyleSheet(
+            "font-size:16px;font-weight:600;color:#1b1b1b;border:none;")
         header_lay.addWidget(title)
 
         subtitle = QLabel("Periksa struk sebelum menyimpan atau mencetak.")
@@ -1417,8 +1465,10 @@ class ReceiptPreviewDialog(QDialog):
         self._receipt_view.setReadOnly(True)
         self._receipt_view.setFont(QFont("Consolas", 8))
         self._receipt_view.setLineWrapMode(QPlainTextEdit.LineWrapMode.NoWrap)
-        self._receipt_view.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self._receipt_view.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self._receipt_view.setHorizontalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self._receipt_view.setVerticalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self._receipt_view.setStyleSheet(f"""
             QPlainTextEdit {{
                 background: #FFFFFF;
@@ -1439,7 +1489,8 @@ class ReceiptPreviewDialog(QDialog):
             }}
         """)
         receipt_paper_lay.addWidget(self._receipt_view)
-        content_lay.addWidget(receipt_paper, alignment=Qt.AlignmentFlag.AlignCenter)
+        content_lay.addWidget(
+            receipt_paper, alignment=Qt.AlignmentFlag.AlignCenter)
         root.addWidget(content_frame, stretch=0)
 
         # Footer
@@ -1502,7 +1553,8 @@ class ReceiptPreviewDialog(QDialog):
             project_root = Path(__file__).parent.parent.parent.parent
             receipts_dir = project_root / "assets" / "receipts"
             receipts_dir.mkdir(parents=True, exist_ok=True)
-            receipt_file = receipts_dir / f"receipt_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
+            receipt_file = receipts_dir / \
+                f"receipt_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
             with open(receipt_file, 'w', encoding='utf-8') as f:
                 f.write(self._receipt_text)
             self.action = "save"
@@ -1510,14 +1562,16 @@ class ReceiptPreviewDialog(QDialog):
             Toast.show_toast("Struk disimpan", "success", self.parent())
             self.accept()
         except Exception as e:
-            Toast.show_toast(f"Error menyimpan struk: {str(e)}", "error", self.parent())
+            Toast.show_toast(
+                f"Error menyimpan struk: {str(e)}", "error", self.parent())
 
     def _on_print(self):
         try:
             project_root = Path(__file__).parent.parent.parent.parent
             receipts_dir = project_root / "assets" / "receipts"
             receipts_dir.mkdir(parents=True, exist_ok=True)
-            receipt_file = receipts_dir / f"receipt_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
+            receipt_file = receipts_dir / \
+                f"receipt_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
             with open(receipt_file, 'w', encoding='utf-8') as f:
                 f.write(self._receipt_text)
 
@@ -1540,10 +1594,12 @@ class ReceiptPreviewDialog(QDialog):
                 doc.print(printer)
                 self.action = "print"
                 self.saved_path = str(receipt_file)
-                Toast.show_toast("Struk berhasil dicetak", "success", self.parent())
+                Toast.show_toast("Struk berhasil dicetak",
+                                 "success", self.parent())
                 self.accept()
         except Exception as e:
-            Toast.show_toast(f"Error mencetak struk: {str(e)}", "error", self.parent())
+            Toast.show_toast(
+                f"Error mencetak struk: {str(e)}", "error", self.parent())
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -1579,7 +1635,8 @@ class OrderConfirmDialog(QDialog):
         self.setWindowTitle("Konfirmasi Order")
         self.setModal(True)
         self.setFixedWidth(820)
-        self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Preferred)
+        self.setSizePolicy(QSizePolicy.Policy.Fixed,
+                           QSizePolicy.Policy.Preferred)
         screen_h = QApplication.primaryScreen().availableGeometry().height()
         self.setMaximumHeight(min(850, screen_h - 80))
         self.setStyleSheet(f"""
@@ -1606,12 +1663,14 @@ class OrderConfirmDialog(QDialog):
 
         logo = QLabel("Warung<span style='color:#4F6EF7'>+</span>")
         logo.setTextFormat(Qt.TextFormat.RichText)
-        logo.setStyleSheet("font-size:14px;color:#5F5E5A;font-weight:500;letter-spacing:1px;border:none;")
+        logo.setStyleSheet(
+            "font-size:14px;color:#5F5E5A;font-weight:500;letter-spacing:1px;border:none;")
         header_lay.addWidget(logo)
         header_lay.addSpacing(15)
 
         title = QLabel("Konfirmasi Order")
-        title.setStyleSheet("font-size:20px;font-weight:600;color:#1b1b1b;border:none;")
+        title.setStyleSheet(
+            "font-size:20px;font-weight:600;color:#1b1b1b;border:none;")
         header_lay.addWidget(title)
         header_lay.addSpacing(5)
 
@@ -1655,7 +1714,7 @@ class OrderConfirmDialog(QDialog):
         self._buyer_input.setStyleSheet(self._input_style())
         left_lay.addWidget(self._buyer_input)
         left_lay.addSpacing(8)
-        
+
         self._buyer_err = QLabel("")
         self._buyer_err.setStyleSheet(f"""
             font-family: 'Segoe UI';
@@ -1685,7 +1744,7 @@ class OrderConfirmDialog(QDialog):
         self._phone_input.setStyleSheet(self._input_style())
         self._phone_input.hide()
         left_lay.addWidget(self._phone_input)
-        
+
         self._phone_err = QLabel("")
         self._phone_err.setStyleSheet(f"""
             font-family: 'Segoe UI';
@@ -1729,7 +1788,8 @@ class OrderConfirmDialog(QDialog):
         items_layout.setContentsMargins(0, 0, 0, 0)
         items_layout.setSpacing(5)
         for product, quantity in self._cart.values():
-            items_layout.addWidget(self._make_confirm_item_row(product, quantity))
+            items_layout.addWidget(
+                self._make_confirm_item_row(product, quantity))
         items_layout.addStretch()
         items_scroll.setWidget(items_container)
         left_lay.addWidget(items_scroll)
@@ -1743,8 +1803,10 @@ class OrderConfirmDialog(QDialog):
             left_lay.addSpacing(4)
 
         if self._discount > 0:
-            row = self._inline_row("Diskon", _format_price(self._discount), small=True)
-            row.itemAt(2).widget().setStyleSheet(f"color:{C_DANGER};font-weight:600;font-size:12px;border:none;")
+            row = self._inline_row(
+                "Diskon", _format_price(self._discount), small=True)
+            row.itemAt(2).widget().setStyleSheet(
+                f"color:{C_DANGER};font-weight:600;font-size:12px;border:none;")
             left_lay.addLayout(row)
             left_lay.addSpacing(4)
 
@@ -1752,8 +1814,10 @@ class OrderConfirmDialog(QDialog):
         left_lay.addSpacing(8)
 
         total_row = self._inline_row("Total", _format_price(self._total))
-        total_row.itemAt(0).widget().setStyleSheet("font-size:14px;font-weight:700;border:none;")
-        total_row.itemAt(2).widget().setStyleSheet(f"font-size:15px;font-weight:700;color:{C_ACCENT};border:none;")
+        total_row.itemAt(0).widget().setStyleSheet(
+            "font-size:14px;font-weight:700;border:none;")
+        total_row.itemAt(2).widget().setStyleSheet(
+            f"font-size:15px;font-weight:700;color:{C_ACCENT};border:none;")
         left_lay.addLayout(total_row)
         left_lay.addStretch()
 
@@ -1790,7 +1854,8 @@ class OrderConfirmDialog(QDialog):
             if value == "tunai":
                 radio.setChecked(True)
             radio.toggled.connect(
-                lambda checked, v=value: self._on_payment_method_changed(v) if checked else None
+                lambda checked, v=value: self._on_payment_method_changed(
+                    v) if checked else None
             )
             self._payment_group.addButton(radio, idx)
             payment_grid.addWidget(radio, 0, idx)
@@ -1822,15 +1887,18 @@ class OrderConfirmDialog(QDialog):
         """)
         arrow_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
         arrow_lbl.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
-        QTimer.singleShot(0, lambda: arrow_lbl.setGeometry(self._payment_type_combo.width() - 28, -6, 24, 40))
+        QTimer.singleShot(0, lambda: arrow_lbl.setGeometry(
+            self._payment_type_combo.width() - 28, -6, 24, 40))
         self._payment_type_combo.setStyleSheet(self._combo_style())
-        self._payment_type_combo.currentIndexChanged.connect(self._on_payment_type_changed)
+        self._payment_type_combo.currentIndexChanged.connect(
+            self._on_payment_type_changed)
         cash_layout.addWidget(self._payment_type_combo)
         cash_layout.addSpacing(0)
 
         # Customer fields (hutang) — side by side
         self._customer_name_label = QLabel("Nama Pelanggan")
-        self._customer_name_label.setStyleSheet(f"font-family:'Segoe UI';font-size:11px;font-weight:600;color:{C_TEXT_PRI};background:transparent;border:none;")
+        self._customer_name_label.setStyleSheet(
+            f"font-family:'Segoe UI';font-size:11px;font-weight:600;color:{C_TEXT_PRI};background:transparent;border:none;")
         self._customer_name_label.hide()
         cash_layout.addWidget(self._customer_name_label)
         cash_layout.addSpacing(4)
@@ -1846,7 +1914,8 @@ class OrderConfirmDialog(QDialog):
         self._customer_name_input.hide()
 
         self._customer_phone_label = QLabel("No Telepon")
-        self._customer_phone_label.setStyleSheet(f"font-family:'Segoe UI';font-size:11px;font-weight:600;color:{C_TEXT_PRI};background:transparent;border:none;")
+        self._customer_phone_label.setStyleSheet(
+            f"font-family:'Segoe UI';font-size:11px;font-weight:600;color:{C_TEXT_PRI};background:transparent;border:none;")
         self._customer_phone_label.hide()
 
         self._customer_phone_input = QLineEdit()
@@ -1885,7 +1954,8 @@ class OrderConfirmDialog(QDialog):
 
         # Cash input
         self._cash_label = QLabel("Uang yang Diberikan")
-        self._cash_label.setStyleSheet(f"font-family:'Segoe UI';font-size:11px;font-weight:600;color:{C_TEXT_PRI};background:transparent;border:none;")
+        self._cash_label.setStyleSheet(
+            f"font-family:'Segoe UI';font-size:11px;font-weight:600;color:{C_TEXT_PRI};background:transparent;border:none;")
         cash_layout.addWidget(self._cash_label)
         cash_layout.addSpacing(4)
 
@@ -1902,11 +1972,13 @@ class OrderConfirmDialog(QDialog):
         remaining_row = QHBoxLayout()
         remaining_row.setContentsMargins(0, 0, 0, 0)
         self._remaining_label = QLabel("Kembalian")
-        self._remaining_label.setStyleSheet(f"font-size:12px;color:{C_TEXT_SEC};border:none;")
+        self._remaining_label.setStyleSheet(
+            f"font-size:12px;color:{C_TEXT_SEC};border:none;")
         remaining_row.addWidget(self._remaining_label)
         remaining_row.addStretch()
         self._remaining_value = QLabel(_format_price(0))
-        self._remaining_value.setStyleSheet(f"font-size:12px;font-weight:600;color:{C_SUCCESS};border:none;")
+        self._remaining_value.setStyleSheet(
+            f"font-size:12px;font-weight:600;color:{C_SUCCESS};border:none;")
         remaining_row.addWidget(self._remaining_value)
         cash_layout.addLayout(remaining_row)
 
@@ -1958,8 +2030,7 @@ class OrderConfirmDialog(QDialog):
 
         # Initialize UI state
         self._on_payment_type_changed(0)
-        
-        
+
     def _on_phone_lookup(self, phone: str):
         phone = phone.strip()
 
@@ -2018,9 +2089,11 @@ class OrderConfirmDialog(QDialog):
         row.setContentsMargins(0, 0, 0, 0)
         fs = "12px" if small else "13px"
         lbl = QLabel(left)
-        lbl.setStyleSheet(f"font-size:{fs};color:{C_TEXT_SEC if small else C_TEXT_PRI};border:none;")
+        lbl.setStyleSheet(
+            f"font-size:{fs};color:{C_TEXT_SEC if small else C_TEXT_PRI};border:none;")
         val = QLabel(right)
-        val.setStyleSheet(f"font-size:{fs};font-weight:600;color:{C_TEXT_PRI};border:none;")
+        val.setStyleSheet(
+            f"font-size:{fs};font-weight:600;color:{C_TEXT_PRI};border:none;")
         row.addWidget(lbl)
         row.addStretch()
         row.addWidget(val)
@@ -2270,7 +2343,7 @@ class OrderConfirmDialog(QDialog):
         pass  # No need to load customers, user will input manually
 
     def _on_payment_method_changed(self, method: str):
-        
+
         self._payment_method = method
         self._cash_fields_frame.show()
 
@@ -2280,7 +2353,6 @@ class OrderConfirmDialog(QDialog):
         )
 
         QTimer.singleShot(0, self.adjustSize)
-
 
     def _on_payment_type_changed(self, index: int):
         self._payment_type = self._payment_type_combo.currentData()
@@ -2309,7 +2381,6 @@ class OrderConfirmDialog(QDialog):
             # tampilkan no telepon
             self._phone_label.show()
             self._phone_input.show()
-            
 
             # cash field
             self._cash_label.setText("Uang yang Dibayarkan")
@@ -2400,7 +2471,6 @@ class OrderConfirmDialog(QDialog):
 
         self.adjustSize()
         self.resize(self.sizeHint())
-
 
     def _on_cash_changed(self):
         try:
@@ -2563,15 +2633,18 @@ class OrderConfirmDialog(QDialog):
             paid_amount = int(cash_str) if cash_str else 0
 
             if paid_amount >= self._total:
-                Toast.show_toast("Pembayaran hutang harus kurang dari total.", "error", self)
+                Toast.show_toast(
+                    "Pembayaran hutang harus kurang dari total.", "error", self)
                 return
             buyer_name = self._buyer_input.text().strip()
             if not buyer_name:
-                Toast.show_toast("Masukkan nama pembeli untuk hutang!", "error", self)
+                Toast.show_toast(
+                    "Masukkan nama pembeli untuk hutang!", "error", self)
                 return
             phone = self._phone_input.text().strip()
             if not phone:
-                Toast.show_toast("Masukkan nomor telepon untuk hutang!", "error", self)
+                Toast.show_toast(
+                    "Masukkan nomor telepon untuk hutang!", "error", self)
                 return
 
         receipt_text = self._build_receipt_text()
@@ -2595,7 +2668,8 @@ class OrderConfirmDialog(QDialog):
                             phone=phone,
                         )
                 except Exception as e:
-                    Toast.show_toast(f"Error menyimpan pelanggan: {str(e)}", "error", self)
+                    Toast.show_toast(
+                        f"Error menyimpan pelanggan: {str(e)}", "error", self)
                     return
                 cash_str = self._cash_input.text().strip()
                 self.cash_given = int(cash_str) if cash_str else 0
@@ -2605,9 +2679,11 @@ class OrderConfirmDialog(QDialog):
                 buyer_name = self._buyer_input.text().strip()
                 if buyer_name:
                     try:
-                        self.customer_id = CustomerController.add(name=buyer_name)
+                        self.customer_id = CustomerController.add(
+                            name=buyer_name)
                     except Exception as e:
-                        Toast.show_toast(f"Error menyimpan pelanggan: {str(e)}", "error", self)
+                        Toast.show_toast(
+                            f"Error menyimpan pelanggan: {str(e)}", "error", self)
                         return
                 else:
                     self.customer_id = None  # Pembeli Umum
@@ -2635,14 +2711,16 @@ class OrderConfirmDialog(QDialog):
 
         def _row(left: str, right) -> str:
             left_str = _truncate(left, RECEIPT_WIDTH - 12)
-            right_str = _format_price(right) if isinstance(right, int) else str(right)
+            right_str = _format_price(right) if isinstance(
+                right, int) else str(right)
             spaces = RECEIPT_WIDTH - len(left_str) - len(right_str)
             return left_str + " " * max(1, spaces) + right_str
 
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         user_name = self._user.get("name", "Cashier")
         buyer_name = self._buyer_input.text().strip() or "Pembeli Umum"
-        payment_text = {"tunai": "Tunai", "qris": "QRIS"}.get(self._payment_method, "Tunai")
+        payment_text = {"tunai": "Tunai", "qris": "QRIS"}.get(
+            self._payment_method, "Tunai")
         payment_text += f" - {'Lunas' if self._payment_type == 'lunas' else 'Hutang'}"
 
         lines = [
@@ -2667,7 +2745,8 @@ class OrderConfirmDialog(QDialog):
 
         for product, quantity in self._cart.values():
             lines.append(_truncate(product.name, RECEIPT_WIDTH))
-            lines.append(_row(f"{quantity}x @ {_format_price(product.price)}", product.price * quantity))
+            lines.append(
+                _row(f"{quantity}x @ {_format_price(product.price)}", product.price * quantity))
             lines.append("")
 
         lines += [

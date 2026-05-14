@@ -38,24 +38,24 @@ from gui.views.components import Avatar
 from gui.signals import product_signals, purchase_signals
 
 # ── Color palette ──────────────────────────────────────────────────────────────
-C_BG       = "#F4F5F9"
-C_WHITE    = "#FFFFFF"
-C_ACCENT   = "#4F6EF7"
+C_BG = "#F4F5F9"
+C_WHITE = "#FFFFFF"
+C_ACCENT = "#4F6EF7"
 C_ACCENT_H = "#3A57E8"
 C_TEXT_PRI = "#1A1D2E"
 C_TEXT_SEC = "#6B6F80"
-C_BORDER   = "#E4E6EE"
-C_DANGER   = "#E05252"
-C_TAG_BG   = "#EEF1FE"
-C_SUCCESS  = "#27AE60"
-C_WARNING  = "#F39C12"
+C_BORDER = "#E4E6EE"
+C_DANGER = "#E05252"
+C_TAG_BG = "#EEF1FE"
+C_SUCCESS = "#27AE60"
+C_WARNING = "#F39C12"
 
 RADIUS = 14
 
-C_ROW_ALT    = "#FAFBFF"
-C_HEADER_BG  = "#FFFFFF"
+C_ROW_ALT = "#FAFBFF"
+C_HEADER_BG = "#FFFFFF"
 C_HEADER_TEXT = "#9EA3B8"
-C_DIVIDER    = "#F0F1F7"
+C_DIVIDER = "#F0F1F7"
 
 STATUS_THEME = {
     "Lunas":   {"bg": "#EEFCEF", "text": "#27AE60"},
@@ -66,6 +66,8 @@ STATUS_THEME = {
 FILTER_STATUS = ["Semua", "Lunas", "Pending", "Belum"]
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
+
+
 def _fmt_currency(value) -> str:
     if value is None:
         return "—"
@@ -74,11 +76,13 @@ def _fmt_currency(value) -> str:
     except Exception:
         return "—"
 
+
 def _fmt_date(value: str) -> str:
     """Trim datetime string to date only if long."""
     if value and len(value) > 10:
         return value[:10]
     return value or "—"
+
 
 def _supplier_palette(name: str) -> tuple:
     PALETTES = [
@@ -97,10 +101,10 @@ def _supplier_palette(name: str) -> tuple:
 # Purchase Card
 # ═══════════════════════════════════════════════════════════════════════════════
 class PurchaseCard(QFrame):
-    edit_clicked   = pyqtSignal(object)
+    edit_clicked = pyqtSignal(object)
     delete_clicked = pyqtSignal(object)
     detail_clicked = pyqtSignal(object)
-    CARD_WIDTH  = 393
+    CARD_WIDTH = 393
     CARD_HEIGHT = 300
 
     def __init__(self, purchase, parent=None):
@@ -113,7 +117,8 @@ class PurchaseCard(QFrame):
 
         self.setObjectName("PurchaseCard")
         self.setFixedHeight(160)
-        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        self.setSizePolicy(QSizePolicy.Policy.Expanding,
+                           QSizePolicy.Policy.Fixed)
 
         self.setStyleSheet(f"""
             QFrame#PurchaseCard {{
@@ -222,15 +227,18 @@ class PurchaseCard(QFrame):
 
         detail_btn = btn("Detail", "#EEFCEF", C_SUCCESS)
         detail_btn.setFixedWidth(70)
-        detail_btn.clicked.connect(lambda: self.detail_clicked.emit(self._purchase))
+        detail_btn.clicked.connect(
+            lambda: self.detail_clicked.emit(self._purchase))
 
         edit_btn = btn("Edit", C_TAG_BG, C_ACCENT)
         edit_btn.setFixedWidth(70)
-        edit_btn.clicked.connect(lambda: self.edit_clicked.emit(self._purchase))
+        edit_btn.clicked.connect(
+            lambda: self.edit_clicked.emit(self._purchase))
 
         del_btn = btn("Hapus", "#FDEAEA", C_DANGER)
         del_btn.setFixedWidth(75)
-        del_btn.clicked.connect(lambda: self.delete_clicked.emit(self._purchase))
+        del_btn.clicked.connect(
+            lambda: self.delete_clicked.emit(self._purchase))
 
         bottom.addWidget(detail_btn)
         bottom.addWidget(edit_btn)
@@ -243,18 +251,18 @@ class PurchaseCard(QFrame):
 # Purchase Table View
 # ═══════════════════════════════════════════════════════════════════════════════
 class PurchaseTableView(QTableWidget):
-    edit_clicked   = pyqtSignal(object)
+    edit_clicked = pyqtSignal(object)
     delete_clicked = pyqtSignal(object)
     detail_clicked = pyqtSignal(object)
 
-    COLUMNS    = ["      #", "Supplier", "User", "Waktu", "Total", "Aksi"]
-    COL_NO        = 0
-    COL_SUPPLIER  = 1
-    COL_USER      = 2
-    COL_DATE      = 3
-    COL_TOTAL     = 4
-    COL_ACTION    = 5
-    ROW_H         = 52
+    COLUMNS = ["      #", "Supplier", "User", "Waktu", "Total", "Aksi"]
+    COL_NO = 0
+    COL_SUPPLIER = 1
+    COL_USER = 2
+    COL_DATE = 3
+    COL_TOTAL = 4
+    COL_ACTION = 5
+    ROW_H = 52
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -277,7 +285,7 @@ class PurchaseTableView(QTableWidget):
     def showEvent(self, event):
         super().showEvent(event)
         QTimer.singleShot(0, self._apply_viewport_clip)
-        
+
     MIN_NAME_WIDTH = 200
 
     def _setup_table(self):
@@ -287,7 +295,8 @@ class PurchaseTableView(QTableWidget):
         self.setAlternatingRowColors(True)
         self.setShowGrid(True)
         self.setGridStyle(Qt.PenStyle.SolidLine)
-        self.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        self.setSelectionBehavior(
+            QAbstractItemView.SelectionBehavior.SelectRows)
         self.setSelectionMode(QAbstractItemView.SelectionMode.NoSelection)
         self.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
@@ -299,24 +308,32 @@ class PurchaseTableView(QTableWidget):
 
         header = self.horizontalHeader()
         header.setHighlightSections(False)
-        header.setDefaultAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        header.setDefaultAlignment(
+            Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
         header.setStretchLastSection(False)
         header.setFixedHeight(42)
 
-        header.setSectionResizeMode(self.COL_NO,       QHeaderView.ResizeMode.Fixed)
-        header.setSectionResizeMode(self.COL_SUPPLIER, QHeaderView.ResizeMode.Stretch)
-        header.setSectionResizeMode(self.COL_USER,     QHeaderView.ResizeMode.Stretch)
-        header.setSectionResizeMode(self.COL_DATE,     QHeaderView.ResizeMode.Fixed)
-        header.setSectionResizeMode(self.COL_TOTAL,    QHeaderView.ResizeMode.Fixed)
-        header.setSectionResizeMode(self.COL_ACTION,   QHeaderView.ResizeMode.Fixed)
+        header.setSectionResizeMode(
+            self.COL_NO,       QHeaderView.ResizeMode.Fixed)
+        header.setSectionResizeMode(
+            self.COL_SUPPLIER, QHeaderView.ResizeMode.Stretch)
+        header.setSectionResizeMode(
+            self.COL_USER,     QHeaderView.ResizeMode.Stretch)
+        header.setSectionResizeMode(
+            self.COL_DATE,     QHeaderView.ResizeMode.Fixed)
+        header.setSectionResizeMode(
+            self.COL_TOTAL,    QHeaderView.ResizeMode.Fixed)
+        header.setSectionResizeMode(
+            self.COL_ACTION,   QHeaderView.ResizeMode.Fixed)
 
         self.setColumnWidth(self.COL_NO,       44)
         self.setColumnWidth(self.COL_DATE,     200)
         self.setColumnWidth(self.COL_TOTAL,    200)
         self.setColumnWidth(self.COL_ACTION,   250)
-        
+
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
-        self.setHorizontalScrollMode(QAbstractItemView.ScrollMode.ScrollPerPixel)
+        self.setHorizontalScrollMode(
+            QAbstractItemView.ScrollMode.ScrollPerPixel)
 
         self.setStyleSheet(f"""
             QTableWidget {{
@@ -382,7 +399,7 @@ class PurchaseTableView(QTableWidget):
                 width: 0;
             }}
         """)
-        
+
     def resizeEvent(self, event):
         super().resizeEvent(event)
         self._adjust_columns()
@@ -472,10 +489,13 @@ class PurchaseTableView(QTableWidget):
         icon.setStyleSheet("font-size: 46px;")
         title = QLabel("Tidak ada pembelian ditemukan")
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        title.setStyleSheet(f"font-family:'Segoe UI';font-size:16px;font-weight:700;color:{C_TEXT_PRI};")
-        sub = QLabel("Coba ubah filter, kata kunci pencarian,\natau tambahkan pembelian baru.")
+        title.setStyleSheet(
+            f"font-family:'Segoe UI';font-size:16px;font-weight:700;color:{C_TEXT_PRI};")
+        sub = QLabel(
+            "Coba ubah filter, kata kunci pencarian,\natau tambahkan pembelian baru.")
         sub.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        sub.setStyleSheet(f"font-family:'Segoe UI';font-size:12px;color:{C_TEXT_SEC};")
+        sub.setStyleSheet(
+            f"font-family:'Segoe UI';font-size:12px;color:{C_TEXT_SEC};")
 
         lay.addWidget(icon)
         lay.addWidget(title)
@@ -506,15 +526,21 @@ class PurchaseTableView(QTableWidget):
                 ph.setFlags(Qt.ItemFlag.ItemIsEnabled)
                 self.setItem(row, col, ph)
 
-            self.setCellWidget(row, self.COL_NO,       self._make_no_cell(i + 1))
+            self.setCellWidget(row, self.COL_NO,
+                               self._make_no_cell(i + 1))
             supplier_name = suppliers.get(p.supplier_id, "Unknown Supplier")
             user_name = users.get(p.user_id, "Unknown User")
 
-            self.setCellWidget(row, self.COL_SUPPLIER, self._make_text_cell(supplier_name))
-            self.setCellWidget(row, self.COL_USER,     self._make_text_cell(user_name))
-            self.setCellWidget(row, self.COL_DATE,     self._make_date_cell(p.time))
-            self.setCellWidget(row, self.COL_TOTAL,    self._make_total_cell(p.total_amount))
-            self.setCellWidget(row, self.COL_ACTION,   self._make_action_buttons(p))
+            self.setCellWidget(row, self.COL_SUPPLIER,
+                               self._make_text_cell(supplier_name))
+            self.setCellWidget(row, self.COL_USER,
+                               self._make_text_cell(user_name))
+            self.setCellWidget(row, self.COL_DATE,
+                               self._make_date_cell(p.time))
+            self.setCellWidget(row, self.COL_TOTAL,
+                               self._make_total_cell(p.total_amount))
+            self.setCellWidget(row, self.COL_ACTION,
+                               self._make_action_buttons(p))
 
         QTimer.singleShot(0, self._apply_viewport_clip)
 
@@ -535,35 +561,39 @@ class PurchaseTableView(QTableWidget):
         lay.setAlignment(Qt.AlignmentFlag.AlignCenter)
         lbl = QLabel(str(number))
         lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        lbl.setStyleSheet(f"font-family:'Segoe UI';font-size:12px;color:{C_TEXT_SEC};background:transparent;")
+        lbl.setStyleSheet(
+            f"font-family:'Segoe UI';font-size:12px;color:{C_TEXT_SEC};background:transparent;")
         lay.addWidget(lbl)
         return w
 
     def _make_text_cell(self, text: str) -> QWidget:
         w, lay = self._wrap()
-        
+
         (bg, fg), initials = _supplier_palette(text)
         avatar = Avatar(initials, bg_color=bg, text_color=fg, size=30)
         lay.addWidget(avatar)
         lay.setSpacing(8)
-        
+
         lbl = QLabel(text)
-        lbl.setStyleSheet(f"font-family:'Segoe UI';font-size:13px;font-weight:600;color:{C_TEXT_PRI};background:transparent;")
+        lbl.setStyleSheet(
+            f"font-family:'Segoe UI';font-size:13px;font-weight:600;color:{C_TEXT_PRI};background:transparent;")
         lay.addWidget(lbl)
         return w
-    
+
     def _make_date_cell(self, text: str) -> QWidget:
         w, lay = self._wrap()
         weight = "400"
         lbl = QLabel(text)
-        lbl.setStyleSheet(f"font-family:'Segoe UI';font-size:13px;font-weight:{weight};color:{C_TEXT_PRI};background:transparent;")
+        lbl.setStyleSheet(
+            f"font-family:'Segoe UI';font-size:13px;font-weight:{weight};color:{C_TEXT_PRI};background:transparent;")
         lay.addWidget(lbl)
         return w
 
     def _make_total_cell(self, total) -> QWidget:
         w, lay = self._wrap()
         lbl = QLabel(_fmt_currency(total))
-        lbl.setStyleSheet(f"font-family:'Segoe UI';font-size:13px;font-weight:600;color:{C_SUCCESS};background:transparent;")
+        lbl.setStyleSheet(
+            f"font-family:'Segoe UI';font-size:13px;font-weight:600;color:{C_SUCCESS};background:transparent;")
         lay.addWidget(lbl)
         return w
 
@@ -573,7 +603,8 @@ class PurchaseTableView(QTableWidget):
         lay = QHBoxLayout(w)
         lay.setContentsMargins(5, 0, 0, 0)
         lay.setSpacing(8)
-        lay.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        lay.setAlignment(Qt.AlignmentFlag.AlignLeft |
+                         Qt.AlignmentFlag.AlignVCenter)
 
         detail_btn = QPushButton("Detail")
         detail_btn.setFixedSize(60, 28)
@@ -631,17 +662,20 @@ class PurchaseDialog(QDialog):
         self._purchase = purchase
         self._is_edit = purchase is not None
         self._current_user = current_user or {}
-        self.setWindowTitle("Edit Pembelian" if self._is_edit else "Tambah Pembelian")
+        self.setWindowTitle(
+            "Edit Pembelian" if self._is_edit else "Tambah Pembelian")
         self.setModal(True)
         self.setFixedWidth(440)
         self.setWindowFlag(Qt.WindowType.MSWindowsFixedSizeDialogHint)
-        self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Minimum)
+        self.setSizePolicy(QSizePolicy.Policy.Fixed,
+                           QSizePolicy.Policy.Minimum)
         self.setSizeGripEnabled(False)
-        self.setStyleSheet(f"QDialog {{ background: {C_WHITE}; font-family: 'Segoe UI'; }}")
+        self.setStyleSheet(
+            f"QDialog {{ background: {C_WHITE}; font-family: 'Segoe UI'; }}")
         self._build_ui()
         self.adjustSize()
         self.setMaximumSize(440, self.height())
-    
+
     def _make_datetime(self, parent_layout, label_text: str):
         wrap = QWidget()
         wrap.setStyleSheet("background: transparent; border: none;")
@@ -650,7 +684,8 @@ class PurchaseDialog(QDialog):
         wl.setSpacing(5)
 
         lbl = QLabel(label_text)
-        lbl.setStyleSheet("font-size:12px;font-weight:500;color:#5F5E5A;border:none;")
+        lbl.setStyleSheet(
+            "font-size:12px;font-weight:500;color:#5F5E5A;border:none;")
         wl.addWidget(lbl)
 
         dt_edit = QDateTimeEdit()
@@ -666,7 +701,8 @@ class PurchaseDialog(QDialog):
         arrow_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
         arrow_lbl.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
 
-        QTimer.singleShot(0, lambda: arrow_lbl.setGeometry(dt_edit.width() - 28, -4, 24, 40))
+        QTimer.singleShot(0, lambda: arrow_lbl.setGeometry(
+            dt_edit.width() - 28, -4, 24, 40))
         dt_edit.setStyleSheet(f"""
             QDateTimeEdit {{
                 background: #FFFFFF; border: 1px solid #DDD9D2;
@@ -719,7 +755,8 @@ class PurchaseDialog(QDialog):
         """)
 
         err = QLabel("")
-        err.setStyleSheet("font-size:11px;color:#E05252;font-family:'Segoe UI';border:none;")
+        err.setStyleSheet(
+            "font-size:11px;color:#E05252;font-family:'Segoe UI';border:none;")
         err.setVisible(False)
         wl.addWidget(dt_edit)
         wl.addWidget(err)
@@ -727,7 +764,7 @@ class PurchaseDialog(QDialog):
         parent_layout.addWidget(wrap)
         parent_layout.addSpacing(10)
         return dt_edit, err
-        
+
     def _make_field(self, parent_layout, label_text: str, placeholder: str = ""):
         wrap = QWidget()
         wrap.setStyleSheet("background: transparent; border: none;")
@@ -736,7 +773,8 @@ class PurchaseDialog(QDialog):
         wl.setSpacing(5)
 
         lbl = QLabel(label_text)
-        lbl.setStyleSheet("font-size:12px;font-weight:500;color:#5F5E5A;border:none;")
+        lbl.setStyleSheet(
+            "font-size:12px;font-weight:500;color:#5F5E5A;border:none;")
         wl.addWidget(lbl)
 
         field = QLineEdit()
@@ -754,7 +792,8 @@ class PurchaseDialog(QDialog):
         wl.addWidget(field)
 
         err = QLabel("")
-        err.setStyleSheet("font-size:11px;color:#E05252;font-family:'Segoe UI';border:none;")
+        err.setStyleSheet(
+            "font-size:11px;color:#E05252;font-family:'Segoe UI';border:none;")
         err.setVisible(False)
         wl.addWidget(err)
 
@@ -770,7 +809,8 @@ class PurchaseDialog(QDialog):
         wl.setSpacing(5)
 
         lbl = QLabel(label_text)
-        lbl.setStyleSheet("font-size:12px;font-weight:500;color:#5F5E5A;border:none;")
+        lbl.setStyleSheet(
+            "font-size:12px;font-weight:500;color:#5F5E5A;border:none;")
         wl.addWidget(lbl)
 
         spin_style = """
@@ -797,7 +837,8 @@ class PurchaseDialog(QDialog):
         wl.addWidget(spin)
 
         err = QLabel("")
-        err.setStyleSheet("font-size:11px;color:#E05252;font-family:'Segoe UI';border:none;")
+        err.setStyleSheet(
+            "font-size:11px;color:#E05252;font-family:'Segoe UI';border:none;")
         err.setVisible(False)
         wl.addWidget(err)
 
@@ -836,7 +877,8 @@ class PurchaseDialog(QDialog):
         wl.setSpacing(5)
 
         lbl = QLabel(label_text)
-        lbl.setStyleSheet("font-size:12px;font-weight:500;color:#5F5E5A;border:none;")
+        lbl.setStyleSheet(
+            "font-size:12px;font-weight:500;color:#5F5E5A;border:none;")
         wl.addWidget(lbl)
 
         combo = QComboBox()
@@ -849,7 +891,8 @@ class PurchaseDialog(QDialog):
         arrow_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
         arrow_lbl.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
 
-        QTimer.singleShot(0, lambda: arrow_lbl.setGeometry(combo.width() - 28, -4, 24, 40))
+        QTimer.singleShot(0, lambda: arrow_lbl.setGeometry(
+            combo.width() - 28, -4, 24, 40))
         combo.setStyleSheet(f"""
             QComboBox {{
                 background: #FFFFFF; border: 1px solid #DDD9D2;
@@ -870,7 +913,8 @@ class PurchaseDialog(QDialog):
         """)
 
         err = QLabel("")
-        err.setStyleSheet("font-size:11px;color:#E05252;font-family:'Segoe UI';border:none;")
+        err.setStyleSheet(
+            "font-size:11px;color:#E05252;font-family:'Segoe UI';border:none;")
         err.setVisible(False)
         wl.addWidget(combo)
         wl.addWidget(err)
@@ -888,7 +932,8 @@ class PurchaseDialog(QDialog):
         wl.setSpacing(5)
 
         lbl = QLabel(label_text)
-        lbl.setStyleSheet("font-size:12px;font-weight:500;color:#5F5E5A;border:none;")
+        lbl.setStyleSheet(
+            "font-size:12px;font-weight:500;color:#5F5E5A;border:none;")
         wl.addWidget(lbl)
 
         field = QLineEdit(value)
@@ -912,19 +957,23 @@ class PurchaseDialog(QDialog):
         root.setSpacing(0)
 
         card = QFrame()
-        card.setStyleSheet("QFrame { background-color: #FAFAF8; border: 1px solid #DDD9D2; }")
+        card.setStyleSheet(
+            "QFrame { background-color: #FAFAF8; border: 1px solid #DDD9D2; }")
         cl = QVBoxLayout(card)
         cl.setContentsMargins(36, 30, 36, 30)
         cl.setSpacing(0)
 
         logo = QLabel("Warung<span style='color:#4F6EF7'>+</span>")
         logo.setTextFormat(Qt.TextFormat.RichText)
-        logo.setStyleSheet("font-size:14px;color:#5F5E5A;font-weight:500;letter-spacing:1px;border:none;")
+        logo.setStyleSheet(
+            "font-size:14px;color:#5F5E5A;font-weight:500;letter-spacing:1px;border:none;")
         cl.addWidget(logo)
         cl.addSpacing(15)
 
-        title = QLabel("Edit Pembelian" if self._is_edit else "Tambah Pembelian Baru")
-        title.setStyleSheet("font-size:20px;font-weight:600;color:#1b1b1b;border:none;")
+        title = QLabel(
+            "Edit Pembelian" if self._is_edit else "Tambah Pembelian Baru")
+        title.setStyleSheet(
+            "font-size:20px;font-weight:600;color:#1b1b1b;border:none;")
         cl.addWidget(title)
         cl.addSpacing(5)
 
@@ -946,7 +995,8 @@ class PurchaseDialog(QDialog):
         cl.addSpacing(18)
 
         # ── Supplier dropdown ─────────────────────────────────────────────────
-        self._supplier_combo, self._supplier_err = self._make_combo(cl, "Supplier")
+        self._supplier_combo, self._supplier_err = self._make_combo(
+            cl, "Supplier")
         self._suppliers = SupplierController.fetch()
         for s in self._suppliers:
             self._supplier_combo.addItem(f"{s.name}", userData=s.id)
@@ -963,8 +1013,9 @@ class PurchaseDialog(QDialog):
                     break
 
         # ── User (read-only, dari login) ──────────────────────────────────────
-        user_id   = self._current_user.get("id", "")
-        user_name = self._current_user.get("name") or self._current_user.get("username") or f"User #{user_id}"
+        user_id = self._current_user.get("id", "")
+        user_name = self._current_user.get("name") or self._current_user.get(
+            "username") or f"User #{user_id}"
         self._make_readonly_field(cl, "Dibuat oleh", f"{user_name}")
 
         # ── Waktu & Total ─────────────────────────────────────────────────────
@@ -972,7 +1023,8 @@ class PurchaseDialog(QDialog):
 
         if self._is_edit:
             if self._purchase.time:
-                dt = QDateTime.fromString(self._purchase.time[:19], "yyyy-MM-dd HH:mm:ss")
+                dt = QDateTime.fromString(
+                    self._purchase.time[:19], "yyyy-MM-dd HH:mm:ss")
                 if dt.isValid():
                     self._time_edit.setDateTime(dt)
 
@@ -995,7 +1047,8 @@ class PurchaseDialog(QDialog):
         """)
         cancel_btn.clicked.connect(self.reject)
 
-        save_btn = QPushButton("Simpan Perubahan" if self._is_edit else "Tambah Pembelian")
+        save_btn = QPushButton(
+            "Simpan Perubahan" if self._is_edit else "Tambah Pembelian")
         save_btn.setFixedHeight(40)
         save_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         save_btn.setStyleSheet(f"""
@@ -1042,7 +1095,6 @@ class PurchaseDialog(QDialog):
 
         self.accept()
         self.saved.emit(payload)
-        
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -1050,6 +1102,7 @@ class PurchaseDialog(QDialog):
 # ═══════════════════════════════════════════════════════════════════════════════
 class PurchaseDetailDialog(QDialog):
     data_changed = pyqtSignal()
+
     def __init__(self, purchase, parent=None):
         super().__init__(parent)
         self._purchase = purchase
@@ -1057,14 +1110,16 @@ class PurchaseDetailDialog(QDialog):
         self.setModal(True)
         self.setFixedWidth(620)
         self.setWindowFlag(Qt.WindowType.MSWindowsFixedSizeDialogHint)
-        self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Minimum)
+        self.setSizePolicy(QSizePolicy.Policy.Fixed,
+                           QSizePolicy.Policy.Minimum)
         self.setSizeGripEnabled(False)
-        self.setStyleSheet(f"QDialog {{ background: {C_WHITE}; font-family: 'Segoe UI'; }}")
+        self.setStyleSheet(
+            f"QDialog {{ background: {C_WHITE}; font-family: 'Segoe UI'; }}")
         self._build_ui()
         self._load_details()
         self.adjustSize()
         self.setMaximumSize(620, self.sizeHint().height() + 60)
-        
+
     def _refresh_meta(self):
         self._purchase = PurchaseController.get(self._purchase.id)
 
@@ -1072,7 +1127,8 @@ class PurchaseDetailDialog(QDialog):
         user_map = {u[0]: u[1] for u in UserController.fetch()}
 
         supplier_name = supplier.name if supplier else f"Supplier #{self._purchase.supplier_id}"
-        user_name = user_map.get(self._purchase.user_id, f"User #{self._purchase.user_id}")
+        user_name = user_map.get(
+            self._purchase.user_id, f"User #{self._purchase.user_id}")
 
         self._meta.setText(
             f"{supplier_name}  ·  {user_name}  ·  {_fmt_date(self._purchase.time)}  ·  "
@@ -1084,20 +1140,23 @@ class PurchaseDetailDialog(QDialog):
         root.setContentsMargins(0, 0, 0, 0)
 
         card = QFrame()
-        card.setStyleSheet("QFrame { background-color: #FAFAF8; border: 1px solid #DDD9D2; }")
+        card.setStyleSheet(
+            "QFrame { background-color: #FAFAF8; border: 1px solid #DDD9D2; }")
         cl = QVBoxLayout(card)
         cl.setContentsMargins(36, 28, 36, 28)
         cl.setSpacing(0)
 
         logo = QLabel("Warung<span style='color:#4F6EF7'>+</span>")
         logo.setTextFormat(Qt.TextFormat.RichText)
-        logo.setStyleSheet("font-size:14px;color:#5F5E5A;font-weight:500;letter-spacing:1px;border:none;")
+        logo.setStyleSheet(
+            "font-size:14px;color:#5F5E5A;font-weight:500;letter-spacing:1px;border:none;")
         cl.addWidget(logo)
         cl.addSpacing(10)
 
         p = self._purchase
         title = QLabel(f"Detail Pembelian #{p.id:04d}")
-        title.setStyleSheet("font-size:20px;font-weight:600;color:#1b1b1b;border:none;")
+        title.setStyleSheet(
+            "font-size:20px;font-weight:600;color:#1b1b1b;border:none;")
         cl.addWidget(title)
         cl.addSpacing(4)
         supplier = SupplierController.get(p.supplier_id)
@@ -1108,13 +1167,14 @@ class PurchaseDetailDialog(QDialog):
 
         supplier_name = supplier.name if supplier else f"Supplier #{p.supplier_id}"
         user_name = user_map.get(p.user_id, f"User #{p.user_id}")
-        
+
         self._meta = QLabel(
             f"{supplier_name}  ·  {user_name}  ·  {_fmt_date(p.time)}  ·  "
             f"<b style='color:{C_SUCCESS}'>{_fmt_currency(p.total_amount)}</b>"
         )
         self._meta.setTextFormat(Qt.TextFormat.RichText)
-        self._meta.setStyleSheet(f"font-size:12px;color:{C_TEXT_SEC};border:none;")
+        self._meta.setStyleSheet(
+            f"font-size:12px;color:{C_TEXT_SEC};border:none;")
         cl.addWidget(self._meta)
         cl.addSpacing(14)
 
@@ -1130,10 +1190,12 @@ class PurchaseDetailDialog(QDialog):
 
         def _spin(min_v=0, max_v=9_999_999, is_float=False):
             if is_float:
-                s = QDoubleSpinBox(); s.setDecimals(2)
+                s = QDoubleSpinBox()
+                s.setDecimals(2)
             else:
                 s = QSpinBox()
-            s.setMinimum(min_v); s.setMaximum(max_v)
+            s.setMinimum(min_v)
+            s.setMaximum(max_v)
             s.setFixedHeight(36)
             s.setStyleSheet("""
                 QDoubleSpinBox, QSpinBox {
@@ -1159,7 +1221,8 @@ class PurchaseDetailDialog(QDialog):
         arrow_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
         arrow_lbl.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
 
-        QTimer.singleShot(0, lambda: arrow_lbl.setGeometry(self._new_product_combo.width() - 28, -6, 24, 40))
+        QTimer.singleShot(0, lambda: arrow_lbl.setGeometry(
+            self._new_product_combo.width() - 28, -6, 24, 40))
         self._new_product_combo.setStyleSheet(f"""
             QComboBox {{
                 background: #FFFFFF; border: 1px solid #DDD9D2;
@@ -1180,10 +1243,11 @@ class PurchaseDetailDialog(QDialog):
             label = f"{p.name}" + (f" ({p.brand})" if p.brand else "")
             self._new_product_combo.addItem(label, userData=p.id)
         if not self._products:
-            self._new_product_combo.addItem("(Tidak ada produk)", userData=None)
+            self._new_product_combo.addItem(
+                "(Tidak ada produk)", userData=None)
             self._new_product_combo.setEnabled(False)
 
-        self._new_qty_spin   = _spin(min_v=1)
+        self._new_qty_spin = _spin(min_v=1)
         self._new_price_spin = _spin(is_float=False, max_v=999_999_999)
 
         # ── Kolom Produk: label + tombol "+ Produk Baru" sejajar di atas dropdown ──
@@ -1195,7 +1259,8 @@ class PurchaseDetailDialog(QDialog):
         produk_header.setSpacing(6)
 
         produk_lbl = QLabel("Produk")
-        produk_lbl.setStyleSheet(f"font-size:11px;font-weight:500;color:{C_TEXT_SEC};border:none;")
+        produk_lbl.setStyleSheet(
+            f"font-size:11px;font-weight:500;color:{C_TEXT_SEC};border:none;")
 
         new_product_btn = QPushButton("+ Produk Baru")
         new_product_btn.setFixedHeight(20)
@@ -1234,7 +1299,8 @@ class PurchaseDetailDialog(QDialog):
             col = QVBoxLayout()
             col.setSpacing(5)
             lbl = QLabel(lbl_text)
-            lbl.setStyleSheet(f"font-size:11px;font-weight:500;color:{C_TEXT_SEC};border:none;")
+            lbl.setStyleSheet(
+                f"font-size:11px;font-weight:500;color:{C_TEXT_SEC};border:none;")
             col.addWidget(lbl)
             col.addWidget(widget)
             add_row.addLayout(col)
@@ -1266,11 +1332,14 @@ class PurchaseDetailDialog(QDialog):
         # ── Detail table ──────────────────────────────────────────────────────
         self._detail_table = QTableWidget()
         self._detail_table.setColumnCount(5)
-        self._detail_table.setHorizontalHeaderLabels(["#", "Produk", "Qty", "Harga", "Aksi"])
+        self._detail_table.setHorizontalHeaderLabels(
+            ["#", "Produk", "Qty", "Harga", "Aksi"])
         self._detail_table.setFixedHeight(220)
         self._detail_table.setAlternatingRowColors(True)
-        self._detail_table.setSelectionMode(QAbstractItemView.SelectionMode.NoSelection)
-        self._detail_table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+        self._detail_table.setSelectionMode(
+            QAbstractItemView.SelectionMode.NoSelection)
+        self._detail_table.setEditTriggers(
+            QAbstractItemView.EditTrigger.NoEditTriggers)
         self._detail_table.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self._detail_table.verticalHeader().setVisible(False)
         self._detail_table.setFrameShape(QFrame.Shape.NoFrame)
@@ -1279,7 +1348,8 @@ class PurchaseDetailDialog(QDialog):
 
         dh = self._detail_table.horizontalHeader()
         dh.setHighlightSections(False)
-        dh.setDefaultAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        dh.setDefaultAlignment(Qt.AlignmentFlag.AlignLeft |
+                               Qt.AlignmentFlag.AlignVCenter)
         dh.setFixedHeight(36)
         dh.setSectionResizeMode(0, QHeaderView.ResizeMode.Fixed)
         dh.setSectionResizeMode(1, QHeaderView.ResizeMode.Fixed)
@@ -1327,7 +1397,7 @@ class PurchaseDetailDialog(QDialog):
         cl.addLayout(btn_row)
 
         root.addWidget(card)
-        
+
     def _on_add_product(self):
         """Buka dialog tambah produk baru, persis seperti di ProductPage."""
         dlg = ProductDialog(parent=self)
@@ -1407,7 +1477,8 @@ class PurchaseDetailDialog(QDialog):
 
     def _load_details(self):
         all_details = PurchaseDetailController.fetch()
-        self._details = [d for d in all_details if d.purchase_id == self._purchase.id]
+        self._details = [
+            d for d in all_details if d.purchase_id == self._purchase.id]
         self._product_map = {p.id: p.name for p in ProductController.fetch()}
         self._populate_detail_table()
 
@@ -1421,7 +1492,8 @@ class PurchaseDetailDialog(QDialog):
             self._detail_table.setRowHeight(0, 80)
             empty_lbl = QLabel("Belum ada item detail.")
             empty_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            empty_lbl.setStyleSheet(f"color:{C_TEXT_SEC};font-size:12px;background:transparent;border:none;")
+            empty_lbl.setStyleSheet(
+                f"color:{C_TEXT_SEC};font-size:12px;background:transparent;border:none;")
             self._detail_table.setCellWidget(0, 0, empty_lbl)
             return
 
@@ -1436,11 +1508,14 @@ class PurchaseDetailDialog(QDialog):
                 it.setFlags(Qt.ItemFlag.ItemIsEnabled)
                 return it
 
-            self._detail_table.setItem(row, 0, _item(str(i + 1), Qt.AlignmentFlag.AlignCenter))
-            product_name = self._product_map.get(d.product_id, f"Product #{d.product_id}")
+            self._detail_table.setItem(row, 0, _item(
+                str(i + 1), Qt.AlignmentFlag.AlignCenter))
+            product_name = self._product_map.get(
+                d.product_id, f"Product #{d.product_id}")
             self._detail_table.setItem(row, 1, _item(product_name))
             self._detail_table.setItem(row, 2, _item(str(d.quantity)))
-            self._detail_table.setItem(row, 3, _item(_fmt_currency(d.purchase_price)))
+            self._detail_table.setItem(
+                row, 3, _item(_fmt_currency(d.purchase_price)))
 
             del_w = QWidget()
             del_w.setStyleSheet("background: transparent; border: none;")
@@ -1458,7 +1533,8 @@ class PurchaseDetailDialog(QDialog):
                 }}
                 QPushButton:hover {{ background:{C_DANGER}; color:#FFFFFF; }}
             """)
-            del_b.clicked.connect(lambda _, did=d.id: self._on_remove_detail(did))
+            del_b.clicked.connect(
+                lambda _, did=d.id: self._on_remove_detail(did))
             del_lay.addWidget(del_b)
             self._detail_table.setCellWidget(row, 4, del_w)
 
@@ -1468,7 +1544,7 @@ class PurchaseDetailDialog(QDialog):
             Toast.show_toast("Pilih produk terlebih dahulu.", "error", self)
             return
 
-        quantity       = self._new_qty_spin.value()
+        quantity = self._new_qty_spin.value()
         purchase_price = self._new_price_spin.value()
 
         try:
@@ -1497,7 +1573,8 @@ class PurchaseDetailDialog(QDialog):
                     image_path=fresh.image_path,
                 )
                 # Broadcast ke kasir & produk page
-                product_signals.product_stock_changed.emit(product_id, new_stock)
+                product_signals.product_stock_changed.emit(
+                    product_id, new_stock)
 
             # Broadcast ke dashboard (purchase selesai / detail berubah)
             purchase_signals.purchase_completed.emit(self._purchase.id)
@@ -1535,7 +1612,8 @@ class PurchaseDetailDialog(QDialog):
                         category=fresh.category,
                         image_path=fresh.image_path,
                     )
-                    product_signals.product_stock_changed.emit(detail.product_id, new_stock)
+                    product_signals.product_stock_changed.emit(
+                        detail.product_id, new_stock)
 
             purchase_signals.purchase_completed.emit(self._purchase.id)
 
@@ -1559,9 +1637,11 @@ class DeletePurchaseDialog(QDialog):
         self.setModal(True)
         self.setFixedWidth(420)
         self.setWindowFlag(Qt.WindowType.MSWindowsFixedSizeDialogHint)
-        self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Minimum)
+        self.setSizePolicy(QSizePolicy.Policy.Fixed,
+                           QSizePolicy.Policy.Minimum)
         self.setSizeGripEnabled(False)
-        self.setStyleSheet(f"QDialog {{ background: {C_WHITE}; font-family: 'Segoe UI'; }}")
+        self.setStyleSheet(
+            f"QDialog {{ background: {C_WHITE}; font-family: 'Segoe UI'; }}")
         self._build_ui()
         self.adjustSize()
         self.setMaximumSize(420, self.height())
@@ -1572,25 +1652,28 @@ class DeletePurchaseDialog(QDialog):
         root.setContentsMargins(0, 0, 0, 0)
 
         card = QFrame()
-        card.setStyleSheet("QFrame { background-color: #FAFAF8; border: 1px solid #DDD9D2; }")
+        card.setStyleSheet(
+            "QFrame { background-color: #FAFAF8; border: 1px solid #DDD9D2; }")
         cl = QVBoxLayout(card)
         cl.setContentsMargins(36, 30, 36, 30)
         cl.setSpacing(0)
 
         logo = QLabel("Warung<span style='color:#4F6EF7'>+</span>")
         logo.setTextFormat(Qt.TextFormat.RichText)
-        logo.setStyleSheet("font-size:14px;color:#5F5E5A;font-weight:500;letter-spacing:1px;border:none;")
+        logo.setStyleSheet(
+            "font-size:14px;color:#5F5E5A;font-weight:500;letter-spacing:1px;border:none;")
         cl.addWidget(logo)
         cl.addSpacing(15)
 
         title = QLabel("Hapus Pembelian?")
-        title.setStyleSheet("font-size:20px;font-weight:600;color:#1b1b1b;border:none;")
+        title.setStyleSheet(
+            "font-size:20px;font-weight:600;color:#1b1b1b;border:none;")
         cl.addWidget(title)
         cl.addSpacing(5)
 
         subtitle = QLabel(
             f"Kamu akan menghapus pembelian <b>#{p.id:04d}</b>.<br>"
-            "Semua detail item akan ikut terhapus. Tindakan ini tidak dapat dibatalkan."
+            "Semua detail item akan ikut terhapus."
         )
         subtitle.setTextFormat(Qt.TextFormat.RichText)
         subtitle.setWordWrap(True)
@@ -1616,13 +1699,16 @@ class DeletePurchaseDialog(QDialog):
         icon_lbl = QLabel("🛒")
         icon_lbl.setFixedSize(36, 36)
         icon_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        icon_lbl.setStyleSheet(f"font-size:18px;background:#EEF1FE;border-radius:8px;")
+        icon_lbl.setStyleSheet(
+            f"font-size:18px;background:#EEF1FE;border-radius:8px;")
 
         detail = QVBoxLayout()
         detail.setSpacing(2)
-        id_lbl   = QLabel(f"Pembelian #{p.id:04d}")
-        id_lbl.setStyleSheet(f"font-size:13px;font-weight:600;color:{C_TEXT_PRI};")
-        meta_lbl = QLabel(f"Supplier #{p.supplier_id}  ·  {_fmt_date(p.time)}  ·  {_fmt_currency(p.total_amount)}")
+        id_lbl = QLabel(f"Pembelian #{p.id:04d}")
+        id_lbl.setStyleSheet(
+            f"font-size:13px;font-weight:600;color:{C_TEXT_PRI};")
+        meta_lbl = QLabel(
+            f"Supplier #{p.supplier_id}  ·  {_fmt_date(p.time)}  ·  {_fmt_currency(p.total_amount)}")
         meta_lbl.setStyleSheet(f"font-size:11px;color:{C_TEXT_SEC};")
         detail.addWidget(id_lbl)
         detail.addWidget(meta_lbl)
@@ -1677,8 +1763,8 @@ class DeletePurchaseDialog(QDialog):
 # ═══════════════════════════════════════════════════════════════════════════════
 class ViewToggle(QWidget):
     VIEW_TABLE = "table"
-    VIEW_CARD  = "card"
-    toggled    = pyqtSignal(str)
+    VIEW_CARD = "card"
+    toggled = pyqtSignal(str)
 
     def __init__(self, initial: str = VIEW_TABLE, parent=None):
         super().__init__(parent)
@@ -1687,7 +1773,8 @@ class ViewToggle(QWidget):
 
     def _build(self):
         self.setFixedHeight(38)
-        self.setStyleSheet(f"QWidget {{ background: {C_WHITE}; border: 1px solid {C_BORDER}; border-radius: 10px; }}")
+        self.setStyleSheet(
+            f"QWidget {{ background: {C_WHITE}; border: 1px solid {C_BORDER}; border-radius: 10px; }}")
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(5)
@@ -1748,13 +1835,13 @@ class ViewToggle(QWidget):
 class PurchasePage(QWidget):
     def __init__(self, user: dict = None, parent=None):
         super().__init__(parent)
-        self._user             = user or {}
-        self._purchases        = self._load_purchases()
-        self._search_query     = ""
-        self._view_mode        = ViewToggle.VIEW_TABLE
+        self._user = user or {}
+        self._purchases = self._load_purchases()
+        self._search_query = ""
+        self._view_mode = ViewToggle.VIEW_TABLE
         self._grid_initialized = False
-        self._pending_refresh  = False
-        self._render_token     = 0
+        self._pending_refresh = False
+        self._render_token = 0
         self._stat_value_labels: dict[str, tuple] = {}
 
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
@@ -1780,7 +1867,8 @@ class PurchasePage(QWidget):
             font-family: 'Segoe UI'; font-size: 27px; font-weight: 700;
             color: {C_TEXT_PRI}; background: transparent;
         """)
-        page_sub = QLabel("Kelola semua transaksi pembelian dari supplier di sini")
+        page_sub = QLabel(
+            "Kelola semua transaksi pembelian dari supplier di sini")
         page_sub.setStyleSheet(f"""
             font-family: 'Segoe UI'; font-size: 13px;
             color: {C_TEXT_SEC}; background: transparent;
@@ -1857,7 +1945,8 @@ class PurchasePage(QWidget):
         self._scroll = QScrollArea()
         self._scroll.setWidgetResizable(True)
         self._scroll.setFrameShape(QFrame.Shape.NoFrame)
-        self._scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self._scroll.setHorizontalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self._scroll.setStyleSheet(f"""
             QScrollArea {{ background: transparent; border: none; }}
             QScrollArea > QWidget > QWidget {{ background: transparent; }}
@@ -1888,7 +1977,8 @@ class PurchasePage(QWidget):
         self._grid_layout.setContentsMargins(0, 0, 0, 0)
         for col in range(4):
             self._grid_layout.setColumnStretch(col, 1)
-        self._grid_layout.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
+        self._grid_layout.setAlignment(
+            Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
         self._scroll.setWidget(self._grid_container)
         card_layout.addWidget(self._scroll)
 
@@ -1925,9 +2015,12 @@ class PurchasePage(QWidget):
         row.setSpacing(14)
         values = self._calc_stats()
         stats = [
-            ("total",    "Total Pembelian",   values["total"],    "#4F6EF7", "#EEF1FE"),
-            ("suppliers","Supplier Aktif",    values["suppliers"],"#F39C12", "#FFF8E8"),
-            ("amount",   "Total Pengeluaran", values["amount"],   "#27AE60", "#E8F8F0"),
+            ("total",    "Total Pembelian",
+             values["total"],    "#4F6EF7", "#EEF1FE"),
+            ("suppliers", "Supplier Aktif",
+             values["suppliers"], "#F39C12", "#FFF8E8"),
+            ("amount",   "Total Pengeluaran",
+             values["amount"],   "#27AE60", "#E8F8F0"),
         ]
         for key, label, value, color, bg in stats:
             row.addWidget(self._stat_card(key, label, value, color, bg))
@@ -1946,7 +2039,8 @@ class PurchasePage(QWidget):
 
         indicator = QFrame()
         indicator.setFixedSize(40, 40)
-        indicator.setStyleSheet(f"background: {bg}; border-radius: 10px; border: none;")
+        indicator.setStyleSheet(
+            f"background: {bg}; border-radius: 10px; border: none;")
 
         dot = QLabel()
         if key == "amount":
@@ -2064,11 +2158,12 @@ class PurchasePage(QWidget):
             outer = QVBoxLayout(empty_wrap)
             outer.setContentsMargins(0, 34, 0, 0)
             outer.setSpacing(0)
-            outer.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter)
+            outer.setAlignment(Qt.AlignmentFlag.AlignTop |
+                               Qt.AlignmentFlag.AlignHCenter)
 
             empty_card = QFrame()
             empty_card.setFixedHeight(260)
-            empty_card.setFixedWidth(460) 
+            empty_card.setFixedWidth(460)
 
             empty_card.setStyleSheet(f"""
                 QFrame {{
@@ -2171,7 +2266,7 @@ class PurchasePage(QWidget):
         self._grid_container.adjustSize()
         self._grid_container.update()
         self._scroll.viewport().update()
-        
+
     def _get_column_count(self) -> int:
         available = self._scroll.viewport().width()
 
@@ -2181,7 +2276,7 @@ class PurchasePage(QWidget):
         )
 
         return max(2, min(4, int(cols)))
-    
+
     def _render_all_cards(self, purchases: list, token: int):
         cols = self._get_column_count()
 
@@ -2200,7 +2295,7 @@ class PurchasePage(QWidget):
                 i // cols,
                 i % cols
             )
-    
+
     def _render_batch_cards(
         self,
         purchases: list,
@@ -2273,7 +2368,8 @@ class PurchasePage(QWidget):
         dlg.exec()
 
     def _open_edit_dialog(self, purchase):
-        dlg = PurchaseDialog(parent=self, purchase=purchase, current_user=self._user)
+        dlg = PurchaseDialog(parent=self, purchase=purchase,
+                             current_user=self._user)
         dlg.saved.connect(self._edit_purchase)
         dlg.exec()
 
@@ -2281,7 +2377,7 @@ class PurchasePage(QWidget):
         dlg = PurchaseDetailDialog(purchase=purchase, parent=self)
         dlg.data_changed.connect(self._on_detail_changed)
         dlg.exec()
-        
+
     def _on_detail_changed(self):
         self._purchases = self._load_purchases()
         self._refresh_stats()
@@ -2337,7 +2433,8 @@ class PurchasePage(QWidget):
             self._purchases = self._load_purchases()
             self._refresh_stats()
             self._refresh_view()
-            Toast.show_toast(f"Pembelian <b>#{data['id']}</b> berhasil diperbarui.", "success", self)
+            Toast.show_toast(
+                f"Pembelian <b>#{data['id']}</b> berhasil diperbarui.", "success", self)
             # Emit signal untuk notify reports page
             purchase_signals.purchase_completed.emit(data['id'])
         except Exception as e:
@@ -2348,12 +2445,14 @@ class PurchasePage(QWidget):
             try:
                 # Kurangi stok produk dari semua detail pembelian ini
                 all_details = PurchaseDetailController.fetch()
-                details = [d for d in all_details if d.purchase_id == purchase.id]
-                
+                details = [
+                    d for d in all_details if d.purchase_id == purchase.id]
+
                 for detail in details:
                     fresh = ProductController.get(detail.product_id)
                     if fresh:
-                        new_stock = max(0, int(fresh.stock or 0) - detail.quantity)
+                        new_stock = max(
+                            0, int(fresh.stock or 0) - detail.quantity)
                         ProductController.edit(
                             product_id=fresh.id,
                             name=fresh.name,
@@ -2364,13 +2463,15 @@ class PurchasePage(QWidget):
                             category=fresh.category,
                             image_path=fresh.image_path,
                         )
-                        product_signals.product_stock_changed.emit(detail.product_id, new_stock)
+                        product_signals.product_stock_changed.emit(
+                            detail.product_id, new_stock)
 
                 PurchaseController.remove(purchase.id)
                 self._purchases = self._load_purchases()
                 self._refresh_stats()
                 self._refresh_view()
-                Toast.show_toast(f"Pembelian <b>#{purchase.id}</b> berhasil dihapus.", "success", self)
+                Toast.show_toast(
+                    f"Pembelian <b>#{purchase.id}</b> berhasil dihapus.", "success", self)
                 # Emit signal untuk notify reports page
                 purchase_signals.purchase_completed.emit(purchase.id)
             except Exception as e:
@@ -2384,5 +2485,5 @@ class PurchasePage(QWidget):
         super().showEvent(event)
         if not self._grid_initialized or self._pending_refresh:
             self._grid_initialized = True
-            self._pending_refresh  = False
+            self._pending_refresh = False
             QTimer.singleShot(0, self._refresh_view)
