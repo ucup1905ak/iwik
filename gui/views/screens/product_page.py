@@ -1643,6 +1643,7 @@ class DeleteProductDialog(QDialog):
         logo.setStyleSheet(
             "font-size:14px;color:#5F5E5A;font-weight:500;letter-spacing:1px;border:none;")
         cl.addWidget(logo)
+        cl.setSpacing(10)
 
         title = QLabel("Hapus Produk?")
         title.setStyleSheet(
