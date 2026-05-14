@@ -207,9 +207,10 @@ def _clear_layout(layout):
 # Chart Widgets
 # ─────────────────────────────────────────────────────────────────────────────
 class SimpleChartWidget(QWidget):
-    def __init__(self, chart_type: ChartType = "bar", parent=None):
+    def __init__(self, chart_type: ChartType = "bar", show_currency: bool = False, parent=None):
         super().__init__(parent)
         self._chart_type = chart_type
+        self._show_currency = show_currency
         self._data: list[tuple[str, float]] = []
         self.setMinimumHeight(220)
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
@@ -228,7 +229,7 @@ class SimpleChartWidget(QWidget):
         if w <= 0 or h <= 0:
             return
 
-        left, right, top, bottom = 54, 18, 18, 42
+        left, right, top, bottom = 70, 18, 18, 42
         chart_w = max(1, w - left - right)
         chart_h = max(1, h - top - bottom)
 
@@ -254,7 +255,8 @@ class SimpleChartWidget(QWidget):
         font = painter.font()
         font.setPointSize(8)
         painter.setFont(font)
-        painter.drawText(0, top - 2, left - 8, 16, Qt.AlignmentFlag.AlignRight, _format_price_no_currency(max_value))
+        label_text = _format_price(max_value) if self._show_currency else _format_price_no_currency(max_value)
+        painter.drawText(0, top - 2, left - 8, 16, Qt.AlignmentFlag.AlignRight, label_text)
         painter.drawText(0, top + chart_h - 10, left - 8, 16, Qt.AlignmentFlag.AlignRight, "0")
 
         count = len(self._data)
@@ -400,11 +402,11 @@ class PieChartWidget(QWidget):
 
 
 class ChartCard(QFrame):
-    def __init__(self, title: str, subtitle: str, chart_type: ChartType = "bar", parent=None):
+    def __init__(self, title: str, subtitle: str, chart_type: ChartType = "bar", show_currency: bool = False, parent=None):
         super().__init__(parent)
         self._title = title
         self._subtitle = subtitle
-        self._chart = SimpleChartWidget(chart_type)
+        self._chart = SimpleChartWidget(chart_type, show_currency)
         self._subtitle_lbl: QLabel | None = None
         self._build()
 
@@ -983,7 +985,7 @@ class ReportsPage(QWidget):
         self._transaction_chart = ChartCard("Jumlah Transaksi", "Jumlah order berdasarkan periode aktif", "bar")
         self._product_chart = ChartCard("Produk Terjual", "Top produk berdasarkan quantity terjual", "bar")
         self._category_chart = ChartCard("Penjualan per Kategori", "Quantity terjual berdasarkan kategori produk", "bar")
-        self._purchase_chart = ChartCard("Pembelian Stok", "Total pembelian stok berdasarkan periode aktif", "line")
+        self._purchase_chart = ChartCard("Pembelian Stok", "Total pembelian stok berdasarkan periode aktif", "line", show_currency=True)
 
         grid.addWidget(self._transaction_chart, 0, 0)
         grid.addWidget(self._product_chart, 0, 1)
@@ -1281,11 +1283,17 @@ class ReportsPage(QWidget):
         labels, mapper = self._time_labels()
         buckets = {label: 0.0 for label in labels}
 
-        for purchase in period_purchases:
-            dt = _parse_datetime(purchase.time)
-            label = self._label_for_dt(dt, mapper) if dt else None
-            if label:
-                buckets[label] += float(purchase.total_amount or 0)
+        # Hitung dari purchase details untuk memastikan semua pembelian terdeteksi
+        period_purchase_details = self._filtered_purchase_details(period_purchases)
+        
+        for detail in period_purchase_details:
+            # Cari purchase terkait
+            purchase = next((p for p in period_purchases if p.id == detail.purchase_id), None)
+            if purchase:
+                dt = _parse_datetime(purchase.time)
+                label = self._label_for_dt(dt, mapper) if dt else None
+                if label:
+                    buckets[label] += float(detail.purchase_price or 0) * int(detail.quantity or 0)
 
         return [(label, buckets[label]) for label in labels]
 

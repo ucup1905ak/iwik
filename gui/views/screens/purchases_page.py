@@ -2286,6 +2286,9 @@ class PurchasePage(QWidget):
         self._purchases = self._load_purchases()
         self._refresh_stats()
         self._refresh_view()
+        # Emit signal untuk notify reports page
+        if self._purchases:
+            purchase_signals.purchase_completed.emit(self._purchases[0].id)
 
     def _add_purchase(self, data: dict):
         try:
@@ -2316,6 +2319,8 @@ class PurchasePage(QWidget):
 
                 dlg.data_changed.connect(self._on_detail_changed)
                 dlg.exec()
+                # Emit signal setelah dialog ditutup
+                purchase_signals.purchase_completed.emit(newest.id)
 
         except Exception as e:
             Toast.show_toast(str(e), "error", self)
@@ -2333,6 +2338,8 @@ class PurchasePage(QWidget):
             self._refresh_stats()
             self._refresh_view()
             Toast.show_toast(f"Pembelian <b>#{data['id']}</b> berhasil diperbarui.", "success", self)
+            # Emit signal untuk notify reports page
+            purchase_signals.purchase_completed.emit(data['id'])
         except Exception as e:
             Toast.show_toast(str(e), "error", self)
 
@@ -2364,6 +2371,8 @@ class PurchasePage(QWidget):
                 self._refresh_stats()
                 self._refresh_view()
                 Toast.show_toast(f"Pembelian <b>#{purchase.id}</b> berhasil dihapus.", "success", self)
+                # Emit signal untuk notify reports page
+                purchase_signals.purchase_completed.emit(purchase.id)
             except Exception as e:
                 Toast.show_toast(str(e), "error", self)
 

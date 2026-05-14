@@ -199,7 +199,7 @@ class SalesChartWidget(QWidget):
         if w <= 0 or h <= 0:
             return
 
-        left = 48
+        left = 70
         right = 18
         top = 18
         bottom = 42
