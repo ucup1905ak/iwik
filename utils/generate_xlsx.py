@@ -8,18 +8,7 @@ from openpyxl.styles import (
 
 
 def export_to_xlsx(products: list, filename: str = None) -> tuple[bool, str]:
-    """
-    Export products to Excel file (.xlsx)
-    
-    Args:
-        products: List of Product namedtuples or dicts with product data
-        filename: Output Excel filename (defaults to 'products_export_TIMESTAMP.xlsx')
-    
-    Returns:
-        Tuple of (success: bool, message: str)
-    """
     try:
-        # Create assets/xlsx directory if it doesn't exist
         base_path = os.path.dirname(os.path.dirname(__file__))
         xlsx_dir = os.path.join(base_path, 'assets', 'xlsx')
         os.makedirs(xlsx_dir, exist_ok=True)
@@ -33,12 +22,10 @@ def export_to_xlsx(products: list, filename: str = None) -> tuple[bool, str]:
         if not products:
             return False, "Data kosong, tidak ada yang diekspor"
         
-        # Create workbook
         wb = Workbook()
         ws = wb.active
         ws.title = "Produk"
         
-        # Define styles
         header_fill = PatternFill(start_color="4F6EF7", end_color="4F6EF7", fill_type="solid")
         header_font = Font(bold=True, color="FFFFFF", name="Segoe UI", size=11)
         header_alignment = Alignment(horizontal="center", vertical="center")
@@ -53,7 +40,6 @@ def export_to_xlsx(products: list, filename: str = None) -> tuple[bool, str]:
         center_alignment = Alignment(horizontal="center", vertical="center")
         left_alignment = Alignment(horizontal="left", vertical="center")
         
-        # Headers
         headers = ["No", "Nama Produk", "Merek", "SKU", "Kategori", "Harga (Rp)", "Stok"]
         for col_num, header in enumerate(headers, 1):
             cell = ws.cell(row=1, column=col_num)
@@ -63,7 +49,6 @@ def export_to_xlsx(products: list, filename: str = None) -> tuple[bool, str]:
             cell.alignment = header_alignment
             cell.border = border
         
-        # Set column widths
         ws.column_dimensions['A'].width = 5
         ws.column_dimensions['B'].width = 25
         ws.column_dimensions['C'].width = 15
@@ -72,10 +57,8 @@ def export_to_xlsx(products: list, filename: str = None) -> tuple[bool, str]:
         ws.column_dimensions['F'].width = 14
         ws.column_dimensions['G'].width = 10
         
-        # Freeze header row
         ws.freeze_panes = "A2"
         
-        # Data rows
         for idx, product in enumerate(products, 2):
             # Handle both namedtuple and dict
             if hasattr(product, '_asdict'):
@@ -84,7 +67,7 @@ def export_to_xlsx(products: list, filename: str = None) -> tuple[bool, str]:
                 data = product
             
             row_data = [
-                idx - 1,  # No
+                idx - 1,
                 data.get('name', ''),
                 data.get('brand', ''),
                 data.get('sku', ''),
@@ -98,11 +81,10 @@ def export_to_xlsx(products: list, filename: str = None) -> tuple[bool, str]:
                 cell.value = value
                 cell.border = border
                 
-                # Format number columns
-                if col_num in [6]:  # Price
+                if col_num in [6]:
                     cell.number_format = '#,##0'
                     cell.alignment = center_alignment
-                elif col_num in [1, 7]:  # No, Stock
+                elif col_num in [1, 7]:
                     cell.alignment = center_alignment
                 else:
                     cell.alignment = left_alignment
@@ -116,16 +98,6 @@ def export_to_xlsx(products: list, filename: str = None) -> tuple[bool, str]:
 
 
 def import_from_xlsx(filepath: str) -> tuple[bool, list, str]:
-    """
-    Import products from Excel file (.xlsx)
-    
-    Args:
-        filepath: Path to Excel file
-    
-    Returns:
-        Tuple of (success: bool, products: list[dict], message: str)
-        products contains dicts with keys: name, brand, sku, category, price, stock
-    """
     try:
         if not os.path.exists(filepath):
             return False, [], f"File tidak ditemukan: {filepath}"
@@ -139,16 +111,13 @@ def import_from_xlsx(filepath: str) -> tuple[bool, list, str]:
         products = []
         errors = []
         
-        # Skip header (row 1)
         for row_num, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
             if not row or all(cell is None for cell in row):
                 continue  # Skip empty rows
             
             try:
-                # Expected columns: No, Name, Brand, SKU, Category, Price, Stock
                 _, name, brand, sku, category, price, stock = row[:7]
                 
-                # Validation
                 if not name or str(name).strip() == "":
                     errors.append(f"Baris {row_num}: Nama produk kosong")
                     continue
@@ -157,7 +126,6 @@ def import_from_xlsx(filepath: str) -> tuple[bool, list, str]:
                     errors.append(f"Baris {row_num}: SKU kosong")
                     continue
                 
-                # Type conversion
                 try:
                     price = float(price) if price else 0
                     stock = int(stock) if stock else 0

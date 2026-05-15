@@ -28,7 +28,6 @@ from gui.views.components.toast import Toast
 from gui.views.components import Avatar
 
 
-# ── Color palette ──────────────────────────────────────────────────────────────
 C_BG       = "#F4F5F9"
 C_WHITE    = "#FFFFFF"
 C_ACCENT   = "#4F6EF7"
@@ -67,7 +66,6 @@ PAYMENT_KEY_MAP = {
 }
 
 
-# ── Helpers ────────────────────────────────────────────────────────────────────
 def _payment_theme(payment: str | None) -> dict:
     return PAYMENT_THEME.get(payment, PAYMENT_THEME[None])
 
@@ -81,7 +79,6 @@ def _fmt_currency(amount: float | None) -> str:
 
 
 def _fetch_name_maps() -> tuple[dict[int, str], dict[int, str], dict[int, str]]:
-    """Return (user_map, product_map, customer_map) dicts id->name."""
     _, cursor = DatabaseManager.require_connection()
     
     cursor.execute("SELECT id, name FROM users")
@@ -101,10 +98,9 @@ def _fetch_transactions() -> list[dict]:
     user_map, product_map, customer_map, price_map = _fetch_name_maps()
     sales = SalesController.fetch()
     details = SalesDetailController.fetch()
-    receivables = ReceivablesController.fetch()  # ← tambah ini
+    receivables = ReceivablesController.fetch()
 
-    # index receivables by sales_id
-    receivable_by_sale = {r.sales_id: r for r in receivables}  # ← tambah ini
+    receivable_by_sale = {r.sales_id: r for r in receivables}
 
     detail_by_sale: dict[int, list] = {}
     for d in details:
@@ -137,15 +133,12 @@ def _fetch_transactions() -> list[dict]:
         else:
             total_price = s.total_price or subtotal
 
-        # ── Receivable info ──────────────────────────────────────
         if receivable:
             debt        = receivable.total_amount - receivable.amount_paid
             debt_status = receivable.status
         else:
-            # Tidak ada receivable = bayar lunas di tempat
             debt        = 0.0
             debt_status = "paid"
-        # ─────────────────────────────────────────────────────────
 
         result.append({
             "id":            s.id,
@@ -156,16 +149,13 @@ def _fetch_transactions() -> list[dict]:
             "paid_amount": max(s.paid_amount or 0.0, 0.0),
             "items":         items,
             "total_price":   total_price,
-            "debt":          debt,           # ← 0.0 = lunas/tidak ada hutang
-            "debt_status":   debt_status,    # ← None = bukan hutang, 'unpaid'/'paid' = hutang
+            "debt":          debt,
+            "debt_status":   debt_status,
         })
 
     return result
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# Transaction Card
-# ═══════════════════════════════════════════════════════════════════════════════
 class TransactionCard(QFrame):
     CARD_WIDTH = 280
     detail_clicked = pyqtSignal(object)
@@ -185,7 +175,6 @@ class TransactionCard(QFrame):
         self.setObjectName("TxCard")
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
 
-        # Border merah kalau ada hutang, hijau kalau lunas hutang, default biasa
         if debt_status is not None and debt > 0:
             border_color = "#E05252"
             top_accent   = "#FDEAEA"
@@ -208,7 +197,6 @@ class TransactionCard(QFrame):
         root.setContentsMargins(0, 0, 0, 0)
         root.setSpacing(0)
 
-        # ── Top accent strip ──────────────────────────────────────────────────
         top_strip = QFrame()
         top_strip.setFixedHeight(36)
         top_strip.setStyleSheet(f"""
@@ -231,7 +219,6 @@ class TransactionCard(QFrame):
         """)
         strip_lay.addWidget(id_lbl)
 
-        # Payment badge
         pt = _payment_theme(tx["payment"])
         pay_tag = QLabel(f"{pt['emoji']} {_payment_label(tx['payment'])}")
         pay_tag.setStyleSheet(f"""
@@ -241,7 +228,6 @@ class TransactionCard(QFrame):
         """)
         strip_lay.addWidget(pay_tag)
 
-        # Debt badge
         if debt_status is not None:
             if debt > 0:
                 debt_tag = QLabel("🔴 Hutang")
@@ -261,7 +247,6 @@ class TransactionCard(QFrame):
 
         strip_lay.addStretch()
 
-        # Waktu di kanan strip
         time_lbl = QLabel(str(tx["time"]))
         time_lbl.setStyleSheet(f"""
             font-family: 'Segoe UI'; font-size: 9px; color: {C_TEXT_SEC};
@@ -271,12 +256,10 @@ class TransactionCard(QFrame):
 
         root.addWidget(top_strip)
 
-        # ── Body ──────────────────────────────────────────────────────────────
         body = QVBoxLayout()
         body.setContentsMargins(14, 10, 14, 10)
         body.setSpacing(8)
 
-        # Kasir + Pelanggan
         people_row = QHBoxLayout()
         people_row.setSpacing(0)
 
@@ -306,13 +289,11 @@ class TransactionCard(QFrame):
         people_row.addLayout(customer_col, stretch=1)
         body.addLayout(people_row)
 
-        # Divider
         div = QFrame()
         div.setFixedHeight(1)
         div.setStyleSheet(f"background: {C_DIVIDER}; border: none;")
         body.addWidget(div)
 
-        # Harga row
         price_row = QHBoxLayout()
         price_row.setSpacing(0)
 
@@ -350,13 +331,11 @@ class TransactionCard(QFrame):
 
         body.addLayout(price_row)
 
-        # Divider
         div2 = QFrame()
         div2.setFixedHeight(1)
         div2.setStyleSheet(f"background: {C_DIVIDER}; border: none;")
         body.addWidget(div2)
 
-        # Items preview
         items = tx.get("items", [])
         if items:
             preview_parts = []
@@ -378,7 +357,6 @@ class TransactionCard(QFrame):
 
         root.addLayout(body)
 
-        # ── Footer: action buttons ────────────────────────────────────────────
         footer = QFrame()
         footer.setStyleSheet(f"""
             QFrame {{
@@ -408,7 +386,6 @@ class TransactionCard(QFrame):
         detail_btn.clicked.connect(lambda: self.detail_clicked.emit(self._tx))
         footer_lay.addWidget(detail_btn)
 
-        # Only show delete button for admin users
         if self._user.get("role") == "Admin":
             del_btn = QPushButton("Hapus")
             del_btn.setFixedSize(72, 26)
@@ -426,14 +403,10 @@ class TransactionCard(QFrame):
 
         root.addWidget(footer)
 
-        # Hitung tinggi dinamis
         base_h = 36 + 10 + 22 + 1 + 10 + 38 + 1 + 10 + 28 + 1 + 10 + 40
         self.setFixedHeight(base_h + (16 if debt_status is not None else 0))
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# Transaction Table View
-# ═══════════════════════════════════════════════════════════════════════════════
 class TransactionTableView(QTableWidget):
     detail_clicked = pyqtSignal(object)
     delete_clicked = pyqtSignal(object)
@@ -447,8 +420,8 @@ class TransactionTableView(QTableWidget):
     COL_CUST  = 3
     COL_TIME  = 4
     COL_PAY   = 5
-    COL_TOTAL = 6  # ← harga asli
-    COL_AMT   = 7  # ← uang dibayar
+    COL_TOTAL = 6
+    COL_AMT   = 7
     COL_ACT   = 8
 
     def __init__(self, user: dict = None, parent=None):
@@ -598,7 +571,6 @@ class TransactionTableView(QTableWidget):
             self.columnWidth(self.COL_ACT)
         )
         available = self.viewport().width()
-        # Dibagi 2 karena ada 2 kolom stretch (Kasir + Pelanggan)
         each_stretch = (available - fixed_widths) // 2
 
         if each_stretch >= self.MIN_STRETCH_WIDTH:
@@ -826,7 +798,6 @@ class TransactionTableView(QTableWidget):
         detail_btn.clicked.connect(lambda: self.detail_clicked.emit(tx))
         lay.addWidget(detail_btn)
 
-        # Only show delete button for admin users
         if self._user.get("role") == "Admin":
             del_btn = QPushButton("Hapus")
             del_btn.setFixedSize(60, 28)
@@ -844,10 +815,6 @@ class TransactionTableView(QTableWidget):
 
         return w
 
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# Transaction Detail Dialog
-# ═══════════════════════════════════════════════════════════════════════════════
 class TransactionDetailDialog(QDialog):
     def __init__(self, tx: dict, parent=None):
         super().__init__(parent)
@@ -898,7 +865,6 @@ class TransactionDetailDialog(QDialog):
         cl.addWidget(divider)
         cl.addSpacing(16)
 
-        # Info rows
         def _info_row(label: str, value: str, value_color: str = "#1b1b1b"):
             row = QHBoxLayout()
             lbl = QLabel(label)
@@ -916,7 +882,6 @@ class TransactionDetailDialog(QDialog):
         _info_row("Pelanggan", tx["customer_name"])
         pt = _payment_theme(tx["payment"])
         _info_row("Pembayaran", f"{pt['emoji']} {_payment_label(tx['payment'])}", pt["text"])
-        # ── tambah baris ini ──
         subtotal = sum(item["price"] * item["quantity"] for item in tx.get("items", []))
         diskon = subtotal - tx["total_price"]
 
@@ -983,9 +948,6 @@ class TransactionDetailDialog(QDialog):
         root.addWidget(card)
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# Delete Transaction Dialog
-# ═══════════════════════════════════════════════════════════════════════════════
 class DeleteTransactionDialog(QDialog):
     confirmed = pyqtSignal()
 
@@ -1111,9 +1073,6 @@ class DeleteTransactionDialog(QDialog):
         self.accept()
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# View Toggle
-# ═══════════════════════════════════════════════════════════════════════════════
 class ViewToggle(QWidget):
     VIEW_TABLE = "table"
     VIEW_CARD  = "card"
@@ -1183,9 +1142,6 @@ class ViewToggle(QWidget):
         return self._current
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# Transaction Page
-# ═══════════════════════════════════════════════════════════════════════════════
 class TransactionPage(QWidget):
     def __init__(self, user: dict = None, parent=None):
         super().__init__(parent)
@@ -1214,13 +1170,11 @@ class TransactionPage(QWidget):
     def _load_transactions(self) -> list[dict]:
         return _fetch_transactions()
 
-    # ── Build UI ───────────────────────────────────────────────────────────────
     def _build_ui(self):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(32, 17, 32, 28)
         layout.setSpacing(0)
 
-        # ── Header ─────────────────────────────────────────────────────────────
         header = QHBoxLayout()
         title_col = QVBoxLayout()
         title_col.setSpacing(2)
@@ -1246,7 +1200,6 @@ class TransactionPage(QWidget):
         layout.addLayout(self._build_stats_row())
         layout.addSpacing(20)
 
-        # ── Filter bar + view toggle ───────────────────────────────────────────
         filter_and_toggle = QHBoxLayout()
         filter_and_toggle.setSpacing(10)
 
@@ -1286,11 +1239,9 @@ class TransactionPage(QWidget):
         layout.addLayout(filter_and_toggle)
         layout.addSpacing(16)
 
-        # ── Content stack ──────────────────────────────────────────────────────
         self._content_stack = QStackedWidget()
         self._content_stack.setStyleSheet("background: transparent;")
 
-        # Page 0: Card grid
         self._card_page = QWidget()
         self._card_page.setStyleSheet("background: transparent;")
         card_layout = QVBoxLayout(self._card_page)
@@ -1338,7 +1289,6 @@ class TransactionPage(QWidget):
         self._scroll.setWidget(self._grid_container)
         card_layout.addWidget(self._scroll)
 
-        # Page 1: Table
         self._table_page = QWidget()
         self._table_page.setStyleSheet("background: transparent;")
         table_layout = QVBoxLayout(self._table_page)
@@ -1350,13 +1300,12 @@ class TransactionPage(QWidget):
         self._table_view.delete_clicked.connect(self._delete_transaction)
         table_layout.addWidget(self._table_view)
 
-        self._content_stack.addWidget(self._card_page)   # index 0
-        self._content_stack.addWidget(self._table_page)  # index 1
+        self._content_stack.addWidget(self._card_page)
+        self._content_stack.addWidget(self._table_page)
         self._content_stack.setCurrentIndex(1)
 
         layout.addWidget(self._content_stack, stretch=1)
 
-    # ── Stats ───────────────────────────────────────────────────────────────────
     def _calc_stats(self) -> dict:
         txs = self._transactions
         total_revenue = sum(t["total_price"] for t in txs if t["total_price"] is not None)
@@ -1421,8 +1370,6 @@ class TransactionPage(QWidget):
             color: {C_TEXT_SEC}; background: transparent; border: none;
         """)
         
-        
-
         self._stat_value_labels[key] = (dot, val_lbl)
 
         text_w = QWidget()
@@ -1445,10 +1392,9 @@ class TransactionPage(QWidget):
             labels = self._stat_value_labels.get(key)
             if labels:
                 dot, val_lbl = labels
-                dot.setText("🪙" if key == "revenue" else value)  # ← konsisten
+                dot.setText("🪙" if key == "revenue" else value)
                 val_lbl.setText(value)
 
-    # ── Filter buttons ─────────────────────────────────────────────────────────
     def _filter_btn(self, label: str) -> QPushButton:
         is_active = label == self._active_filter
         btn = QPushButton(label)
@@ -1482,7 +1428,6 @@ class TransactionPage(QWidget):
                 }}
             """)
 
-    # ── Data / filter ───────────────────────────────────────────────────────────
     def _filtered_transactions(self) -> list[dict]:
         result = self._transactions
         key = PAYMENT_KEY_MAP.get(self._active_filter)
@@ -1496,7 +1441,6 @@ class TransactionPage(QWidget):
             ]
         return result
 
-    # ── Refresh ─────────────────────────────────────────────────────────────────
     def _refresh_view(self):
         if self._view_mode == ViewToggle.VIEW_CARD:
             self._refresh_grid()
@@ -1603,11 +1547,9 @@ class TransactionPage(QWidget):
         )
         cols = self._get_column_count()
 
-        # reset stretch
         for c in range(10):
             self._grid_layout.setColumnStretch(c, 0)
 
-        # apply stretch
         for c in range(cols):
             self._grid_layout.setColumnStretch(c, 1)
 
@@ -1694,7 +1636,6 @@ class TransactionPage(QWidget):
         super().resizeEvent(event)
         QTimer.singleShot(0, self._refresh_grid)
 
-    # ── Event handlers ──────────────────────────────────────────────────────────
     def _on_view_mode_changed(self, mode: str):
         self._view_mode = mode
         if mode == ViewToggle.VIEW_TABLE:
@@ -1726,7 +1667,6 @@ class TransactionPage(QWidget):
             Toast.show_toast("Hanya admin yang dapat menghapus transaksi.", "error", self)
             return
         
-        # Cek piutang aktif SEBELUM dialog konfirmasi muncul
         all_receivables = ReceivablesController.fetch()
         piutang_aktif = [
             r for r in all_receivables

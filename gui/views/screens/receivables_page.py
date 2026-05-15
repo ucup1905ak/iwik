@@ -31,7 +31,6 @@ from PyQt6.QtGui import QColor, QPainterPath, QRegion, QFont
 from gui.views.components.toast import Toast
 from gui.signals import receivables_signals
 
-# ── Color palette ──────────────────────────────────────────────────────────────
 C_BG = "#F4F5F9"
 C_WHITE = "#FFFFFF"
 C_ACCENT = "#4F6EF7"
@@ -46,7 +45,6 @@ C_WARNING = "#F39C12"
 
 RADIUS = 14
 
-# ── Status config ──────────────────────────────────────────────────────────────
 STATUS_CONFIG = {
     "unpaid":  {"label": "🔴 Belum Lunas", "bg": "#FDEAEA", "text": "#C0392B", "dot": "#E05252"},
     "partial": {"label": "🟡 Sebagian",    "bg": "#FEF3E2", "text": "#A04000", "dot": "#F39C12"},
@@ -61,7 +59,6 @@ C_HEADER_TEXT = "#9EA3B8"
 C_DIVIDER = "#F0F1F7"
 
 
-# ── Helpers ────────────────────────────────────────────────────────────────────
 def _fmt_currency(amount: float) -> str:
     return f"Rp {amount:,.0f}".replace(",", ".")
 
@@ -90,14 +87,10 @@ def _due_date_display(due_date: str | None) -> str:
     return due_date
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# Customer Detail Dialog — rincian semua transaksi piutang satu pelanggan
-# ═══════════════════════════════════════════════════════════════════════════════
 class CustomerDetailDialog(QDialog):
-    """Menampilkan semua transaksi piutang milik satu pelanggan."""
 
-    pay_clicked = pyqtSignal(object)   # emits Receivables
-    delete_clicked = pyqtSignal(object)   # emits Receivables
+    pay_clicked = pyqtSignal(object)
+    delete_clicked = pyqtSignal(object)
 
     def __init__(self, customer_name: str, records: list[Receivables], user: dict = None, parent=None):
         super().__init__(parent)
@@ -122,7 +115,6 @@ class CustomerDetailDialog(QDialog):
         root.setContentsMargins(0, 0, 0, 0)
         root.setSpacing(0)
 
-        # ── Header ──
         header = QFrame()
         header.setStyleSheet(
             f"QFrame {{ background: #FAFAF8; border-bottom: 1px solid #DDD9D2; }}")
@@ -166,7 +158,6 @@ class CustomerDetailDialog(QDialog):
         hl.addLayout(right)
         root.addWidget(header)
 
-        # ── Scroll area with transaction cards ──
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QFrame.Shape.NoFrame)
@@ -187,7 +178,6 @@ class CustomerDetailDialog(QDialog):
         scroll.setWidget(container)
         root.addWidget(scroll)
 
-        # ── Footer ──
         footer = QFrame()
         footer.setStyleSheet(
             "QFrame { background: #FAFAF8; border-top: 1px solid #DDD9D2; }")
@@ -229,7 +219,6 @@ class CustomerDetailDialog(QDialog):
         lay.setContentsMargins(16, 14, 16, 14)
         lay.setSpacing(10)
 
-        # ── Top row: nomor + status + tombol ──
         top = QHBoxLayout()
         top.setSpacing(8)
 
@@ -264,7 +253,6 @@ class CustomerDetailDialog(QDialog):
                 lambda _=False, r=rec: self.pay_clicked.emit(r))
             top.addWidget(pay_btn)
 
-        # Only show delete button for admin users
         if self._user.get("role") == "Admin":
             del_btn = QPushButton("Hapus")
             del_btn.setFixedSize(62, 26)
@@ -282,13 +270,11 @@ class CustomerDetailDialog(QDialog):
             top.addWidget(del_btn)
         lay.addLayout(top)
 
-        # ── Divider ──
         div = QFrame()
         div.setFixedHeight(1)
         div.setStyleSheet(f"background: {C_DIVIDER}; border: none;")
         lay.addWidget(div)
 
-        # ── Amount grid ──
         grid = QHBoxLayout()
         grid.setSpacing(0)
 
@@ -312,7 +298,6 @@ class CustomerDetailDialog(QDialog):
 
         lay.addLayout(grid)
 
-        # ── Due date ──
         if rec.due_date:
             today = QDate.currentDate()
             try:
@@ -329,9 +314,6 @@ class CustomerDetailDialog(QDialog):
         return card
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# Delete All Receivables Dialog
-# ═══════════════════════════════════════════════════════════════════════════════
 class DeleteAllReceivablesDialog(QDialog):
     confirmed = pyqtSignal()
 
@@ -430,19 +412,13 @@ class DeleteAllReceivablesDialog(QDialog):
         root.addWidget(card)
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# Receivable Card (Card View)
-# ═══════════════════════════════════════════════════════════════════════════════
 class ReceivableCard(QFrame):
-    """Satu kartu piutang pelanggan untuk tampilan grid/card view."""
 
     CARD_WIDTH = 290
 
-    pay_clicked = pyqtSignal(object)       # emits Receivables (agg)
-    delete_clicked = pyqtSignal(object)       # emits Receivables (agg)
-    # emits (customer_name, [Receivables])
+    pay_clicked = pyqtSignal(object)
+    delete_clicked = pyqtSignal(object)
     detail_clicked = pyqtSignal(str, list)
-    # emits (customer_name, [Receivables])
     delete_all_clicked = pyqtSignal(str, list)
 
     def __init__(
@@ -469,7 +445,6 @@ class ReceivableCard(QFrame):
         remaining = agg.total_amount - agg.amount_paid
         multi = len(self._all_for_cust) > 1
 
-        # Border warna sesuai status
         border_color = cfg["dot"]
         top_accent = cfg["bg"]
 
@@ -488,7 +463,6 @@ class ReceivableCard(QFrame):
         root.setContentsMargins(0, 0, 0, 0)
         root.setSpacing(0)
 
-        # ── Top accent strip ──────────────────────────────────────────────────
         top_strip = QFrame()
         top_strip.setFixedHeight(36)
         top_strip.setStyleSheet(f"""
@@ -504,7 +478,6 @@ class ReceivableCard(QFrame):
         strip_lay.setContentsMargins(14, 0, 14, 0)
         strip_lay.setSpacing(6)
 
-        # Avatar inisial
         parts = self._cust_name.strip().split()
         initials = (
             (parts[0][0] + parts[1][0]).upper()
@@ -531,7 +504,6 @@ class ReceivableCard(QFrame):
         strip_lay.addWidget(name_lbl)
         strip_lay.addStretch()
 
-        # Status badge di kanan strip
         status_badge = QLabel(cfg["label"])
         status_badge.setStyleSheet(f"""
             background: transparent; color: {cfg['text']};
@@ -542,12 +514,10 @@ class ReceivableCard(QFrame):
 
         root.addWidget(top_strip)
 
-        # ── Body ──────────────────────────────────────────────────────────────
         body = QVBoxLayout()
         body.setContentsMargins(14, 10, 14, 10)
         body.setSpacing(8)
 
-        # Nomor telepon + badge multi transaksi
         info_row = QHBoxLayout()
         info_row.setSpacing(6)
         phone_lbl = QLabel(f"📞  {self._phone}" if self._phone else "📞  —")
@@ -568,13 +538,11 @@ class ReceivableCard(QFrame):
             info_row.addWidget(multi_badge)
         body.addLayout(info_row)
 
-        # Divider
         div1 = QFrame()
         div1.setFixedHeight(1)
         div1.setStyleSheet(f"background: {C_DIVIDER}; border: none;")
         body.addWidget(div1)
 
-        # Amount columns: Total · Terbayar · Sisa
         amt_row = QHBoxLayout()
         amt_row.setSpacing(0)
 
@@ -637,7 +605,6 @@ class ReceivableCard(QFrame):
 
         root.addLayout(body)
 
-        # ── Footer: action buttons ────────────────────────────────────────────
         footer = QFrame()
         footer.setStyleSheet(f"""
             QFrame {{
@@ -728,15 +695,11 @@ class ReceivableCard(QFrame):
 
         root.addWidget(footer)
 
-        # Tinggi dinamis
         base_h = 36 + 10 + 22 + 1 + 10 + 38 + 1 + 10 + 40
         extra = 20 if agg.due_date else 0
         self.setFixedHeight(base_h + extra)
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# View Toggle
-# ═══════════════════════════════════════════════════════════════════════════════
 class ReceivablesViewToggle(QWidget):
     VIEW_TABLE = "table"
     VIEW_CARD = "card"
@@ -806,15 +769,10 @@ class ReceivablesViewToggle(QWidget):
         return self._current
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# Receivables Table View
-# ═══════════════════════════════════════════════════════════════════════════════
 class ReceivablesTableView(QTableWidget):
-    pay_clicked = pyqtSignal(object)       # emits Receivables
-    delete_clicked = pyqtSignal(object)       # emits Receivables
-    # emits (customer_name, [Receivables])
+    pay_clicked = pyqtSignal(object)
+    delete_clicked = pyqtSignal(object)
     detail_clicked = pyqtSignal(str, list)
-    # emits (customer_name, [Receivables])
     delete_all_clicked = pyqtSignal(str, list)
 
     COLUMNS = ["      #", "Pelanggan", "Total Piutang",
@@ -1091,7 +1049,6 @@ class ReceivablesTableView(QTableWidget):
 
         QTimer.singleShot(0, self._apply_viewport_clip)
 
-    # ── Cell builders ──────────────────────────────────────────────────────────
     def _make_no_cell(self, number: int) -> QWidget:
         w = QWidget()
         w.setStyleSheet("background: transparent; border: none;")
@@ -1336,11 +1293,8 @@ class ReceivablesTableView(QTableWidget):
         return w
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# Pay Dialog
-# ═══════════════════════════════════════════════════════════════════════════════
 class PayDialog(QDialog):
-    paid = pyqtSignal(dict)   # {"id": int, "amount": float}
+    paid = pyqtSignal(dict)
 
     def __init__(self, rec: Receivables, customer_name: str, parent=None):
         super().__init__(parent)
@@ -1521,9 +1475,6 @@ class PayDialog(QDialog):
         self.accept()
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# Add Receivable Dialog
-# ═══════════════════════════════════════════════════════════════════════════════
 class AddReceivableDialog(QDialog):
     saved = pyqtSignal(dict)
 
@@ -1722,9 +1673,6 @@ class AddReceivableDialog(QDialog):
         self.accept()
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# Delete Confirm Dialog
-# ═══════════════════════════════════════════════════════════════════════════════
 class DeleteReceivableDialog(QDialog):
     confirmed = pyqtSignal()
 
@@ -1820,9 +1768,6 @@ class DeleteReceivableDialog(QDialog):
         root.addWidget(card)
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# Receivables Page
-# ═══════════════════════════════════════════════════════════════════════════════
 class ReceivablesPage(QWidget):
     def __init__(self, user: dict = None, parent=None):
         super().__init__(parent)
@@ -1860,7 +1805,6 @@ class ReceivablesPage(QWidget):
                 status=rec.status,
             )
 
-            # Emit signal untuk receivables update
             receivables_signals.receivables_updated.emit(rec.sales_id or 0)
 
             self._load_data()
@@ -1876,7 +1820,6 @@ class ReceivablesPage(QWidget):
         except Exception as e:
             Toast.show_toast(str(e), "error", self)
 
-    # ── Data ──────────────────────────────────────────────────────────────────
     def _load_data(self):
         self._receivables = ReceivablesController.fetch()
         self._customers = CustomerController.fetch()
@@ -1898,7 +1841,6 @@ class ReceivablesPage(QWidget):
             "count_paid":   str(count_paid),
         }
 
-    # ── Build UI ──────────────────────────────────────────────────────────────
     def _build_ui(self):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(32, 17, 32, 28)
@@ -1925,7 +1867,6 @@ class ReceivablesPage(QWidget):
         layout.addLayout(self._build_stats_row())
         layout.addSpacing(20)
 
-        # ── Filter bar + view toggle ───────────────────────────────────────────
         bar_and_toggle = QHBoxLayout()
         bar_and_toggle.setSpacing(10)
 
@@ -1966,11 +1907,9 @@ class ReceivablesPage(QWidget):
         layout.addLayout(bar_and_toggle)
         layout.addSpacing(16)
 
-        # ── Content stack ──────────────────────────────────────────────────────
         self._content_stack = QStackedWidget()
         self._content_stack.setStyleSheet("background: transparent;")
 
-        # ── Page 0: Card grid ──────────────────────────────────────────────────
         self._card_page = QWidget()
         self._card_page.setStyleSheet("background: transparent;")
         card_page_layout = QVBoxLayout(self._card_page)
@@ -2020,7 +1959,6 @@ class ReceivablesPage(QWidget):
         self._scroll.setWidget(self._grid_container)
         card_page_layout.addWidget(self._scroll)
 
-        # ── Page 1: Table ──────────────────────────────────────────────────────
         self._table_page = QWidget()
         self._table_page.setStyleSheet("background: transparent;")
         table_page_layout = QVBoxLayout(self._table_page)
@@ -2042,7 +1980,6 @@ class ReceivablesPage(QWidget):
 
         self._refresh_table()
 
-    # ── Stats ─────────────────────────────────────────────────────────────────
     def _build_stats_row(self) -> QHBoxLayout:
         row = QHBoxLayout()
         row.setSpacing(14)
@@ -2126,7 +2063,6 @@ class ReceivablesPage(QWidget):
             if dot and key != "total_debt":
                 dot.setText(val)
 
-    # ── Filter buttons ────────────────────────────────────────────────────────
     def _make_filter_btn(self, label: str) -> QPushButton:
         active = label == self._active_filter
         btn = QPushButton(label)
@@ -2158,7 +2094,6 @@ class ReceivablesPage(QWidget):
                 }}
             """)
 
-    # ── Filtering & refresh ───────────────────────────────────────────────────
     def _filtered_rows(self) -> list[tuple]:
         from collections import OrderedDict
 
@@ -2223,7 +2158,6 @@ class ReceivablesPage(QWidget):
         self._table.populate(self._filtered_rows(),
                              self._customer_map, self._receivables)
 
-    # ── Card grid ─────────────────────────────────────────────────────────────
     def _get_column_count(self) -> int:
         available = self._scroll.viewport().width()
         cols = available // (ReceivableCard.CARD_WIDTH +
@@ -2380,7 +2314,6 @@ class ReceivablesPage(QWidget):
         if self._view_mode == ReceivablesViewToggle.VIEW_CARD:
             QTimer.singleShot(0, self._refresh_grid)
 
-    # ── Event handlers ────────────────────────────────────────────────────────
     def _on_view_mode_changed(self, mode: str):
         self._view_mode = mode
         if mode == ReceivablesViewToggle.VIEW_TABLE:
@@ -2440,7 +2373,6 @@ class ReceivablesPage(QWidget):
         dlg.confirmed.connect(lambda: self._delete_all_receivables(records))
         dlg.exec()
 
-    # ── CRUD handlers ─────────────────────────────────────────────────────────
     def _add_receivable(self, data: dict):
         try:
             ReceivablesController.add(
@@ -2479,12 +2411,10 @@ class ReceivablesPage(QWidget):
                 status=new_status,
             )
 
-            # ── Update paid_amount di Sales ──
             if rec.sales_id:
                 from controllers.sales import SalesController
                 sale = SalesController.get(rec.sales_id)
                 if sale:
-                    # Jika lunas, paid_amount = total_price; jika sebagian, pakai new_paid
                     paid_amount_for_sale = sale.total_price if new_status == "paid" else new_paid
 
                     SalesController.edit(
@@ -2521,7 +2451,6 @@ class ReceivablesPage(QWidget):
         try:
             ReceivablesController.remove(rec.id)
 
-            # Emit receivables signal
             receivables_signals.receivables_updated.emit(rec.sales_id or 0)
 
             self._load_data()

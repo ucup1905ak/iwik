@@ -1,5 +1,3 @@
-# gui/views/screens/sales_page.py
-
 from datetime import datetime
 from controllers.product import ProductController, Product
 from controllers.sales import SalesController
@@ -34,7 +32,6 @@ from gui.signals import product_signals, sales_signals
 import os
 from pathlib import Path
 
-# ── Color palette ──────────────────────────────────────────────────────────────
 C_BG = "#F4F5F9"
 C_WHITE = "#FFFFFF"
 C_ACCENT = "#4F6EF7"
@@ -66,8 +63,7 @@ C_HEADER_BG = "#FFFFFF"
 C_HEADER_TEXT = "#9EA3B8"
 C_DIVIDER = "#F0F1F7"
 
-# ── Card dimensions ────────────────────────────────────────────────────────────
-CASHIER_CARD_WIDTH = 320   # lebar minimum kolom grid
+CASHIER_CARD_WIDTH = 320
 CASHIER_CARD_SPACING = 12
 
 SAMPLE_PRODUCTS = [
@@ -199,10 +195,6 @@ def _style_cat_btn(btn: QPushButton, cat: str, active: bool):
             }}
         """)
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# Cashier Product Card  –  horizontal compact layout
-# ═══════════════════════════════════════════════════════════════════════════════
-
 
 class CashierProductCard(QFrame):
     clicked = pyqtSignal(Product)
@@ -240,7 +232,6 @@ class CashierProductCard(QFrame):
         root.setContentsMargins(14, 14, 14, 14)
         root.setSpacing(14)
 
-        # ── Image (kiri) – only fixed width, height follows card ───────────
         img_container = QFrame()
         img_container.setFixedWidth(140)
         img_container.setStyleSheet(f"""
@@ -278,13 +269,11 @@ class CashierProductCard(QFrame):
         img_layout.addWidget(img_label)
         root.addWidget(img_container)
 
-        # ── Info (kanan) ───────────────────────────────────────────────────
         info_container = QWidget()
         info_layout = QVBoxLayout(info_container)
         info_layout.setContentsMargins(0, 0, 0, 0)
         info_layout.setSpacing(2)
 
-        # ── Top row: category tag + stock badge ────────────────────────────
         top = QHBoxLayout()
         top.setSpacing(4)
         top.setContentsMargins(0, 0, 0, 0)
@@ -326,7 +315,6 @@ class CashierProductCard(QFrame):
         top.addWidget(stock_badge)
         info_layout.addLayout(top)
 
-        # ── Nama produk ────────────────────────────────────────────────────
         name_lbl = QLabel(product.name)
         name_lbl.setWordWrap(True)
         name_lbl.setMaximumHeight(36)
@@ -340,7 +328,6 @@ class CashierProductCard(QFrame):
         """)
         info_layout.addWidget(name_lbl)
 
-        # ── Brand ──────────────────────────────────────────────────────────
         if product.brand:
             brand_lbl = QLabel(f"Merek: {product.brand}")
             brand_lbl.setStyleSheet(f"""
@@ -352,7 +339,6 @@ class CashierProductCard(QFrame):
             """)
             info_layout.addWidget(brand_lbl)
 
-        # ── SKU ────────────────────────────────────────────────────────────
         if product.sku:
             sku_lbl = QLabel(f"SKU: {product.sku}")
             sku_lbl.setStyleSheet(f"""
@@ -366,7 +352,6 @@ class CashierProductCard(QFrame):
 
         info_layout.addStretch(1)
 
-        # ── Bottom row: harga kiri, tombol tambah kanan ────────────────────
         bottom = QHBoxLayout()
         bottom.setSpacing(8)
         bottom.setContentsMargins(0, 0, 0, 0)
@@ -391,9 +376,6 @@ class CashierProductCard(QFrame):
         super().mousePressEvent(event)
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# Order Item Card  –  item di panel order kanan
-# ═══════════════════════════════════════════════════════════════════════════════
 class OrderItemCard(QFrame):
     remove_clicked = pyqtSignal(int)
     quantity_changed = pyqtSignal(int, int)
@@ -421,7 +403,6 @@ class OrderItemCard(QFrame):
         root.setContentsMargins(12, 0, 10, 0)
         root.setSpacing(8)
 
-        # ── Info ───────────────────────────────────────────────────────────
         info = QVBoxLayout()
         info.setSpacing(2)
         info.setContentsMargins(0, 0, 0, 0)
@@ -451,7 +432,6 @@ class OrderItemCard(QFrame):
         info.addWidget(price_lbl)
         root.addLayout(info, stretch=1)
 
-        # ── Qty control ────────────────────────────────────────────────────
         qty_frame = QFrame()
         qty_frame.setFixedHeight(30)
         qty_frame.setStyleSheet(f"""
@@ -518,7 +498,6 @@ class OrderItemCard(QFrame):
         qty_layout.addWidget(plus_btn)
         root.addWidget(qty_frame)
 
-        # ── Remove button ──────────────────────────────────────────────────
         remove_btn = QPushButton("×")
         remove_btn.setFixedSize(26, 26)
         remove_btn.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -537,7 +516,6 @@ class OrderItemCard(QFrame):
         root.addWidget(remove_btn)
 
     def _on_qty_typed(self, text: str):
-        # Update internal quantity saat mengetik tapi belum commit
         if text and text.isdigit():
             val = int(text)
             if val >= 1:
@@ -545,7 +523,6 @@ class OrderItemCard(QFrame):
                 self.quantity_changed.emit(self._product.id, self._quantity)
 
     def _on_qty_committed(self):
-        # Saat focus hilang / Enter, validasi dan clamp ke stock
         text = self._qty_lbl.text().strip()
         if not text or not text.isdigit() or int(text) < 1:
             self._quantity = 1
@@ -591,9 +568,6 @@ class OrderItemCard(QFrame):
         self._qty_lbl.setText(str(self._quantity))
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# Sales Page  –  Halaman Kasir
-# ═══════════════════════════════════════════════════════════════════════════════
 class SalesPage(QWidget):
     def __init__(self, user: dict, parent=None):
         super().__init__(parent)
@@ -618,13 +592,11 @@ class SalesPage(QWidget):
             self._on_product_stock_changed)
         product_signals.products_imported.connect(self._on_products_imported)
 
-    # ──────────────────────────────────────────────────────────────────────────
     def _build_ui(self):
         root = QVBoxLayout(self)
         root.setContentsMargins(24, 24, 24, 24)
         root.setSpacing(0)
 
-        # ── Header ──────────────────────────────────────────────────────────
         header = QVBoxLayout()
         header.setSpacing(4)
         header.setContentsMargins(0, 0, 0, 0)
@@ -651,20 +623,15 @@ class SalesPage(QWidget):
         root.addLayout(header)
         root.addSpacing(20)
 
-        # ── Main container (kiri + kanan) ────────────────────────────────────
         main_container = QHBoxLayout()
         main_container.setSpacing(16)
         main_container.setContentsMargins(0, 0, 0, 0)
         main_container.setAlignment(Qt.AlignmentFlag.AlignTop)
 
-        # ══════════════════════════════════════════════════════════════════════
-        # LEFT  –  produk grid
-        # ══════════════════════════════════════════════════════════════════════
         left_layout = QVBoxLayout()
         left_layout.setSpacing(10)
         left_layout.setContentsMargins(0, 0, 0, 0)
 
-        # Search bar
         self._search_input = QLineEdit()
         self._search_input.setPlaceholderText("🔍  Cari produk...")
         self._search_input.setFixedHeight(40)
@@ -685,7 +652,6 @@ class SalesPage(QWidget):
         self._search_input.textChanged.connect(self._on_search)
         left_layout.addWidget(self._search_input)
 
-        # Category buttons
         cat_frame = QFrame()
         cat_frame.setFixedHeight(38)
         cat_frame.setStyleSheet("background: transparent; border: none;")
@@ -710,7 +676,6 @@ class SalesPage(QWidget):
         left_layout.addWidget(cat_frame)
         left_layout.addSpacing(4)
 
-        # Products scroll area
         self._products_scroll = QScrollArea()
         self._products_scroll.setWidgetResizable(True)
         self._products_scroll.setFrameShape(QFrame.Shape.NoFrame)
@@ -759,9 +724,6 @@ class SalesPage(QWidget):
 
         main_container.addLayout(left_layout, stretch=1)
 
-        # ══════════════════════════════════════════════════════════════════════
-        # RIGHT  –  order summary panel
-        # ══════════════════════════════════════════════════════════════════════
         summary_frame = QFrame()
         summary_frame.setFixedWidth(340)
         summary_frame.setSizePolicy(
@@ -777,9 +739,7 @@ class SalesPage(QWidget):
         summary_layout = QVBoxLayout(summary_frame)
         summary_layout.setContentsMargins(16, 16, 16, 16)
         summary_layout.setSpacing(10)
-        # Tidak pakai AlignTop — biarkan stretch mengatur ruang
 
-        # Panel title
         title = QLabel("Order")
         title.setFixedHeight(24)
         title.setStyleSheet(f"""
@@ -792,10 +752,9 @@ class SalesPage(QWidget):
         """)
         summary_layout.addWidget(title)
 
-        # Order items scroll  –  stretch=1 agar menyerap sisa ruang
         scroll_items = QScrollArea()
         scroll_items.setWidgetResizable(True)
-        scroll_items.setMinimumHeight(80)   # minimal saat cart kosong
+        scroll_items.setMinimumHeight(80)
         scroll_items.setFrameShape(QFrame.Shape.NoFrame)
         scroll_items.setStyleSheet(f"""
             QScrollArea {{
@@ -822,17 +781,10 @@ class SalesPage(QWidget):
         self._items_layout.addStretch()
 
         scroll_items.setWidget(items_widget)
-        # stretch=1 → area item menyerap ruang bebas, mendorong footer ke bawah
         summary_layout.addWidget(scroll_items, stretch=1)
 
-        # ── Footer block (subtotal → diskon → total → button) ─────────────
-        # Seluruh blok ini tidak punya stretch, sehingga selalu menempel
-        # tepat di bawah area item dan tidak ada jarak ekstra.
-
-        # Divider atas footer
         summary_layout.addWidget(self._make_divider())
 
-        # Subtotal
         self._subtotal_value = QLabel("Rp 0")
         self._subtotal_value.setStyleSheet(f"""
             font-family: 'Segoe UI';
@@ -847,7 +799,6 @@ class SalesPage(QWidget):
                 "Subtotal", self._subtotal_value, secondary=True)
         )
 
-        # Diskon label + inputs dalam satu blok rapat
         discount_label = QLabel("Diskon")
         discount_label.setFixedHeight(18)
         discount_label.setStyleSheet(f"""
@@ -935,7 +886,7 @@ class SalesPage(QWidget):
         self._discount_input.setPlaceholderText("0")
         self._discount_input.setFixedHeight(34)
         self._discount_input.setValidator(
-            QIntValidator(0, 999_999_999))  # ← tambahkan ini
+            QIntValidator(0, 999_999_999))
         self._discount_input.setStyleSheet(f"""
             QLineEdit {{
                 background: {C_TAG_BG};
@@ -956,7 +907,6 @@ class SalesPage(QWidget):
         discount_row.addWidget(self._discount_input)
         summary_layout.addLayout(discount_row)
 
-        # Potongan
         self._discount_value = QLabel("Rp 0")
         self._discount_value.setStyleSheet(f"""
             font-family: 'Segoe UI';
@@ -971,10 +921,8 @@ class SalesPage(QWidget):
                 "Potongan", self._discount_value, secondary=True)
         )
 
-        # Divider sebelum total
         summary_layout.addWidget(self._make_divider())
 
-        # Total
         self._total_value = QLabel("Rp 0")
         self._total_value.setStyleSheet(f"""
             font-family: 'Segoe UI';
@@ -1000,7 +948,6 @@ class SalesPage(QWidget):
         total_row.addWidget(self._total_value)
         summary_layout.addLayout(total_row)
 
-        # Tombol Proses Order – langsung di bawah total, tanpa spacing tambahan
         order_btn = QPushButton("Proses Order")
         order_btn.setFixedHeight(42)
         order_btn.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -1029,14 +976,12 @@ class SalesPage(QWidget):
 
         self._set_category("Semua")
 
-    # ── Helper: buat divider ───────────────────────────────────────────────────
     def _make_divider(self) -> QFrame:
         div = QFrame()
         div.setFixedHeight(1)
         div.setStyleSheet(f"background: {C_BORDER}; border: none;")
         return div
 
-    # ── Helper: buat baris label + value ──────────────────────────────────────
     def _make_summary_row(self, label_text: str, value_widget: QLabel, secondary: bool = False) -> QHBoxLayout:
         row = QHBoxLayout()
         row.setContentsMargins(0, 0, 0, 0)
@@ -1068,19 +1013,16 @@ class SalesPage(QWidget):
         super().resizeEvent(event)
         QTimer.singleShot(0, self._refresh_products_grid)
 
-    # ── Load products ──────────────────────────────────────────────────────────
     def _load_products(self):
         try:
             self._products = ProductController.fetch()
             # self._products = SAMPLE_PRODUCTS;
             self._filtered_products = self._products
-            # Defer ke next event loop tick agar viewport sudah punya ukuran yang benar
             QTimer.singleShot(0, self._refresh_products_grid)
         except Exception as e:
             Toast.show_toast(
                 f"Error loading products: {str(e)}", "error", self)
 
-    # ── Category ───────────────────────────────────────────────────────────────
     def _set_category(self, category: str):
         self._active_category = category
         for cat, btn in self._cat_buttons.items():
@@ -1099,13 +1041,11 @@ class SalesPage(QWidget):
         ]
         self._refresh_products_grid()
 
-    # ── Grid helpers ───────────────────────────────────────────────────────────
     def _get_product_column_count(self) -> int:
         if not self._products_scroll:
             return 2
         available = self._products_scroll.viewport().width()
         if available <= 0:
-            # Fallback saat widget belum selesai di-render
             available = self._products_scroll.width() - 20
         if available <= 0:
             return 2
@@ -1144,11 +1084,9 @@ class SalesPage(QWidget):
             col = idx % cols
             self._products_grid.addWidget(card, row, col)
 
-        # Semua kolom dapat stretch yang sama → lebar merata
         for col_idx in range(cols):
             self._products_grid.setColumnStretch(col_idx, 1)
 
-    # ── Cart logic ─────────────────────────────────────────────────────────────
     def _add_to_cart(self, product: Product):
         if product.stock <= 0:
             Toast.show_toast("Produk habis!", "info", self)
@@ -1171,7 +1109,6 @@ class SalesPage(QWidget):
         self._refresh_cart_display()
 
     def _refresh_cart_display(self):
-        # Hapus semua item kecuali stretch di akhir
         while self._items_layout.count() > 1:
             item = self._items_layout.takeAt(0)
             if item.widget():
@@ -1231,7 +1168,6 @@ class SalesPage(QWidget):
         self._discount_value.setText(_format_price(discount_amount))
         self._total_value.setText(_format_price(total))
 
-    # ── Order ──────────────────────────────────────────────────────────────────
     def _on_order_clicked(self):
         if not self._cart:
             Toast.show_toast(
@@ -1287,7 +1223,7 @@ class SalesPage(QWidget):
                 time=timestamp,
                 payment=payment_method,
                 paid_amount=paid_amount,
-                total_price=total   # ← Simpan total JUAL (setelah diskon)
+                total_price=total
             )
 
             updated_stocks = {}
@@ -1300,7 +1236,7 @@ class SalesPage(QWidget):
                     sales_id=sales_id,
                     product_id=product_id,
                     quantity=quantity,
-                    discount=0  # diskon sudah diperhitungkan di total, tidak perlu per item
+                    discount=0
                 )
 
                 new_stock = fresh_stock - quantity
@@ -1317,12 +1253,10 @@ class SalesPage(QWidget):
                     image_path=fresh.image_path
                 )
 
-            # Save to Receivables if payment is hutang (credit)
             if payment_type == "hutang" and customer_id:
                 ReceivablesController.add(
                     sales_id=sales_id,
                     customer_id=customer_id,
-                    # ← Gunakan total JUAL (setelah diskon)
                     total_amount=total,
                     due_date=None,
                     amount_paid=paid_amount,
@@ -1347,7 +1281,6 @@ class SalesPage(QWidget):
         except Exception as e:
             Toast.show_toast(f"Error: {str(e)}", "error", self)
 
-    # ── Signal handlers ────────────────────────────────────────────────────────
     def _on_product_added(self, product: Product):
         if product not in self._products:
             self._products.append(product)
@@ -1386,9 +1319,6 @@ class SalesPage(QWidget):
         self._filter_products()
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# Receipt Preview Dialog
-# ═══════════════════════════════════════════════════════════════════════════════
 class ReceiptPreviewDialog(QDialog):
     def __init__(self, receipt_text: str, parent=None):
         super().__init__(parent)
@@ -1422,7 +1352,6 @@ class ReceiptPreviewDialog(QDialog):
         root.setContentsMargins(0, 0, 0, 0)
         root.setSpacing(0)
 
-        # Header
         header = QFrame()
         header.setStyleSheet("QFrame { background-color: #FAFAF8; }")
         header_lay = QVBoxLayout(header)
@@ -1440,7 +1369,6 @@ class ReceiptPreviewDialog(QDialog):
         header_lay.addSpacing(14)
         root.addWidget(header)
 
-        # Receipt paper
         content_frame = QFrame()
         content_frame.setStyleSheet("background: #FAFAF8;")
         content_lay = QVBoxLayout(content_frame)
@@ -1493,7 +1421,6 @@ class ReceiptPreviewDialog(QDialog):
             receipt_paper, alignment=Qt.AlignmentFlag.AlignCenter)
         root.addWidget(content_frame, stretch=0)
 
-        # Footer
         footer = QFrame()
         footer.setStyleSheet("QFrame { background-color: #FAFAF8; }")
         footer_lay = QHBoxLayout(footer)
@@ -1602,9 +1529,6 @@ class ReceiptPreviewDialog(QDialog):
                 f"Error mencetak struk: {str(e)}", "error", self.parent())
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# Order Confirm Dialog
-# ═══════════════════════════════════════════════════════════════════════════════
 class OrderConfirmDialog(QDialog):
     def __init__(self, cart: dict, subtotal: int, discount: int, total: int,
                  user: dict, parent=None):
@@ -1619,7 +1543,7 @@ class OrderConfirmDialog(QDialog):
         self._total = total
         self._user = user
         self._payment_method = "tunai"
-        self._payment_type = "lunas"  # tunai payment type: lunas or hutang
+        self._payment_type = "lunas"
         self._selected_customer_id = None
         self._paid_amount = 0
         self._remaining = total
@@ -1654,7 +1578,6 @@ class OrderConfirmDialog(QDialog):
         root.setContentsMargins(0, 0, 0, 0)
         root.setSpacing(0)
 
-        # ── Header ──────────────────────────────────────────────────────────
         header = QFrame()
         header.setStyleSheet("QFrame { background-color: #FAFAF8; }")
         header_lay = QVBoxLayout(header)
@@ -1680,21 +1603,18 @@ class OrderConfirmDialog(QDialog):
         root.addWidget(header)
         root.addWidget(self._make_divider())
 
-        # ── Two-column body ──────────────────────────────────────────────────
         body = QWidget()
         body.setStyleSheet("background: #FAFAF8;")
         body_lay = QHBoxLayout(body)
         body_lay.setContentsMargins(0, 0, 0, 0)
         body_lay.setSpacing(0)
 
-        # ── LEFT column: order summary ────────────────────────────────────
         left_widget = QWidget()
         left_widget.setStyleSheet("background: #FAFAF8;")
         left_lay = QVBoxLayout(left_widget)
         left_lay.setContentsMargins(28, 18, 20, 18)
         left_lay.setSpacing(0)
 
-        # Buyer name
         self._buyer_label = QLabel("Nama Pembeli (Opsional)")
         self._buyer_label.setFixedHeight(18)
         self._buyer_label.setStyleSheet(f"""
@@ -1727,7 +1647,6 @@ class OrderConfirmDialog(QDialog):
 
         left_lay.addWidget(self._buyer_err)
 
-        # Phone number (hanya tampil saat hutang)
         self._phone_label = QLabel("No Telepon")
         self._phone_label.setFixedHeight(18)
         self._phone_label.setStyleSheet(f"""
@@ -1768,7 +1687,6 @@ class OrderConfirmDialog(QDialog):
         left_lay.addWidget(self._make_divider())
         left_lay.addSpacing(12)
 
-        # Order items
         self._add_field_label(left_lay, "Item Pesanan")
         left_lay.addSpacing(6)
 
@@ -1797,7 +1715,6 @@ class OrderConfirmDialog(QDialog):
         left_lay.addWidget(self._make_divider())
         left_lay.addSpacing(10)
 
-        # Summary rows
         for label, value in [("Subtotal", _format_price(self._subtotal))]:
             left_lay.addLayout(self._inline_row(label, value, small=True))
             left_lay.addSpacing(4)
@@ -1823,20 +1740,17 @@ class OrderConfirmDialog(QDialog):
 
         body_lay.addWidget(left_widget, 1)
 
-        # Vertical separator between columns
         v_sep = QFrame()
         v_sep.setFixedWidth(1)
         v_sep.setStyleSheet("background: #DDD9D2; border: none;")
         body_lay.addWidget(v_sep)
 
-        # ── RIGHT column: payment ─────────────────────────────────────────
         right_widget = QWidget()
         right_widget.setStyleSheet("background: #FAFAF8;")
         right_lay = QVBoxLayout(right_widget)
         right_lay.setContentsMargins(20, 18, 28, 18)
         right_lay.setSpacing(0)
 
-        # Payment method
         self._add_field_label(right_lay, "Metode Pembayaran")
         right_lay.addSpacing(6)
 
@@ -1865,14 +1779,12 @@ class OrderConfirmDialog(QDialog):
         right_lay.addWidget(self._make_divider())
         right_lay.addSpacing(12)
 
-        # Cash payment fields (Tunai)
         self._cash_fields_frame = QFrame()
         self._cash_fields_frame.setStyleSheet("background: transparent;")
         cash_layout = QVBoxLayout(self._cash_fields_frame)
         cash_layout.setContentsMargins(0, 0, 0, 0)
         cash_layout.setSpacing(8)
 
-        # Payment type dropdown
         self._add_field_label(cash_layout, "Jenis Pembayaran")
         cash_layout.addSpacing(4)
 
@@ -1925,7 +1837,6 @@ class OrderConfirmDialog(QDialog):
         self._customer_phone_input.hide()
         self._phone_input.textChanged.connect(self._on_phone_lookup)
 
-        # Stacked vertically but in pairs using a grid for tight layout
         self._customer_block = QWidget()
         self._customer_block.setStyleSheet("background: transparent;")
         cust_lay = QVBoxLayout(self._customer_block)
@@ -1952,7 +1863,6 @@ class OrderConfirmDialog(QDialog):
         self._customer_block.hide()
         cash_layout.addWidget(self._customer_block)
 
-        # Cash input
         self._cash_label = QLabel("Uang yang Diberikan")
         self._cash_label.setStyleSheet(
             f"font-family:'Segoe UI';font-size:11px;font-weight:600;color:{C_TEXT_PRI};background:transparent;border:none;")
@@ -1968,7 +1878,6 @@ class OrderConfirmDialog(QDialog):
         cash_layout.addWidget(self._cash_input)
         cash_layout.addSpacing(8)
 
-        # Remaining/Change display
         remaining_row = QHBoxLayout()
         remaining_row.setContentsMargins(0, 0, 0, 0)
         self._remaining_label = QLabel("Kembalian")
@@ -1989,7 +1898,6 @@ class OrderConfirmDialog(QDialog):
         root.addWidget(body)
         root.addWidget(self._make_divider())
 
-        # ── Footer ──────────────────────────────────────────────────────────
         footer = QFrame()
         footer.setStyleSheet("QFrame { background-color: #FAFAF8; }")
         footer_lay = QHBoxLayout(footer)
@@ -2028,7 +1936,6 @@ class OrderConfirmDialog(QDialog):
         footer_lay.addWidget(confirm_btn)
         root.addWidget(footer)
 
-        # Initialize UI state
         self._on_payment_type_changed(0)
 
     def _on_phone_lookup(self, phone: str):
@@ -2064,7 +1971,6 @@ class OrderConfirmDialog(QDialog):
         except Exception as e:
             Toast.show_toast("No Telepon Error!", "error", self)
 
-    # ── Dialog helpers ─────────────────────────────────────────────────────────
     def _make_divider(self) -> QFrame:
         div = QFrame()
         div.setFixedHeight(1)
@@ -2220,17 +2126,10 @@ class OrderConfirmDialog(QDialog):
         row_layout.setContentsMargins(10, 0, 10, 0)
         row_layout.setSpacing(8)
 
-        # =========================
-        # ICON BARANG
-        # =========================
         theme = CAT_THEME.get(product.category, CAT_THEME["Lainnya"])
-
         item_icon = QLabel(theme["emoji"])
-
         item_icon.setFixedSize(36, 36)
-
         item_icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
         item_icon.setStyleSheet(f"""
             font-size: 18px;
             background: {theme['bg']};
@@ -2240,9 +2139,6 @@ class OrderConfirmDialog(QDialog):
 
         row_layout.addWidget(item_icon)
 
-        # =========================
-        # INFO PRODUK
-        # =========================
         info_widget = QWidget()
         info_widget.setSizePolicy(
             QSizePolicy.Policy.Expanding,
@@ -2291,14 +2187,8 @@ class OrderConfirmDialog(QDialog):
         info_layout.addWidget(price_label)
 
         row_layout.addWidget(info_widget)
-
-        # =========================
-        # QTY
-        # =========================
         qty_label = QLabel(f"×{quantity}")
-
         qty_label.setFixedWidth(32)
-
         qty_label.setAlignment(
             Qt.AlignmentFlag.AlignCenter |
             Qt.AlignmentFlag.AlignVCenter
@@ -2314,13 +2204,8 @@ class OrderConfirmDialog(QDialog):
 
         row_layout.addWidget(qty_label)
 
-        # =========================
-        # TOTAL
-        # =========================
         total_label = QLabel(_format_price(product.price * quantity))
-
         total_label.setFixedWidth(90)
-
         total_label.setAlignment(
             Qt.AlignmentFlag.AlignRight |
             Qt.AlignmentFlag.AlignVCenter
@@ -2338,16 +2223,14 @@ class OrderConfirmDialog(QDialog):
 
         return row_frame
 
-    # ── Payment logic ──────────────────────────────────────────────────────────
     def _load_customers(self):
-        pass  # No need to load customers, user will input manually
+        pass
 
     def _on_payment_method_changed(self, method: str):
 
         self._payment_method = method
         self._cash_fields_frame.show()
 
-        # refresh UI
         self._on_payment_type_changed(
             self._payment_type_combo.currentIndex()
         )
@@ -2357,13 +2240,7 @@ class OrderConfirmDialog(QDialog):
     def _on_payment_type_changed(self, index: int):
         self._payment_type = self._payment_type_combo.currentData()
 
-        # =========================================================
-        # HUTANG
-        # =========================================================
         if self._payment_type == "hutang":
-
-            # validator:
-            # maksimal pembayaran = total - 1
             self._dynamic_spacing.changeSize(
                 0,
                 16,
@@ -2378,17 +2255,14 @@ class OrderConfirmDialog(QDialog):
                 QIntValidator(0, max_cash)
             )
 
-            # tampilkan no telepon
             self._phone_label.show()
             self._phone_input.show()
 
-            # cash field
             self._cash_label.setText("Uang yang Dibayarkan")
             self._cash_label.show()
 
             self._cash_input.show()
 
-            # remaining
             self._remaining_label.setText("Sisa Bayar")
             self._remaining_label.show()
 
@@ -2403,9 +2277,6 @@ class OrderConfirmDialog(QDialog):
 
             self._remaining_value.show()
 
-        # =========================================================
-        # LUNAS
-        # =========================================================
         else:
             self._dynamic_spacing.changeSize(
                 0,
@@ -2415,24 +2286,18 @@ class OrderConfirmDialog(QDialog):
             )
 
             self._buyer_label.setText("Nama Pembeli (Opsional)")
-            # validator normal
             self._cash_input.setValidator(
                 QIntValidator(0, 999_999_999)
             )
 
-            # sembunyikan no telepon
             self._phone_label.hide()
             self._phone_input.hide()
 
             self._remaining_label.setText("Kembalian")
 
-            # =========================
-            # TUNAI
-            # =========================
             if self._payment_method == "tunai":
 
                 self._cash_label.setText("Uang yang Diberikan")
-
                 self._cash_label.show()
                 self._cash_input.show()
 
@@ -2449,9 +2314,6 @@ class OrderConfirmDialog(QDialog):
 
                 self._remaining_value.show()
 
-            # =========================
-            # QRIS
-            # =========================
             else:
 
                 self._cash_label.hide()
@@ -2462,11 +2324,9 @@ class OrderConfirmDialog(QDialog):
 
         self._on_cash_changed()
 
-        # refresh layout
         self.layout().invalidate()
         self.layout().activate()
 
-        # biar bisa mengecil lagi
         self.setMinimumHeight(0)
 
         self.adjustSize()
@@ -2474,20 +2334,13 @@ class OrderConfirmDialog(QDialog):
 
     def _on_cash_changed(self):
         try:
-
-            # QRIS lunas tidak perlu kalkulasi
             if self._payment_method == "qris" and self._payment_type == "lunas":
                 return
 
             cash_str = self._cash_input.text().strip()
             self._paid_amount = int(cash_str) if cash_str else 0
 
-            # =====================================================
-            # HUTANG
-            # =====================================================
             if self._payment_type == "hutang":
-
-                # proteksi tambahan
                 if self._paid_amount >= self._total:
 
                     Toast.show_toast(
@@ -2513,7 +2366,6 @@ class OrderConfirmDialog(QDialog):
                     self._total - self._paid_amount
                 )
 
-                # masih ada hutang
                 if self._remaining > 0:
 
                     self._remaining_value.setText(
@@ -2528,8 +2380,6 @@ class OrderConfirmDialog(QDialog):
                         border:none;
                         """
                     )
-
-                # lunas
                 elif self._remaining == 0:
 
                     self._remaining_value.setText(
@@ -2544,8 +2394,6 @@ class OrderConfirmDialog(QDialog):
                         border:none;
                         """
                     )
-
-                # lebih bayar
                 else:
 
                     self._remaining_value.setText(
@@ -2560,17 +2408,12 @@ class OrderConfirmDialog(QDialog):
                         border:none;
                         """
                     )
-
-            # =====================================================
-            # TUNAI LUNAS
-            # =====================================================
             else:
 
                 self._remaining = (
                     self._paid_amount - self._total
                 )
 
-                # uang kurang
                 if self._remaining < 0:
 
                     self._remaining_value.setText(
@@ -2585,8 +2428,6 @@ class OrderConfirmDialog(QDialog):
                         border:none;
                         """
                     )
-
-                # uang cukup
                 else:
 
                     self._remaining_value.setText(
@@ -2627,7 +2468,6 @@ class OrderConfirmDialog(QDialog):
                 Toast.show_toast("Uang tunai tidak cukup!", "error", self)
                 return
 
-        # Validasi hutang: nama pembeli + no telepon wajib
         if self._payment_type == "hutang":
             cash_str = self._cash_input.text().strip()
             paid_amount = int(cash_str) if cash_str else 0

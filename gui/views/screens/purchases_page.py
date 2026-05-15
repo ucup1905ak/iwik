@@ -37,7 +37,6 @@ from controllers.user import UserController
 from gui.views.components import Avatar
 from gui.signals import product_signals, purchase_signals
 
-# ── Color palette ──────────────────────────────────────────────────────────────
 C_BG = "#F4F5F9"
 C_WHITE = "#FFFFFF"
 C_ACCENT = "#4F6EF7"
@@ -65,7 +64,6 @@ STATUS_THEME = {
 
 FILTER_STATUS = ["Semua", "Lunas", "Pending", "Belum"]
 
-# ── Helpers ────────────────────────────────────────────────────────────────────
 
 
 def _fmt_currency(value) -> str:
@@ -97,9 +95,6 @@ def _supplier_palette(name: str) -> tuple:
     return (bg, fg), initials
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# Purchase Card
-# ═══════════════════════════════════════════════════════════════════════════════
 class PurchaseCard(QFrame):
     edit_clicked = pyqtSignal(object)
     delete_clicked = pyqtSignal(object)
@@ -132,7 +127,6 @@ class PurchaseCard(QFrame):
         layout.setContentsMargins(16, 14, 16, 12)
         layout.setSpacing(10)
 
-        # ── TOP (ID + DATE) ─────────────────────────────
         top = QHBoxLayout()
 
         id_lbl = QLabel(f"#{p.id:04d}")
@@ -153,7 +147,6 @@ class PurchaseCard(QFrame):
 
         layout.addLayout(top)
 
-        # ── MID (CHIPS) ─────────────────────────────
         mid = QHBoxLayout()
         mid.setSpacing(8)
 
@@ -184,7 +177,6 @@ class PurchaseCard(QFrame):
         mid.addStretch()
         layout.addLayout(mid)
 
-        # ── TOTAL (FOCUS AREA) ─────────────────────────────
         total_lbl = QLabel(_fmt_currency(p.total_amount))
         total_lbl.setStyleSheet(f"""
             font-family: 'Segoe UI';
@@ -195,10 +187,8 @@ class PurchaseCard(QFrame):
         """)
         layout.addWidget(total_lbl)
 
-        # spacing visual separator (important UX trick)
         layout.addSpacing(4)
 
-        # ── BOTTOM BUTTONS ─────────────────────────────
         bottom = QHBoxLayout()
         bottom.setSpacing(8)
 
@@ -247,9 +237,6 @@ class PurchaseCard(QFrame):
         layout.addLayout(bottom)
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# Purchase Table View
-# ═══════════════════════════════════════════════════════════════════════════════
 class PurchaseTableView(QTableWidget):
     edit_clicked = pyqtSignal(object)
     delete_clicked = pyqtSignal(object)
@@ -422,11 +409,9 @@ class PurchaseTableView(QTableWidget):
 
         remaining = available - fixed_widths
 
-        # Karena ada 2 kolom stretch:
         min_required = self.MIN_NAME_WIDTH * 2
 
         if remaining >= min_required:
-            # Layout normal → supplier & user stretch
             header.setSectionResizeMode(
                 self.COL_SUPPLIER,
                 QHeaderView.ResizeMode.Stretch
@@ -438,7 +423,6 @@ class PurchaseTableView(QTableWidget):
             )
 
         else:
-            # Layout sempit → fixed + horizontal scroll
             header.setSectionResizeMode(
                 self.COL_SUPPLIER,
                 QHeaderView.ResizeMode.Fixed
@@ -651,9 +635,6 @@ class PurchaseTableView(QTableWidget):
         return w
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# Purchase Dialog (Add / Edit)
-# ═══════════════════════════════════════════════════════════════════════════════
 class PurchaseDialog(QDialog):
     saved = pyqtSignal(dict)
 
@@ -994,7 +975,6 @@ class PurchaseDialog(QDialog):
         cl.addWidget(divider)
         cl.addSpacing(18)
 
-        # ── Supplier dropdown ─────────────────────────────────────────────────
         self._supplier_combo, self._supplier_err = self._make_combo(
             cl, "Supplier")
         self._suppliers = SupplierController.fetch()
@@ -1005,20 +985,17 @@ class PurchaseDialog(QDialog):
             self._supplier_combo.addItem("(Tidak ada supplier)", userData=None)
             self._supplier_combo.setEnabled(False)
 
-        # Preselect supplier saat edit
         if self._is_edit:
             for i, s in enumerate(self._suppliers):
                 if s.id == self._purchase.supplier_id:
                     self._supplier_combo.setCurrentIndex(i)
                     break
 
-        # ── User (read-only, dari login) ──────────────────────────────────────
         user_id = self._current_user.get("id", "")
         user_name = self._current_user.get("name") or self._current_user.get(
             "username") or f"User #{user_id}"
         self._make_readonly_field(cl, "Dibuat oleh", f"{user_name}")
 
-        # ── Waktu & Total ─────────────────────────────────────────────────────
         self._time_edit, self._time_err = self._make_datetime(cl, "Waktu")
 
         if self._is_edit:
@@ -1030,7 +1007,6 @@ class PurchaseDialog(QDialog):
 
         cl.addSpacing(12)
 
-        # ── Tombol ────────────────────────────────────────────────────────────
         btn_row = QHBoxLayout()
         btn_row.setSpacing(10)
 
@@ -1081,7 +1057,6 @@ class PurchaseDialog(QDialog):
         if not valid:
             return
 
-        # Ambil waktu dari QDateTimeEdit, bukan QLineEdit
         time_val = self._time_edit.dateTime().toString("yyyy-MM-dd HH:mm:ss")
 
         payload = {
@@ -1097,9 +1072,6 @@ class PurchaseDialog(QDialog):
         self.saved.emit(payload)
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# Purchase Detail Dialog (view + manage items)
-# ═══════════════════════════════════════════════════════════════════════════════
 class PurchaseDetailDialog(QDialog):
     data_changed = pyqtSignal()
 
@@ -1162,7 +1134,6 @@ class PurchaseDetailDialog(QDialog):
         supplier = SupplierController.get(p.supplier_id)
         user = UserController.fetch()
 
-        # bikin map user_id → name
         user_map = {u[0]: u[1] for u in user}
 
         supplier_name = supplier.name if supplier else f"Supplier #{p.supplier_id}"
@@ -1184,7 +1155,6 @@ class PurchaseDetailDialog(QDialog):
         cl.addWidget(divider)
         cl.addSpacing(14)
 
-        # ── Add detail form ────────────────────────────────────────────────────
         add_row = QHBoxLayout()
         add_row.setSpacing(8)
 
@@ -1209,7 +1179,6 @@ class PurchaseDetailDialog(QDialog):
             """)
             return s
 
-        # Dropdown produk
         self._products = ProductController.fetch()
         self._new_product_combo = QComboBox()
         self._new_product_combo.setFixedHeight(36)
@@ -1250,7 +1219,6 @@ class PurchaseDetailDialog(QDialog):
         self._new_qty_spin = _spin(min_v=1)
         self._new_price_spin = _spin(is_float=False, max_v=999_999_999)
 
-        # ── Kolom Produk: label + tombol "+ Produk Baru" sejajar di atas dropdown ──
         produk_col = QVBoxLayout()
         produk_col.setSpacing(5)
 
@@ -1291,7 +1259,6 @@ class PurchaseDetailDialog(QDialog):
         produk_col.addWidget(self._new_product_combo)
         add_row.addLayout(produk_col)
 
-        # ── Kolom Qty & Harga ──────────────────────────────────────────────────
         for lbl_text, widget in [
             ("Qty",        self._new_qty_spin),
             ("Harga (Rp)", self._new_price_spin),
@@ -1305,7 +1272,6 @@ class PurchaseDetailDialog(QDialog):
             col.addWidget(widget)
             add_row.addLayout(col)
 
-        # ── Tombol Tambah ──────────────────────────────────────────────────────
         add_item_btn = QPushButton("+ Tambah")
         add_item_btn.setFixedSize(90, 36)
         add_item_btn.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -1329,7 +1295,6 @@ class PurchaseDetailDialog(QDialog):
         cl.addLayout(add_row)
         cl.addSpacing(12)
 
-        # ── Detail table ──────────────────────────────────────────────────────
         self._detail_table = QTableWidget()
         self._detail_table.setColumnCount(5)
         self._detail_table.setHorizontalHeaderLabels(
@@ -1417,7 +1382,6 @@ class PurchaseDetailDialog(QDialog):
                 image_path=data.get("image_path"),
             )
 
-            # Jika gambar di-upload dengan product_id=0, rename ke nama asli + random suffix
             if data.get("image_path"):
                 all_products = ProductController.fetch()
                 if all_products:
@@ -1449,7 +1413,6 @@ class PurchaseDetailDialog(QDialog):
                         except Exception as e:
                             print(f"Error renaming image: {e}")
 
-            # Refresh dropdown produk di form tambah detail
             all_products = ProductController.fetch()
             self._products = all_products
             self._new_product_combo.clear()
@@ -1457,12 +1420,10 @@ class PurchaseDetailDialog(QDialog):
                 label = f"{p.name}" + (f" ({p.brand})" if p.brand else "")
                 self._new_product_combo.addItem(label, userData=p.id)
 
-            # Otomatis pilih produk yang baru saja ditambahkan
             if self._products:
                 self._new_product_combo.setCurrentIndex(
                     len(self._products) - 1)
 
-            # Emit signal agar halaman lain (ProductPage, dll.) ikut ter-refresh
             from gui.signals import product_signals as ps
             if all_products:
                 ps.product_added.emit(all_products[-1])
@@ -1555,10 +1516,8 @@ class PurchaseDetailDialog(QDialog):
                 purchase_price=purchase_price,
             )
 
-            # Update total pembelian
             PurchaseDetailController.update_purchase_total(self._purchase.id)
 
-            # ─── Update stok produk: bertambah sesuai qty yang dibeli ───────
             fresh = ProductController.get(product_id)
             if fresh:
                 new_stock = int(fresh.stock or 0) + quantity
@@ -1572,11 +1531,9 @@ class PurchaseDetailDialog(QDialog):
                     category=fresh.category,
                     image_path=fresh.image_path,
                 )
-                # Broadcast ke kasir & produk page
                 product_signals.product_stock_changed.emit(
                     product_id, new_stock)
 
-            # Broadcast ke dashboard (purchase selesai / detail berubah)
             purchase_signals.purchase_completed.emit(self._purchase.id)
 
             self._new_qty_spin.setValue(1)
@@ -1591,13 +1548,11 @@ class PurchaseDetailDialog(QDialog):
 
     def _on_remove_detail(self, detail_id: int):
         try:
-            # Ambil detail sebelum dihapus agar bisa kembalikan stok
             detail = PurchaseDetailController.get(detail_id)
 
             PurchaseDetailController.remove(detail_id)
             PurchaseDetailController.update_purchase_total(self._purchase.id)
 
-            # ─── Kembalikan stok produk: berkurang sesuai qty yang dihapus ──
             if detail:
                 fresh = ProductController.get(detail.product_id)
                 if fresh:
@@ -1624,9 +1579,6 @@ class PurchaseDetailDialog(QDialog):
             Toast.show_toast(str(e), "error", self)
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# Delete Purchase Dialog
-# ═══════════════════════════════════════════════════════════════════════════════
 class DeletePurchaseDialog(QDialog):
     confirmed = pyqtSignal()
 
@@ -1758,9 +1710,6 @@ class DeletePurchaseDialog(QDialog):
         self.accept()
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# View Toggle (reused pattern)
-# ═══════════════════════════════════════════════════════════════════════════════
 class ViewToggle(QWidget):
     VIEW_TABLE = "table"
     VIEW_CARD = "card"
@@ -1829,9 +1778,6 @@ class ViewToggle(QWidget):
         return self._current
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# Purchase Page
-# ═══════════════════════════════════════════════════════════════════════════════
 class PurchasePage(QWidget):
     def __init__(self, user: dict = None, parent=None):
         super().__init__(parent)
@@ -1851,13 +1797,11 @@ class PurchasePage(QWidget):
     def _load_purchases(self) -> list:
         return PurchaseController.fetch()
 
-    # ── Build UI ──────────────────────────────────────────────────────────────
     def _build_ui(self):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(32, 17, 32, 28)
         layout.setSpacing(0)
 
-        # ── Header ────────────────────────────────────────────────────────────
         header = QHBoxLayout()
         title_col = QVBoxLayout()
         title_col.setSpacing(2)
@@ -1898,7 +1842,6 @@ class PurchasePage(QWidget):
         layout.addLayout(self._build_stats_row())
         layout.addSpacing(20)
 
-        # ── Filter bar + view toggle ──────────────────────────────────────────
         filter_and_toggle = QHBoxLayout()
         filter_and_toggle.setSpacing(10)
 
@@ -1931,11 +1874,9 @@ class PurchasePage(QWidget):
         layout.addLayout(filter_and_toggle)
         layout.addSpacing(16)
 
-        # ── Content stack ─────────────────────────────────────────────────────
         self._content_stack = QStackedWidget()
         self._content_stack.setStyleSheet("background: transparent;")
 
-        # Page 0: Card grid
         self._card_page = QWidget()
         self._card_page.setStyleSheet("background: transparent;")
         card_layout = QVBoxLayout(self._card_page)
@@ -2001,7 +1942,6 @@ class PurchasePage(QWidget):
 
         layout.addWidget(self._content_stack, stretch=1)
 
-    # ── Stats ──────────────────────────────────────────────────────────────────
     def _calc_stats(self) -> dict:
         total_amount = sum(p.total_amount or 0 for p in self._purchases)
         return {
@@ -2044,7 +1984,7 @@ class PurchasePage(QWidget):
 
         dot = QLabel()
         if key == "amount":
-            dot.setText("🪙")  # bisa emoji coin
+            dot.setText("🪙")
         else:
             dot.setText(value)
         dot.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -2100,7 +2040,6 @@ class PurchasePage(QWidget):
 
                 val_lbl.setText(value)
 
-    # ── Data / filter ──────────────────────────────────────────────────────────
     def _filtered_purchases(self) -> list:
         result = self._purchases
 
@@ -2123,7 +2062,6 @@ class PurchasePage(QWidget):
 
         return result
 
-    # ── Refresh ────────────────────────────────────────────────────────────────
     def _refresh_view(self):
         if self._view_mode == ViewToggle.VIEW_CARD:
             self._refresh_grid()
@@ -2146,7 +2084,7 @@ class PurchasePage(QWidget):
 
         purchases = self._filtered_purchases()
 
-        if not purchases:  # (atau: if not suppliers:)
+        if not purchases:
             self._grid_layout.setAlignment(
                 Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter
             )
@@ -2245,11 +2183,9 @@ class PurchasePage(QWidget):
 
         cols = self._get_column_count()
 
-        # reset stretch
         for c in range(10):
             self._grid_layout.setColumnStretch(c, 0)
 
-        # apply stretch
         for c in range(cols):
             self._grid_layout.setColumnStretch(c, 1)
 
@@ -2348,7 +2284,6 @@ class PurchasePage(QWidget):
         super().resizeEvent(event)
         QTimer.singleShot(0, self._refresh_grid)
 
-    # ── Event handlers ─────────────────────────────────────────────────────────
     def _on_view_mode_changed(self, mode: str):
         self._view_mode = mode
         if mode == ViewToggle.VIEW_TABLE:
@@ -2382,7 +2317,6 @@ class PurchasePage(QWidget):
         self._purchases = self._load_purchases()
         self._refresh_stats()
         self._refresh_view()
-        # Emit signal untuk notify reports page
         if self._purchases:
             purchase_signals.purchase_completed.emit(self._purchases[0].id)
 
@@ -2415,7 +2349,6 @@ class PurchasePage(QWidget):
 
                 dlg.data_changed.connect(self._on_detail_changed)
                 dlg.exec()
-                # Emit signal setelah dialog ditutup
                 purchase_signals.purchase_completed.emit(newest.id)
 
         except Exception as e:
@@ -2435,7 +2368,6 @@ class PurchasePage(QWidget):
             self._refresh_view()
             Toast.show_toast(
                 f"Pembelian <b>#{data['id']}</b> berhasil diperbarui.", "success", self)
-            # Emit signal untuk notify reports page
             purchase_signals.purchase_completed.emit(data['id'])
         except Exception as e:
             Toast.show_toast(str(e), "error", self)
@@ -2443,7 +2375,6 @@ class PurchasePage(QWidget):
     def _delete_purchase(self, purchase):
         def do_delete():
             try:
-                # Kurangi stok produk dari semua detail pembelian ini
                 all_details = PurchaseDetailController.fetch()
                 details = [
                     d for d in all_details if d.purchase_id == purchase.id]
@@ -2472,7 +2403,6 @@ class PurchasePage(QWidget):
                 self._refresh_view()
                 Toast.show_toast(
                     f"Pembelian <b>#{purchase.id}</b> berhasil dihapus.", "success", self)
-                # Emit signal untuk notify reports page
                 purchase_signals.purchase_completed.emit(purchase.id)
             except Exception as e:
                 Toast.show_toast(str(e), "error", self)

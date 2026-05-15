@@ -1,5 +1,3 @@
-# views/components/sidebar.py
-
 from PyQt6.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -12,7 +10,6 @@ from PyQt6.QtGui import QColor, QPainter, QPixmap, QPalette
 from PyQt6.QtSvg import QSvgRenderer
 
 
-# ── Nav items ─────────────────────────────────────────────────────────────────
 NAV_ITEMS_ADMIN = [
     {"key": "dashboard",    "label": "Dashboard", "icon": "grid"},
     {"key": "products",     "label": "Produk",    "icon": "box"},
@@ -34,7 +31,6 @@ NAV_ITEMS_CASHIER = [
 VALID_NAV_KEYS = {item["key"] for item in NAV_ITEMS_ADMIN}
  
  
-# ── SVG icons ─────────────────────────────────────────────────────────────────
 ICONS = {
     "grid":          """<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>""",
     "box":           """<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>""",
@@ -50,7 +46,6 @@ ICONS = {
  
 
 
-# ── Palette ───────────────────────────────────────────────────────────────────
 COLOR_BG         = "#FAFAF8"
 COLOR_ACTIVE_BG  = "#EEF0FD"
 COLOR_HOVER_BG   = "#F1EFE8"
@@ -64,7 +59,6 @@ COLOR_LOGOUT     = "#C0392B"
 COLOR_LOGOUT_HOV = "#962d22"
 
 
-# ── Helper ────────────────────────────────────────────────────────────────────
 def _make_pixmap(key: str, color: str, size: int = 18) -> QPixmap:
     """Render SVG icon ke QPixmap dengan warna tertentu."""
     svg = ICONS.get(key, "").replace('stroke="currentColor"', f'stroke="{color}"')
@@ -83,7 +77,6 @@ def _make_pixmap(key: str, color: str, size: int = 18) -> QPixmap:
     return px
 
 
-# ── NavItem ───────────────────────────────────────────────────────────────────
 class NavItem(QWidget):
     clicked = pyqtSignal(str)
 
@@ -180,7 +173,6 @@ class NavItem(QWidget):
         super().mousePressEvent(event)
 
 
-# ── LogoutButton ──────────────────────────────────────────────────────────────
 class LogoutButton(QWidget):
     clicked = pyqtSignal()
 
@@ -241,7 +233,6 @@ class LogoutButton(QWidget):
         super().mousePressEvent(event)
 
 
-# ── SidebarWidget ─────────────────────────────────────────────────────────────
 class SidebarWidget(QWidget):
     nav_changed      = pyqtSignal(str)
     logout_requested = pyqtSignal()
@@ -251,7 +242,6 @@ class SidebarWidget(QWidget):
         self._user = user
         self._role = user.get("role", "Admin")
 
-        # Pilih nav items sesuai role
         if self._role == "Admin":
             self._nav_list = NAV_ITEMS_ADMIN
             default_active = "dashboard"
@@ -259,7 +249,6 @@ class SidebarWidget(QWidget):
             self._nav_list = NAV_ITEMS_CASHIER
             default_active = "cashier"
 
-        # Pastikan active_key valid untuk role ini
         valid_keys = {item["key"] for item in self._nav_list}
         self._active_key = active_key if active_key in valid_keys else default_active
         self._nav_items: dict[str, NavItem] = {}
@@ -381,7 +370,6 @@ class SidebarWidget(QWidget):
         return card
 
     def _set_active_visual(self, key: str):
-        """Ubah active state sidebar tanpa emit signal navigasi."""
         if key not in self._nav_items:
             return
 
@@ -395,15 +383,12 @@ class SidebarWidget(QWidget):
         if key not in self._nav_items:
             return
 
-        # Tetap emit walaupun item yang sama diklik.
-        # Ini membuat MainShell bisa recovery jika state sidebar dan stack sempat tidak sinkron.
         if key != self._active_key:
             self._set_active_visual(key)
 
         self.nav_changed.emit(key)
 
     def set_active(self, key: str):
-        """Dipanggil dari MainShell untuk menyamakan visual; tidak mengirim signal."""
         self._set_active_visual(key)
 
     def current_key(self) -> str:

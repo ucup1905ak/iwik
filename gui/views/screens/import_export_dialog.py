@@ -1,9 +1,3 @@
-# gui/views/screens/import_export_dialog.py
-"""
-Custom Import/Export Dialog untuk halaman Produk
-Mengikuti tema UI Warung+ dengan rounded corners, warna primer biru, etc
-"""
-
 from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QFrame, QLabel, QPushButton,
     QFileDialog, QProgressBar, QWidget
@@ -13,7 +7,6 @@ from utils.generate_xlsx import export_to_xlsx, import_from_xlsx
 import os
 
 
-# ── Color palette (from product_page.py) ──
 C_BG       = "#F4F5F9"
 C_WHITE    = "#FFFFFF"
 C_ACCENT   = "#4F6EF7"
@@ -28,7 +21,6 @@ C_TAG_TEXT = "#4F6EF7"
 
 
 class ImportExportDialog(QDialog):
-    """Custom dialog untuk import/export dengan tema Warung+"""
     
     RESULT_IDLE = 0
     RESULT_SUCCESS = 1
@@ -36,11 +28,6 @@ class ImportExportDialog(QDialog):
     RESULT_CANCELLED = 3
     
     def __init__(self, dialog_type: str = "export", products_data: list = None, parent=None):
-        """
-        Args:
-            dialog_type: 'export' atau 'import'
-            products_data: data produk (untuk export)
-        """
         super().__init__(parent)
         self.dialog_type = dialog_type
         self.products_data = products_data or []
@@ -62,7 +49,6 @@ class ImportExportDialog(QDialog):
         root.setContentsMargins(0, 0, 0, 0)
         root.setSpacing(0)
         
-        # ── Header ──
         header = QFrame()
         header.setStyleSheet(f"QFrame {{ background-color: #FAFAF8; }}")
         header_lay = QVBoxLayout(header)
@@ -92,7 +78,6 @@ class ImportExportDialog(QDialog):
         
         root.addWidget(header)
         
-        # ── Content ──
         content = QWidget()
         content.setStyleSheet(f"background: #FAFAF8;")
         cl = QVBoxLayout(content)
@@ -105,7 +90,6 @@ class ImportExportDialog(QDialog):
         cl.addWidget(divider)
         cl.addSpacing(24)
         
-        # ── Status area ──
         status_frame = QFrame()
         status_frame.setStyleSheet(f"""
             QFrame {{
@@ -152,7 +136,6 @@ class ImportExportDialog(QDialog):
         cl.addWidget(status_frame)
         cl.addSpacing(24)
         
-        # ── Progress (hidden by default) ──
         self._progress = QProgressBar()
         self._progress.setFixedHeight(8)
         self._progress.setStyleSheet(f"""
@@ -169,7 +152,6 @@ class ImportExportDialog(QDialog):
         self._progress.setVisible(False)
         cl.addWidget(self._progress)
         
-        # ── Result area (hidden by default) ──
         self._result_frame = QFrame()
         self._result_frame.setStyleSheet(f"""
             QFrame {{
@@ -204,7 +186,6 @@ class ImportExportDialog(QDialog):
         
         root.addWidget(content)
         
-        # ── Footer ──
         footer = QFrame()
         footer.setStyleSheet(f"QFrame {{ background-color: #FAFAF8; }}")
         footer_lay = QHBoxLayout(footer)
@@ -248,29 +229,24 @@ class ImportExportDialog(QDialog):
         root.addWidget(footer)
     
     def _do_export(self):
-        """Proses export ke Excel"""
         try:
             if not self.products_data:
                 self._show_result(success=False, message="Tidak ada produk untuk diekspor.")
                 return
             
-            # Show progress
             self._action_btn.setEnabled(False)
             
             success, message = export_to_xlsx(self.products_data)
             
             if success:
-                # Show result
                 self._show_result(success=True, message=message)
                 self.result_status = self.RESULT_SUCCESS
                 self.result_message = message
                 
-                # Optional: open folder
                 base_path = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
                 xlsx_dir = os.path.join(base_path, 'assets', 'xlsx')
                 xlsx_dir = os.path.abspath(xlsx_dir)
                 
-                # Schedule close after 2 seconds
                 QTimer.singleShot(2000, self.accept)
             else:
                 self._show_result(success=False, message=message)
@@ -285,7 +261,6 @@ class ImportExportDialog(QDialog):
             self._action_btn.setEnabled(True)
     
     def _do_import(self):
-        """Proses import dari Excel"""
         try:
             file_path, _ = QFileDialog.getOpenFileName(
                 self,
@@ -298,7 +273,6 @@ class ImportExportDialog(QDialog):
                 self.result_status = self.RESULT_CANCELLED
                 return
             
-            # Show progress
             self._action_btn.setEnabled(False)
             self._progress.setVisible(True)
             self._progress.setValue(50)
@@ -313,7 +287,6 @@ class ImportExportDialog(QDialog):
                 self.result_status = self.RESULT_SUCCESS
                 self.result_message = message
                 
-                # Change button to "Confirm Import"
                 self._action_btn.setText("✓ Konfirmasi Import")
                 self._action_btn.clicked.disconnect()
                 self._action_btn.clicked.connect(self.accept)
@@ -333,7 +306,6 @@ class ImportExportDialog(QDialog):
             self._progress.setVisible(False)
     
     def _show_result(self, success: bool, message: str):
-        """Tampilkan result di status frame"""
         if success:
             bg = "#E8F8F0"
             border = C_SUCCESS
@@ -359,12 +331,11 @@ class ImportExportDialog(QDialog):
             }}
         """)
         
-        # Update result display
         for i in range(self._result_frame.layout().count()):
             widget = self._result_frame.layout().itemAt(i).widget()
             if isinstance(widget, QLabel):
                 if widget.text() == "" or len(widget.text()) == 1:
-                    if len(widget.text()) == 1:  # Icon
+                    if len(widget.text()) == 1:
                         widget.setText(icon)
                         widget.setStyleSheet(f"font-size: 28px; color: {color}; background: transparent;")
                         break

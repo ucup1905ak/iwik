@@ -9,19 +9,7 @@ import os
 
 
 def generate_pdf_report(data, filename='sales_report.pdf', title='Sales Report'):
-    """
-    Generate PDF report with sales data
-    
-    Args:
-        data: List of tuples containing table rows
-        filename: Output PDF filename (supports full path)
-        title: Title of the report
-    
-    Returns:
-        Tuple of (success: bool, message: str)
-    """
     try:
-        # Create directory if it doesn't exist
         filepath = os.path.normpath(filename)
         dirpath = os.path.dirname(filepath)
         
@@ -31,7 +19,6 @@ def generate_pdf_report(data, filename='sales_report.pdf', title='Sales Report')
         doc = SimpleDocTemplate(filepath, pagesize=A4)
         elements = []
         
-        # Styles
         styles = getSampleStyleSheet()
         title_style = ParagraphStyle(
             'CustomTitle',
@@ -39,19 +26,16 @@ def generate_pdf_report(data, filename='sales_report.pdf', title='Sales Report')
             fontSize=16,
             textColor=colors.HexColor('#1f4788'),
             spaceAfter=30,
-            alignment=1  # Center alignment
+            alignment=1
         )
         
-        # Title
         title_para = Paragraph(title, title_style)
         elements.append(title_para)
         
-        # Timestamp
         timestamp = Paragraph(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", styles['Normal'])
         elements.append(timestamp)
         elements.append(Spacer(1, 12))
         
-        # Create table
         if data:
             table = Table(data, colWidths=[1.2*inch]*len(data[0]))
             table.setStyle(TableStyle([
@@ -68,7 +52,6 @@ def generate_pdf_report(data, filename='sales_report.pdf', title='Sales Report')
             ]))
             elements.append(table)
         
-        # Build PDF
         doc.build(elements)
         return True, f"PDF berhasil dibuat: {filepath}"
     except Exception as e:

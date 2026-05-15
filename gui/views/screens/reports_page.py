@@ -1,5 +1,3 @@
-# gui/views/screens/reports_page.py
-
 from __future__ import annotations
 
 from collections import defaultdict
@@ -32,10 +30,6 @@ from controllers.receivables import ReceivablesController, Receivables
 from gui.views.components.toast import Toast
 from gui.signals import sales_signals, purchase_signals, receivables_signals, product_signals
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Theme
-# ─────────────────────────────────────────────────────────────────────────────
 C_BG = "#F4F5F9"
 C_WHITE = "#FFFFFF"
 C_ACCENT = "#4F6EF7"
@@ -69,10 +63,6 @@ LOW_STOCK_THRESHOLD = 20
 Period = Literal["daily", "weekly", "monthly", "yearly", "all_time"]
 ChartType = Literal["bar", "line"]
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Helpers
-# ─────────────────────────────────────────────────────────────────────────────
 def _format_price(price: float | int | None) -> str:
     value = float(price or 0)
     return f"Rp {value:,.0f}".replace(",", ".")
@@ -117,10 +107,8 @@ def _period_start(period: Period) -> datetime:
         return (now - timedelta(days=29)).replace(hour=0, minute=0, second=0, microsecond=0)
 
     if period == "yearly":
-        # yearly: 1 Jan of this year
         return now.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
 
-    # all_time: January 1, 1900
     return datetime(1900, 1, 1, 0, 0, 0)
 
 
@@ -136,11 +124,9 @@ def _period_label(period: Period) -> str:
     if period == "monthly":
         return "30 Hari Terakhir"
     if period == "yearly":
-        # yearly
         now = datetime.now()
         year = now.strftime("%Y")
         return f"Tahun {year}"
-    # all_time
     return "Sepanjang Waktu"
 
 
@@ -164,11 +150,9 @@ def _format_period_label(period: Period, tx_count: int = 0) -> str:
         return month_name if tx_count == 0 else f"{month_name} • {_format_number(tx_count)} transaksi"
     
     if period == "yearly":
-        # yearly
         year_str = now.strftime("1 Jan - 31 Des %Y")
         return year_str if tx_count == 0 else f"{year_str} • {_format_number(tx_count)} transaksi"
     
-    # all_time
     return "Sepanjang Waktu" if tx_count == 0 else f"Sepanjang Waktu • {_format_number(tx_count)} transaksi"
 
 
@@ -203,9 +187,6 @@ def _clear_layout(layout):
             widget.deleteLater()
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Chart Widgets
-# ─────────────────────────────────────────────────────────────────────────────
 class SimpleChartWidget(QWidget):
     def __init__(self, chart_type: ChartType = "bar", show_currency: bool = False, parent=None):
         super().__init__(parent)
@@ -377,8 +358,8 @@ class PieChartWidget(QWidget):
         painter.setFont(font)
 
         color_map = {
-            "Tunai": "#27AE60",  # hijau
-            "QRIS": "#4F6EF7",   # biru
+            "Tunai": "#27AE60",
+            "QRIS": "#4F6EF7",
         }
 
         for idx, (label, value) in enumerate(self._data[:6]):
@@ -511,9 +492,6 @@ class PieChartCard(QFrame):
             self._subtitle_lbl.setText(subtitle)
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Cards / Lists
-# ─────────────────────────────────────────────────────────────────────────────
 class MetricCard(QFrame):
     def __init__(self, title: str, value: str, subtitle: str, icon: str, color: str = C_ACCENT, parent=None):
         super().__init__(parent)
@@ -756,9 +734,6 @@ class ReportListCard(QFrame):
         self.update()
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Reports Page
-# ─────────────────────────────────────────────────────────────────────────────
 class ReportsPage(QWidget):
     def __init__(self, user: dict | None = None, parent=None):
         super().__init__(parent)
@@ -780,14 +755,12 @@ class ReportsPage(QWidget):
         self._build_ui()
         self._load_data()
 
-        # Auto-refresh saat ada transaksi baru dari halaman Kasir, Pembelian, atau Piutang
         sales_signals.sales_completed.connect(self._on_sales_completed)
         purchase_signals.purchase_completed.connect(self._on_purchase_completed)
         receivables_signals.receivables_updated.connect(self._on_receivables_updated)
         receivables_signals.receivables_paid.connect(self._on_receivables_updated)
         product_signals.product_stock_changed.connect(self._on_product_stock_changed)
 
-    # ── UI Build ──────────────────────────────────────────────────────────────
     def _build_ui(self):
         root = QVBoxLayout(self)
         root.setContentsMargins(24, 24, 24, 24)
@@ -1018,7 +991,6 @@ class ReportsPage(QWidget):
 
         parent_layout.addLayout(grid)
 
-    # ── Data / Refresh ────────────────────────────────────────────────────────
     def _load_data(self):
         try:
             self._products = ProductController.fetch()
@@ -1111,13 +1083,8 @@ class ReportsPage(QWidget):
         return [detail for detail in self._purchase_details if int(detail.purchase_id) in purchase_ids]
 
     def _refresh_metrics(self, period_sales: list[Sales], period_details: list[SalesDetail]):
-        # ── Omset (Gross Revenue) ──
-        # Hitung berdasarkan total_price (harga jual), bukan paid_amount (uang dibayar)
-        # Jika pembayaran tunai dan uang lebih, omset tetap dari harga jual, kembalian dari kas
         gross_revenue = sum(float(sale.total_price or 0) for sale in period_sales)
         
-        # ── Biaya Operasional ──
-        # 1. Total modal pembelian dari supplier
         period_purchases = self._filtered_purchases()
         period_purchase_details = self._filtered_purchase_details(period_purchases)
         total_purchase_cost = sum(
@@ -1125,21 +1092,16 @@ class ReportsPage(QWidget):
             for detail in period_purchase_details
         )
         
-        # 2. Pajak UMKM 0.5% dari total omset
         umkm_tax = gross_revenue * 0.005
         
-        # 3. Total biaya operasional
         total_operational_cost = total_purchase_cost + umkm_tax
         
-        # ── Profit = Omset - Biaya Operasional ──
         profit = gross_revenue - total_operational_cost
         
-        # ── Total Piutang ──
         period_receivables = [r for r in self._receivables if _same_period(r.due_date, self._active_period)] if self._receivables else []
         unpaid_receivables = [r for r in period_receivables if str(r.status).lower() in ("unpaid", "pending")]
         total_receivable = sum(float(r.total_amount or 0) - float(r.amount_paid or 0) for r in unpaid_receivables)
         
-        # ── Metrics Display ──
         tx_count = len(period_sales)
         items_sold = sum(int(detail.quantity or 0) for detail in period_details)
 
@@ -1160,7 +1122,6 @@ class ReportsPage(QWidget):
         self._category_chart.set_data(self._category_series(period_details), "Quantity terjual per kategori")
         self._purchase_chart.set_data(self._purchase_series(period_purchases), f"Pembelian stok ({period_subtitle.split(' • ')[0]})")
 
-    # ── Series builders ───────────────────────────────────────────────────────
     def _time_labels(self) -> tuple[list[str], dict]:
         now = datetime.now()
 
@@ -1169,28 +1130,23 @@ class ReportsPage(QWidget):
             return labels, {hour: f"{hour:02d}" for hour in range(24)}
 
         if self._active_period == "weekly":
-            # Hanya 7 hari dari Senin minggu ini sampai Minggu
-            days_since_monday = now.weekday()  # 0=Senin, 6=Minggu
+            days_since_monday = now.weekday()
             monday = (now - timedelta(days=days_since_monday)).replace(hour=0, minute=0, second=0, microsecond=0)
             days = [monday + timedelta(days=i) for i in range(7)]
             labels = [day.strftime("%d/%m") for day in days]
             return labels, {day.date(): label for day, label in zip(days, labels)}
 
         if self._active_period == "monthly":
-            # monthly: dari hari 1 bulan ini sampai hari ini
             first_day = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
             days = [(first_day + timedelta(days=i)).date() for i in range((now.date() - first_day.date()).days + 1)]
             labels = [day.strftime("%d/%m") for day in days]
             return labels, {day: label for day, label in zip(days, labels)}
 
         if self._active_period == "yearly":
-            # yearly: Semua 12 bulan dalam tahun ini
             labels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
             month_map = {i: label for i, label in enumerate(labels, start=1)}
             return labels, month_map
 
-        # all_time: Group per tahun, tahun 0 untuk data tanpa tahun valid
-        # Kumpulkan semua tahun yang ada di data
         all_sales = self._sales
         years = set()
         for sale in all_sales:
@@ -1200,7 +1156,6 @@ class ReportsPage(QWidget):
             else:
                 years.add(0)
         
-        # Sort tahun dari terkecil, tapi 0 paling belakang
         sorted_years = sorted([y for y in years if y != 0]) + ([0] if 0 in years else [])
         labels = [str(year) for year in sorted_years]
         year_map = {year: str(year) for year in sorted_years}
@@ -1223,31 +1178,23 @@ class ReportsPage(QWidget):
             dt = _parse_datetime(sale.time)
             label = self._label_for_dt(dt, mapper) if dt else None
             if label:
-                # Hitung berdasarkan total_price (harga jual sebenarnya), bukan paid_amount
                 buckets[label] += float(sale.total_price or 0)
 
         return [(label, buckets[label]) for label in labels]
 
     def _profit_series(self, period_sales: list[Sales], period_purchases: list[Purchase]) -> list[tuple[str, float]]:
-        """Hitung profit = omset - (total biaya operasional)
-        Biaya operasional = total pembelian + pajak UMKM 0.5% dari omset"""
-        
         labels, mapper = self._time_labels()
         omset_buckets = {label: 0.0 for label in labels}
         purchase_buckets = {label: 0.0 for label in labels}
 
-        # Hitung omset per periode berdasarkan total_price (harga jual sebenarnya)
         for sale in period_sales:
             dt = _parse_datetime(sale.time)
             label = self._label_for_dt(dt, mapper) if dt else None
             if label:
-                # Gunakan total_price (harga jual), bukan paid_amount (uang dibayar user)
                 omset_buckets[label] += float(sale.total_price or 0)
 
-        # Hitung biaya pembelian per periode
         period_purchase_details = self._filtered_purchase_details(period_purchases)
         for detail in period_purchase_details:
-            # Cari purchase terkait
             purchase = next((p for p in period_purchases if p.id == detail.purchase_id), None)
             if purchase:
                 dt = _parse_datetime(purchase.time)
@@ -1255,14 +1202,12 @@ class ReportsPage(QWidget):
                 if label:
                     purchase_buckets[label] += float(detail.purchase_price or 0) * int(detail.quantity or 0)
 
-        # Hitung profit per label (clamp negatif ke 0 untuk chart)
         profit_buckets = {}
         for label in labels:
             omset = omset_buckets[label]
             purchase_cost = purchase_buckets[label]
-            tax = omset * 0.005  # Pajak UMKM 0.5%
+            tax = omset * 0.005
             profit = omset - purchase_cost - tax
-            # Jika profit negatif, tampilkan 0 di chart (tetap stabil)
             profit_buckets[label] = max(0, profit)
 
         return [(label, profit_buckets[label]) for label in labels]
@@ -1283,7 +1228,6 @@ class ReportsPage(QWidget):
         labels, mapper = self._time_labels()
         buckets = {label: 0.0 for label in labels}
 
-        # Hitung dari purchase details untuk memastikan semua pembelian terdeteksi
         period_purchase_details = self._filtered_purchase_details(period_purchases)
         
         for detail in period_purchase_details:
@@ -1329,7 +1273,6 @@ class ReportsPage(QWidget):
     def _payment_series(self, period_sales: list[Sales]) -> list[tuple[str, float]]:
         counts: dict[str, int] = defaultdict(int)
         
-        # Payment label mapping - hanya Tunai dan QRIS
         payment_labels = {
             "tunai": "Tunai",
             "qris": "QRIS",
@@ -1346,12 +1289,11 @@ class ReportsPage(QWidget):
         for payment_key in order:
             label = payment_labels.get(payment_key, payment_key.upper() if payment_key else "—")
             count = counts.get(payment_key, 0)
-            if count > 0:  # Hanya tampilkan jika ada transaksi
+            if count > 0:
                 result.append((label, float(count)))
         
         return result
 
-    # ── List builders ─────────────────────────────────────────────────────────
     def _refresh_lists(self, period_sales: list[Sales], period_details: list[SalesDetail], period_purchases: list[Purchase]):
         self._top_products_card.set_items(self._top_product_items(period_details))
         self._low_stock_card.set_items(self._low_stock_items())
@@ -1435,7 +1377,7 @@ class ReportsPage(QWidget):
         items_sold = sum(int(detail.quantity or 0) for detail in period_details)
         avg_order = revenue / tx_count if tx_count else 0
         
-        period_label = _format_period_label(self._active_period, 0)  # tanpa tx count untuk header
+        period_label = _format_period_label(self._active_period, 0)
 
         items: list[tuple[str, str, str, str]] = [
             ("Periode laporan", "Filter aktif yang sedang digunakan", period_label, C_ACCENT),
@@ -1445,7 +1387,6 @@ class ReportsPage(QWidget):
 
         return items
 
-    # ── PDF Export ────────────────────────────────────────────────────────────
     def _export_pdf_report(self):
         try:
             default_name = f"laporan_transaksi_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
@@ -1620,7 +1561,6 @@ class ReportsPage(QWidget):
             product_count_by_sale[int(detail.sales_id)] += int(detail.quantity or 0)
             discount_by_sale[int(detail.sales_id)] += float(detail.discount or 0)
 
-        # Payment label mapping - hanya Tunai dan QRIS
         payment_labels = {
             "tunai": "Tunai",
             "qris": "QRIS",

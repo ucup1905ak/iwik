@@ -4,24 +4,23 @@ from PyQt6.QtCore import Qt
 
 
 class PinDot(QWidget):
-    def __init__(self, accent="#4F6EF7"):  # ← tambahkan ini
+    def __init__(self, accent="#4F6EF7"):
         super().__init__()
-        self.setFixedSize(22, 22)  # ← samakan ukuran dengan versi lama (22, bukan 14)
+        self.setFixedSize(22, 22)
         self.accent = accent
         self._filled = False
         self._error = False
-        self._shake_offset = 0  # ← diperlukan oleh shake animation di LoginScreen
+        self._shake_offset = 0
 
-    def set_filled(self, v: bool):  # ← LoginScreen pakai set_filled, bukan setFilled
+    def set_filled(self, v: bool):
         self._filled = v
         self._error = False
         self.update()
 
-    def set_error(self, v: bool):   # ← LoginScreen pakai set_error
+    def set_error(self, v: bool):
         self._error = v
         self.update()
 
-    # Untuk shake animation di LoginScreen
     def get_shake(self): return self._shake_offset
     def set_shake(self, v):
         self._shake_offset = v

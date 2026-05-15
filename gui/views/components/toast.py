@@ -1,5 +1,3 @@
-# gui/views/components/toast.py
-
 from PyQt6.QtWidgets import QFrame, QHBoxLayout, QVBoxLayout, QLabel, QWidget
 from PyQt6.QtCore import Qt, QTimer, QPropertyAnimation, QEasingCurve, QPoint
 from PyQt6.QtGui import QColor
@@ -28,11 +26,10 @@ class Toast(QFrame):
         """)
 
         lay = QHBoxLayout(self)
-        lay.setContentsMargins(16, 12, 12, 12)  # ← fix di sini
+        lay.setContentsMargins(16, 12, 12, 12)
         lay.setSpacing(12)
         lay.setAlignment(Qt.AlignmentFlag.AlignVCenter)
 
-        # ── Icon circle ───────────────────────────────────────────────────
         icon_circle = QFrame()
         icon_circle.setFixedSize(32, 32)
         icon_circle.setStyleSheet(f"""
@@ -56,7 +53,6 @@ class Toast(QFrame):
         """)
         icon_lay.addWidget(icon_lbl)
 
-        # ── Text block ────────────────────────────────────────────────────
         text_block = QVBoxLayout()
         text_block.setSpacing(2)
         text_block.setContentsMargins(0, 0, 0, 0)
@@ -111,8 +107,7 @@ class Toast(QFrame):
 
         def _remove():
             try:
-                # Guard: cek apakah toast masih valid
-                toast.objectName()  # akan raise RuntimeError jika sudah deleted
+                toast.objectName()
             except RuntimeError:
                 return
 

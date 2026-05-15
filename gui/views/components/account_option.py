@@ -44,12 +44,10 @@ class AccountOption(QWidget):
             }
         """)
 
-        # ── Layout ────────────────────────────────────────────────────────────
         layout = QHBoxLayout(self)
         layout.setContentsMargins(10, 10, 14, 10)
         layout.setSpacing(14)
 
-        # ── Avatar ────────────────────────────────────────────────────────────
         if is_add:
             avatar = Avatar(
                 "+",
@@ -67,7 +65,6 @@ class AccountOption(QWidget):
 
         layout.addWidget(avatar)
 
-        # ── Text Section (Name only) ─────────────────────────────────────────
         text_layout = QVBoxLayout()
         text_layout.setSpacing(2)
 
@@ -93,7 +90,6 @@ class AccountOption(QWidget):
         layout.addLayout(text_layout)
         layout.addStretch()
 
-        # ── Badge ─────────────────────────────────────────────────────────────
         if badge_text:
             badge = Badge(
                 badge_text,
@@ -102,7 +98,6 @@ class AccountOption(QWidget):
             )
             layout.addWidget(badge)
 
-        # ── Chevron ───────────────────────────────────────────────────────────
         self.chevron = QLabel("›")
         self.chevron.setStyleSheet("""
             font-size: 18px;
@@ -113,17 +108,14 @@ class AccountOption(QWidget):
 
         layout.addWidget(self.chevron)
 
-        # ── Background Animation ─────────────────────────────────────────────
         self._anim_bg = QPropertyAnimation(self, b"bgAlpha")
         self._anim_bg.setDuration(140)
         self._anim_bg.setEasingCurve(QEasingCurve.Type.OutCubic)
 
-        # ── Chevron Animation ────────────────────────────────────────────────
         self._anim_chevron = QPropertyAnimation(self, b"chevronAlpha")
         self._anim_chevron.setDuration(140)
         self._anim_chevron.setEasingCurve(QEasingCurve.Type.OutCubic)
 
-    # ── bgAlpha property ─────────────────────────────────────────────────────
     def getBgAlpha(self):
         return self._bg_alpha
 
@@ -133,7 +125,6 @@ class AccountOption(QWidget):
 
     bgAlpha = pyqtProperty(int, getBgAlpha, setBgAlpha)
 
-    # ── chevronAlpha property ────────────────────────────────────────────────
     def getChevronAlpha(self):
         return self._chevron_alpha
 
@@ -155,7 +146,6 @@ class AccountOption(QWidget):
 
     chevronAlpha = pyqtProperty(int, getChevronAlpha, setChevronAlpha)
 
-    # ── Paint ────────────────────────────────────────────────────────────────
     def paintEvent(self, event):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
@@ -185,7 +175,6 @@ class AccountOption(QWidget):
 
         painter.end()
 
-    # ── Animation Helper ─────────────────────────────────────────────────────
     def _anim_to(self, bg_val: int, ch_val: int):
         self._anim_bg.stop()
         self._anim_bg.setStartValue(self._bg_alpha)
@@ -197,7 +186,6 @@ class AccountOption(QWidget):
         self._anim_chevron.setEndValue(ch_val)
         self._anim_chevron.start()
 
-    # ── Events ───────────────────────────────────────────────────────────────
     def enterEvent(self, e):
         self._anim_to(220, 255)
         super().enterEvent(e)

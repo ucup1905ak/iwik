@@ -4,18 +4,7 @@ from datetime import datetime
 
 
 def export_to_csv(data, filename='sales_export.csv'):
-    """
-    Export data to CSV file
-    
-    Args:
-        data: List of tuples/lists containing table rows
-        filename: Output CSV filename
-    
-    Returns:
-        Tuple of (success: bool, message: str)
-    """
     try:
-        # Create assets/csv directory if it doesn't exist
         csv_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'assets', 'csv')
         os.makedirs(csv_dir, exist_ok=True)
         

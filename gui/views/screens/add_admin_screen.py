@@ -1,12 +1,3 @@
-# views/screens/add_admin_screen.py
-"""
-Add Admin Screen
-================
-Layar tambah admin baru.
-UI only — belum terhubung ke SQLite langsung.
-Penyimpanan tetap lewat callback on_success dari AppShell.
-"""
-
 from PyQt6.QtWidgets import (
     QWidget,
     QLabel,
@@ -133,7 +124,6 @@ class AddAdminScreen(QWidget):
 
         root.addWidget(card, alignment=Qt.AlignmentFlag.AlignCenter)
 
-    # ── Handlers ─────────────────────────────────────────────────────────────
     def _on_name_changed(self, text: str):
         text = text.strip()
 

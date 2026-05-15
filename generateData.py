@@ -173,9 +173,6 @@ def _ensure_suppliers() -> list[int]:
 
 def _ensure_products() -> dict[int, dict]:
     rows = [
-        # =========================
-        # MAKANAN - kemasan / instan, bukan siap saji
-        # =========================
         ("Indomie Goreng", "Indomie", "MKN-001", "Makanan", 180, 3500, 25),
         ("Indomie Soto", "Indomie", "MKN-002", "Makanan", 160, 3500, 22),
         ("Indomie Ayam Bawang", "Indomie", "MKN-003", "Makanan", 150, 3500, 20),
@@ -197,9 +194,6 @@ def _ensure_products() -> dict[int, dict]:
         ("Roti Tawar Kering Kemasan", "Sari Roti", "MKN-019", "Makanan", 25, 12000, 4),
         ("Meses Coklat Sachet", "Ceres", "MKN-020", "Makanan", 40, 3000, 4),
 
-        # =========================
-        # MINUMAN
-        # =========================
         ("Kopi Kapal Api Sachet", "Kapal Api", "MNM-001", "Minuman", 180, 1500, 25),
         ("Kopi ABC Susu Sachet", "ABC", "MNM-002", "Minuman", 160, 2000, 22),
         ("Kopi Good Day Cappuccino", "Good Day", "MNM-003", "Minuman", 120, 2500, 18),
@@ -221,9 +215,6 @@ def _ensure_products() -> dict[int, dict]:
         ("Air Mineral 600ml", "Aqua", "MNM-019", "Minuman", 120, 4000, 16),
         ("Air Mineral 1.5L", "Aqua", "MNM-020", "Minuman", 70, 7000, 10),
 
-        # =========================
-        # SNACK
-        # =========================
         ("Biskuit Roma Kelapa", "Roma", "SNK-001", "Snack", 70, 8500, 12),
         ("Biskuit Roma Malkist", "Roma", "SNK-002", "Snack", 65, 9000, 10),
         ("Biskuit Khong Guan", "Khong Guan", "SNK-003", "Snack", 40, 13000, 6),
@@ -245,9 +236,6 @@ def _ensure_products() -> dict[int, dict]:
         ("Keripik Singkong Balado", "Kusuka", "SNK-019", "Snack", 35, 8500, 5),
         ("Kuaci Rebo", "Rebo", "SNK-020", "Snack", 50, 3000, 7),
 
-        # =========================
-        # SEMBAKO
-        # =========================
         ("Beras Ramos 5kg", "Ramos", "SMB-001", "Sembako", 35, 72000, 18),
         ("Beras Pandan Wangi 5kg", "Pandan Wangi", "SMB-002", "Sembako", 28, 78000, 15),
         ("Beras Premium 10kg", "Makmur Jaya", "SMB-003", "Sembako", 20, 145000, 10),
@@ -269,9 +257,6 @@ def _ensure_products() -> dict[int, dict]:
         ("Merica Bubuk Sachet", "Ladaku", "SMB-019", "Sembako", 80, 1500, 8),
         ("Santan Instan 65ml", "Kara", "SMB-020", "Sembako", 55, 4500, 8),
 
-        # =========================
-        # LAINNYA
-        # =========================
         ("Sabun Mandi Batang", "Lifebuoy", "LNY-001", "Lainnya", 55, 4500, 8),
         ("Sabun Mandi Batang", "Lux", "LNY-002", "Lainnya", 45, 5000, 7),
         ("Shampoo Sachet", "Sunsilk", "LNY-003", "Lainnya", 150, 1000, 18),
@@ -376,24 +361,17 @@ _MONTHLY_QUOTA = {
     (2026,  2): 4,
     (2026,  3): 5,
     (2026,  4): 6,
-    (2026,  5): 5,   # Mei 2026 termasuk hari ini
+    (2026,  5): 5,
 }
 
-TODAY_TX_COUNT = 5   # Transaksi wajib hari ini
+TODAY_TX_COUNT = 5
 
 
 def _build_sale_dates(transaction_count: int) -> list[datetime]:
-    """
-    Bangun list datetime transaksi:
-    - TODAY_TX_COUNT transaksi hari ini (jam siang–sore)
-    - Sisa tersebar per bulan sesuai _MONTHLY_QUOTA
-    - Total tidak melebihi transaction_count
-    """
     now = datetime.now()
     today = now.date()
     dates: list[datetime] = []
 
-    # 1. Transaksi hari ini — jam bervariasi agar chart harian tidak menumpuk
     today_hours = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
     for h in random.sample(today_hours, k=min(TODAY_TX_COUNT, len(today_hours))):
         dates.append(datetime(
@@ -401,9 +379,7 @@ def _build_sale_dates(transaction_count: int) -> list[datetime]:
             h, random.randint(0, 59), random.randint(0, 59),
         ))
 
-    # 2. Transaksi per bulan dari quota
     for (year, month), quota in _MONTHLY_QUOTA.items():
-        # Hitung hari valid dalam bulan itu (tidak boleh melebihi hari ini)
         import calendar
         last_day = calendar.monthrange(year, month)[1]
         month_start = datetime(year, month, 1)
@@ -509,7 +485,6 @@ def _generate_purchases(user_ids, supplier_ids, product_map, purchase_count=PURC
     product_ids = list(product_map.keys())
     now = datetime.now()
 
-    # Sebaran purchase: 1–2 per bulan dari Jan 2025 s/d sekarang
     import calendar
     purchase_months = list(_MONTHLY_QUOTA.keys())[:purchase_count]
 

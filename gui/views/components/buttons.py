@@ -1,5 +1,3 @@
-# views/components/buttons.py
-
 from PyQt6.QtWidgets import QWidget, QLabel, QHBoxLayout, QSizePolicy
 from PyQt6.QtCore import Qt, QPropertyAnimation, QEasingCurve, pyqtProperty
 from PyQt6.QtGui import QPainter, QColor, QPainterPath
@@ -47,7 +45,6 @@ class PrimaryButton(QWidget):
         path = QPainterPath()
         path.addRoundedRect(0, 0, self.width(), self.height(), 8, 8)
 
-        # Interpolasi antara #4F6EF7 normal dan #3B5CE6 hover.
         t = self._bg_anim_val / 255
         r = int(0x4F + (0x3B - 0x4F) * t)
         g = int(0x6E + (0x5C - 0x6E) * t)

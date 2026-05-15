@@ -11,7 +11,6 @@ from PyQt6.QtWidgets import (
     QGridLayout,
     QComboBox,
     QDialog,
-    QFormLayout,
     QMessageBox,
     QGraphicsDropShadowEffect,
     QTableWidget,
@@ -22,7 +21,7 @@ from PyQt6.QtWidgets import (
     QFileDialog
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QTimer
-from PyQt6.QtGui import QColor, QFont, QPainter, QPainterPath, QRegion, QPixmap
+from PyQt6.QtGui import QColor, QFont, QPainterPath, QRegion, QPixmap
 from gui.views.components.toast import Toast
 from gui.views.screens.import_export_dialog import ImportExportDialog
 from gui.signals import product_signals
@@ -32,7 +31,6 @@ import os
 import random
 import string
 
-# ── Color palette ──────────────────────────────────────────────────────────────
 C_BG = "#F4F5F9"
 C_WHITE = "#FFFFFF"
 C_ACCENT = "#4F6EF7"
@@ -130,9 +128,6 @@ def _apply_card_shadow(widget: QWidget):
         widget.setGraphicsEffect(None)
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# Product Card
-# ═══════════════════════════════════════════════════════════════════════════════
 class ProductCard(QFrame):
     edit_clicked = pyqtSignal(Product)
     delete_clicked = pyqtSignal(Product)
@@ -165,17 +160,12 @@ class ProductCard(QFrame):
         """)
         _apply_card_shadow(self)
 
-        # ── Main Layout ─────────────────────────────────────────────
         root = QHBoxLayout(self)
         root.setContentsMargins(14, 14, 14, 14)
         root.setSpacing(14)
 
-        # ============================================================
-        # IMAGE KIRI (DI DALAM CARD)
-        # ============================================================
         img_container = QFrame()
-        # Hapus setFixedSize, ganti dengan hanya fixed width
-        img_container.setFixedWidth(140)  # ← lebar saja, tinggi mengikuti card
+        img_container.setFixedWidth(140)
         img_container.setStyleSheet(f"""
             QFrame {{
                 background: #FFFFFF;
@@ -195,7 +185,7 @@ class ProductCard(QFrame):
             pixmap = QPixmap(product.image_path)
             if not pixmap.isNull():
                 scaled = pixmap.scaled(
-                    130, 150,  # ← lebih besar menyesuaikan container
+                    130, 150,
                     Qt.AspectRatioMode.KeepAspectRatio,
                     Qt.TransformationMode.SmoothTransformation
                 )
@@ -209,18 +199,13 @@ class ProductCard(QFrame):
             img_label.setStyleSheet(f"font-size: 40px; color: {C_TEXT_SEC};")
 
         img_layout.addWidget(img_label)
-        # ↓ Hapus alignment=AlignTop agar gambar full tinggi
         root.addWidget(img_container)
 
-        # ============================================================
-        # INFO KANAN
-        # ============================================================
         info_container = QWidget()
         info_layout = QVBoxLayout(info_container)
         info_layout.setContentsMargins(0, 0, 0, 0)
         info_layout.setSpacing(2)
 
-        # ── Top row ────────────────────────────────────────────────
         top = QHBoxLayout()
         cat = _cat_theme(product.category)
 
@@ -260,7 +245,6 @@ class ProductCard(QFrame):
         top.addWidget(stock_badge)
         info_layout.addLayout(top)
 
-        # ── Name ───────────────────────────────────────────────────
         name_lbl = QLabel(product.name)
         name_lbl.setWordWrap(True)
         name_lbl.setMaximumHeight(36)
@@ -274,7 +258,6 @@ class ProductCard(QFrame):
         """)
         info_layout.addWidget(name_lbl)
 
-        # ── Brand ──────────────────────────────────────────────────
         if product.brand:
             brand_lbl = QLabel(f"Merek: {product.brand}")
             brand_lbl.setStyleSheet(f"""
@@ -286,7 +269,6 @@ class ProductCard(QFrame):
             """)
             info_layout.addWidget(brand_lbl)
 
-        # ── SKU ────────────────────────────────────────────────────
         sku_lbl = QLabel(f"SKU: {product.sku}")
         sku_lbl.setStyleSheet(f"""
             font-family: 'Segoe UI';
@@ -299,7 +281,6 @@ class ProductCard(QFrame):
 
         info_layout.addStretch(1)
 
-        # ── Bottom row ─────────────────────────────────────────────
         bottom = QHBoxLayout()
         bottom.setSpacing(8)
 
@@ -364,9 +345,6 @@ class ProductCard(QFrame):
         root.addWidget(info_container, stretch=1)
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# Product Table View
-# ═══════════════════════════════════════════════════════════════════════════════
 class ProductTableView(QTableWidget):
     edit_clicked = pyqtSignal(Product)
     delete_clicked = pyqtSignal(Product)
@@ -386,7 +364,6 @@ class ProductTableView(QTableWidget):
         super().__init__(parent)
         self._setup_table()
 
-    # ── Viewport clip (rounded mask) ──────────────────────────────────────────
     def _apply_viewport_clip(self):
         vp = self.viewport()
         w, h = vp.width(), vp.height()
@@ -411,7 +388,6 @@ class ProductTableView(QTableWidget):
         self.setColumnCount(len(self.COLUMNS))
         self.setHorizontalHeaderLabels(self.COLUMNS)
 
-        # ===== TABLE BEHAVIOR =====
         self.setAlternatingRowColors(True)
         self.setShowGrid(True)
         self.setGridStyle(Qt.PenStyle.SolidLine)
@@ -431,7 +407,6 @@ class ProductTableView(QTableWidget):
         self.setSelectionMode(QAbstractItemView.SelectionMode.NoSelection)
         self.viewport().setAutoFillBackground(True)
 
-        # ===== HEADER =====
         header = self.horizontalHeader()
         header.setHighlightSections(False)
         header.setDefaultAlignment(
@@ -465,7 +440,6 @@ class ProductTableView(QTableWidget):
         self.setHorizontalScrollMode(
             QAbstractItemView.ScrollMode.ScrollPerPixel)
 
-        # ===== STYLE =====
         self.setStyleSheet(f"""
             QTableWidget {{
                 background: {C_WHITE};
@@ -592,7 +566,6 @@ class ProductTableView(QTableWidget):
     def _adjust_columns(self):
         header = self.horizontalHeader()
 
-        # Total lebar semua kolom fixed (kecuali COL_NAME)
         fixed_widths = (
             self.columnWidth(self.COL_NO) +
             self.columnWidth(self.COL_SKU) +
@@ -602,21 +575,17 @@ class ProductTableView(QTableWidget):
             self.columnWidth(self.COL_ACTION)
         )
 
-        # Lebar viewport yang tersedia
         available = self.viewport().width()
         name_width = available - fixed_widths
 
         if name_width >= self.MIN_NAME_WIDTH:
-            # Cukup lebar → stretch seperti biasa
             header.setSectionResizeMode(
                 self.COL_NAME, QHeaderView.ResizeMode.Stretch)
         else:
-            # Terlalu sempit → fix kolom Nama, aktifkan scroll horizontal
             header.setSectionResizeMode(
                 self.COL_NAME, QHeaderView.ResizeMode.Fixed)
             self.setColumnWidth(self.COL_NAME, self.MIN_NAME_WIDTH)
 
-    # ── Empty state ───────────────────────────────────────────────────────────
     def _show_empty_state(self):
         self.clearContents()
         self.setRowCount(1)
@@ -679,7 +648,6 @@ class ProductTableView(QTableWidget):
 
         self.setCellWidget(0, 0, empty_widget)
 
-    # ── Populate ──────────────────────────────────────────────────────────────
 
     def populate(self, products: list):
         self.clearContents()
@@ -721,7 +689,6 @@ class ProductTableView(QTableWidget):
 
         QTimer.singleShot(0, self._apply_viewport_clip)
 
-    # ── Cell helpers ──────────────────────────────────────────────────────────
     def _wrap(self, bg: str, align=Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter):
         w = QWidget()
         w.setStyleSheet(f"""
@@ -943,9 +910,6 @@ class ProductTableView(QTableWidget):
         return w
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# Add / Edit Product Dialog
-# ═══════════════════════════════════════════════════════════════════════════════
 class ProductDialog(QDialog):
     saved = pyqtSignal(dict)
 
@@ -972,9 +936,8 @@ class ProductDialog(QDialog):
         """)
         self._build_ui()
         self.adjustSize()
-        self.setFixedWidth(420)  # hanya kunci width
+        self.setFixedWidth(420)
 
-    # ── Field builders ────────────────────────────────────────────────────────
     def _make_field(
         self,
         parent_layout,
@@ -1132,7 +1095,6 @@ class ProductDialog(QDialog):
         arrow_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
         arrow_lbl.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
 
-        # Posisi setelah layout diset — pakai QTimer agar width sudah terhitung
         QTimer.singleShot(0, lambda: arrow_lbl.setGeometry(
             combo.width() - 28, -8, 24, 40))
 
@@ -1151,7 +1113,6 @@ class ProductDialog(QDialog):
 
         return combo, err_lbl
 
-    # ── Validation helpers ────────────────────────────────────────────────────
     @staticmethod
     def _show_error(field: QLineEdit, err_lbl: QLabel, msg: str):
         field.setStyleSheet("""
@@ -1189,13 +1150,11 @@ class ProductDialog(QDialog):
         """)
         err_lbl.setVisible(False)
 
-    # ── Build UI ──────────────────────────────────────────────────────────────
     def _build_ui(self):
         root = QVBoxLayout(self)
         root.setContentsMargins(0, 0, 0, 0)
         root.setSpacing(0)
 
-        # ── Header ────────────────────────────────────────────────────────────
         header = QFrame()
         header.setStyleSheet("QFrame { background-color: #FAFAF8; }")
         header_lay = QVBoxLayout(header)
@@ -1226,7 +1185,6 @@ class ProductDialog(QDialog):
         header_lay.addSpacing(16)
         root.addWidget(header)
 
-        # ── Content ────────────────────────────────────────────────────────────
         content = QWidget()
         content.setStyleSheet("background: #FAFAF8;")
         cl = QVBoxLayout(content)
@@ -1239,7 +1197,6 @@ class ProductDialog(QDialog):
         cl.addWidget(divider)
         cl.addSpacing(18)
 
-        # ── Fields ────────────────────────────────────────────────────────────
         self._name_field,  self._name_err = self._make_field(
             cl, "Nama",        "Contoh: Kecap")
         self._brand_field, self._brand_err = self._make_field(
@@ -1266,7 +1223,6 @@ class ProductDialog(QDialog):
                 }
             """)
 
-        # ── Image Upload Section ──────────────────────────────────────────────
         img_wrap = QWidget()
         img_wrap.setStyleSheet("background: transparent; border: none;")
         img_lay = QVBoxLayout(img_wrap)
@@ -1370,14 +1326,12 @@ class ProductDialog(QDialog):
 
         cl.addWidget(img_wrap)
 
-        # Store image paths
         self._existing_image_path = None
         self._selected_image_path = None
         self._image_removed = False
 
         root.addWidget(content)
 
-       # ── Footer ────────────────────────────────────────────────────────────
         footer = QFrame()
         footer.setStyleSheet("QFrame { background-color: #FAFAF8; }")
         footer_lay = QHBoxLayout(footer)
@@ -1426,7 +1380,6 @@ class ProductDialog(QDialog):
             if idx >= 0:
                 self._cat_combo.setCurrentIndex(idx)
 
-            # Stok tidak bisa diedit — hanya tampil nilai saat ini
             self._stock_field.setReadOnly(True)
             self._stock_field.setStyleSheet("""
                 QLineEdit {
@@ -1445,7 +1398,6 @@ class ProductDialog(QDialog):
                 self._existing_image_path = p.image_path
                 self._selected_image_path = None
 
-    # ── Image handlers ────────────────────────────────────────────────────────
     def _on_upload_image(self):
         """Handle image upload"""
         file_dialog = QFileDialog()
@@ -1459,7 +1411,6 @@ class ProductDialog(QDialog):
         if not file_path:
             return
 
-        # Check file size
         is_valid, msg = ImageOptimizer.file_size_valid(file_path)
         if not is_valid:
             Toast.show_toast(msg, "error", self)
@@ -1476,7 +1427,6 @@ class ProductDialog(QDialog):
                 self._image_preview.setText("❌ Gambar tidak valid")
                 return
 
-            # Scale to fit preview
             scaled_pixmap = pixmap.scaledToHeight(
                 75,
                 Qt.TransformationMode.SmoothTransformation
@@ -1484,7 +1434,6 @@ class ProductDialog(QDialog):
             self._image_preview.setPixmap(scaled_pixmap)
             self._remove_img_btn.setVisible(True)
 
-            # Update info
             size = ImageOptimizer.get_file_size(image_path)
             size_str = ImageOptimizer.format_file_size(size)
             self._image_info.setText(f"Ukuran file: {size_str}")
@@ -1494,15 +1443,13 @@ class ProductDialog(QDialog):
     def _on_remove_image(self):
         """Remove selected image"""
         self._selected_image_path = None
-        self._image_removed = True  # Mark that user explicitly removed the image
+        self._image_removed = True
         self._image_preview.setPixmap(QPixmap())
         self._image_preview.setText("")
         self._remove_img_btn.setVisible(False)
         self._image_info.setText("Ukuran maksimal: 500 KB")
 
-    # ── Save ──────────────────────────────────────────────────────────────────
     def _on_save(self):
-        # Reset semua error dulu
         for field, err in [
             (self._name_field,  self._name_err),
             (self._brand_field, self._brand_err),
@@ -1557,15 +1504,12 @@ class ProductDialog(QDialog):
             self.adjustSize()
             return
 
-        # ── Handle image compression ─────────────────────────────────────────
         image_path = None
         if self._image_removed:
-            # User explicitly removed the image → delete old image and set to None
             if self._edit_mode and self._existing_image_path:
                 ImageOptimizer.delete_image(self._existing_image_path)
             image_path = None
         elif self._selected_image_path:
-            # User uploaded a new image
             product_id = self._product.id if self._edit_mode else 0
             output_path, success, msg = ImageOptimizer.optimize_image(
                 self._selected_image_path,
@@ -1578,11 +1522,9 @@ class ProductDialog(QDialog):
 
             image_path = output_path
 
-            # If editing and there's an old image, delete it
             if self._edit_mode and self._existing_image_path and self._existing_image_path != self._selected_image_path:
                 ImageOptimizer.delete_image(self._existing_image_path)
         else:
-            # No image action: keep existing image if in edit mode
             if self._edit_mode:
                 image_path = self._existing_image_path
 
@@ -1600,9 +1542,6 @@ class ProductDialog(QDialog):
         self.saved.emit(data)
         self.accept()
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# Delete Product Dialog
-# ═══════════════════════════════════════════════════════════════════════════════
 
 
 class DeleteProductDialog(QDialog):
@@ -1614,7 +1553,7 @@ class DeleteProductDialog(QDialog):
 
         self.setWindowTitle("Hapus Produk")
         self.setModal(True)
-        self.setFixedWidth(420)  # ← samakan width
+        self.setFixedWidth(420)
         self.setWindowFlag(Qt.WindowType.MSWindowsFixedSizeDialogHint)
         self.setSizePolicy(QSizePolicy.Policy.Fixed,
                            QSizePolicy.Policy.Minimum)
@@ -1623,7 +1562,7 @@ class DeleteProductDialog(QDialog):
             f"QDialog {{ background: {C_WHITE}; font-family: 'Segoe UI'; }}")
         self._build_ui()
         self.adjustSize()
-        self.setMaximumSize(420, self.height())  # ← samakan
+        self.setMaximumSize(420, self.height())
 
     def _build_ui(self):
         root = QVBoxLayout(self)
@@ -1635,7 +1574,7 @@ class DeleteProductDialog(QDialog):
             "QFrame { background-color: #FAFAF8; border: 1px solid #DDD9D2; }")
 
         cl = QVBoxLayout(card)
-        cl.setContentsMargins(36, 30, 36, 30)  # ← samakan
+        cl.setContentsMargins(36, 30, 36, 30)
         cl.setSpacing(12)
 
         logo = QLabel("Warung<span style='color:#4F6EF7'>+</span>")
@@ -1738,9 +1677,6 @@ class DeleteProductDialog(QDialog):
         self.confirmed.emit()
         self.accept()
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# View Toggle
-# ═══════════════════════════════════════════════════════════════════════════════
 
 
 class ViewToggle(QWidget):
@@ -1828,9 +1764,6 @@ class ViewToggle(QWidget):
         return self._current
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# Product Page
-# ═══════════════════════════════════════════════════════════════════════════════
 class ProductPage(QWidget):
     def __init__(self, user: dict = None, parent=None):
         super().__init__(parent)
@@ -1848,7 +1781,6 @@ class ProductPage(QWidget):
         self.setStyleSheet(f"background: {C_BG};")
         self._build_ui()
 
-        # Connect signals untuk sync stok real-time dari halaman lain
         product_signals.product_stock_changed.connect(
             self._on_product_stock_changed_signal)
         product_signals.product_added.connect(self._on_product_added_signal)
@@ -1864,7 +1796,6 @@ class ProductPage(QWidget):
         layout.setContentsMargins(16, 17, 16, 28)
         layout.setSpacing(0)
 
-        # ── Header ────────────────────────────────────────────────────────────
         header = QHBoxLayout()
         title_col = QVBoxLayout()
         title_col.setSpacing(2)
@@ -1909,7 +1840,6 @@ class ProductPage(QWidget):
         """)
         add_btn.clicked.connect(self._open_add_dialog)
 
-        # ── Import/Export buttons ─────────────────────────────────────────────
         import_btn = QPushButton("📥  Import")
         import_btn.setFixedHeight(42)
         import_btn.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -1950,7 +1880,6 @@ class ProductPage(QWidget):
         """)
         export_btn.clicked.connect(self._on_export_clicked)
 
-        # ── Button group ──────────────────────────────────────────────────────
         btn_group = QHBoxLayout()
         btn_group.setSpacing(8)
         btn_group.addWidget(import_btn)
@@ -1966,7 +1895,6 @@ class ProductPage(QWidget):
         layout.addLayout(self._build_stats_row())
         layout.addSpacing(20)
 
-        # ── Filter bar + view toggle ──────────────────────────────────────────
         filter_and_toggle = QHBoxLayout()
         filter_and_toggle.setSpacing(10)
 
@@ -2012,11 +1940,9 @@ class ProductPage(QWidget):
         layout.addLayout(filter_and_toggle)
         layout.addSpacing(16)
 
-        # ── Content stack ─────────────────────────────────────────────────────
         self._content_stack = QStackedWidget()
         self._content_stack.setStyleSheet("background: transparent;")
 
-        # Page 0: Card grid
         self._card_page = QWidget()
         self._card_page.setStyleSheet("background: transparent;")
         card_page_layout = QVBoxLayout(self._card_page)
@@ -2075,7 +2001,6 @@ class ProductPage(QWidget):
         self._scroll.setWidget(self._grid_container)
         card_page_layout.addWidget(self._scroll)
 
-        # Page 1: Table
         self._table_page = QWidget()
         self._table_page.setStyleSheet("background: transparent;")
         table_page_layout = QVBoxLayout(self._table_page)
@@ -2093,7 +2018,6 @@ class ProductPage(QWidget):
 
         layout.addWidget(self._content_stack, stretch=1)
 
-    # ── Stats ──────────────────────────────────────────────────────────────────
     def _calc_stats(self) -> dict:
         return {
             "total":      str(len(self._products)),
@@ -2199,7 +2123,6 @@ class ProductPage(QWidget):
         layout.addStretch()
         return card
 
-    # ── Category button helpers ────────────────────────────────────────────────
     def _build_filter_bar(self) -> QHBoxLayout:
         return QHBoxLayout()
 
@@ -2278,7 +2201,6 @@ class ProductPage(QWidget):
                 }}
             """)
 
-    # ── Data / filter logic ────────────────────────────────────────────────────
     def _filtered_products(self) -> list[Product]:
         result = self._products
         if self._active_category != "Semua":
@@ -2307,7 +2229,6 @@ class ProductPage(QWidget):
 
         return max(2, min(4, int(cols)))
 
-    # ── Refresh ────────────────────────────────────────────────────────────────
     def _refresh_view(self):
         if self._view_mode == ViewToggle.VIEW_CARD:
             self._refresh_grid()
@@ -2331,18 +2252,16 @@ class ProductPage(QWidget):
         products = self._filtered_products()
 
         if not products:
-            # Reset alignment grid ke center saat kosong
             self._grid_layout.setAlignment(
                 Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter
             )
 
             empty_wrap = QWidget()
             empty_wrap.setStyleSheet("background: transparent; border: none;")
-            # Paksa widget mengisi lebar penuh scroll viewport
             empty_wrap.setMinimumWidth(self._scroll.viewport().width())
 
             outer = QVBoxLayout(empty_wrap)
-            outer.setContentsMargins(0, 34, 0, 0)   # ← tambah margin atas
+            outer.setContentsMargins(0, 34, 0, 0)
             outer.setSpacing(0)
             outer.setAlignment(Qt.AlignmentFlag.AlignTop |
                                Qt.AlignmentFlag.AlignHCenter)
@@ -2410,11 +2329,9 @@ class ProductPage(QWidget):
         )
         cols = self._get_column_count()
 
-        # reset stretch
         for c in range(10):
             self._grid_layout.setColumnStretch(c, 0)
 
-        # apply stretch
         for c in range(cols):
             self._grid_layout.setColumnStretch(c, 1)
 
@@ -2468,7 +2385,6 @@ class ProductPage(QWidget):
             product = products[i]
 
             card = ProductCard(product)
-
             card.edit_clicked.connect(self._open_edit_dialog)
             card.delete_clicked.connect(self._delete_product)
 
@@ -2511,7 +2427,6 @@ class ProductPage(QWidget):
                 dot.setText(value)
                 val_lbl.setText(value)
 
-    # ── Event handlers ─────────────────────────────────────────────────────────
     def _on_view_mode_changed(self, mode: str):
         self._view_mode = mode
         if mode == ViewToggle.VIEW_TABLE:
@@ -2556,7 +2471,6 @@ class ProductPage(QWidget):
                 image_path=data.get("image_path"),
             )
 
-            # If image was added with product_id=0, rename it to the actual ID
             if data.get("image_path"):
                 self._products = self._load_products()
                 if self._products:
@@ -2564,7 +2478,6 @@ class ProductPage(QWidget):
                     image_path = data.get("image_path")
                     if os.path.exists(image_path) and "product_0" in os.path.basename(image_path):
                         old_path = image_path
-                        # ambil ekstensi asli
                         ext = os.path.splitext(old_path)[1]
                         original_name = data.get("original_image_name") or os.path.splitext(
                             os.path.basename(old_path))[0]
@@ -2591,7 +2504,6 @@ class ProductPage(QWidget):
                             print(f"Error renaming image: {e}")
 
             self._products = self._load_products()
-            # Emit signal untuk notifikasi halaman lain
             if self._products:
                 product_signals.product_added.emit(self._products[-1])
 
@@ -2615,7 +2527,6 @@ class ProductPage(QWidget):
                 image_path=data.get("image_path"),
             )
 
-            # Rename gambar baru ke nama asli + random suffix
             if data.get("image_path") and data.get("original_image_name"):
                 image_path = data["image_path"]
                 if os.path.exists(image_path):
@@ -2642,7 +2553,6 @@ class ProductPage(QWidget):
                         print(f"Error renaming image: {e}")
 
             self._products = self._load_products()
-            # Emit signal untuk notifikasi halaman lain
             updated_product = next(
                 (p for p in self._products if p.id == data["id"]), None)
             if updated_product:
@@ -2658,13 +2568,11 @@ class ProductPage(QWidget):
     def _delete_product(self, product: Product):
         def do_delete():
             try:
-                # Hapus file gambar dulu sebelum hapus dari DB
                 if product.image_path and os.path.exists(product.image_path):
                     ImageOptimizer.delete_image(product.image_path)
 
                 product_id = product.id
                 ProductController.remove(product_id)
-                # Emit signal untuk notifikasi halaman lain
                 product_signals.product_deleted.emit(product_id)
 
                 self._products = self._load_products()
@@ -2673,7 +2581,6 @@ class ProductPage(QWidget):
                 Toast.show_toast(
                     f"Produk <b>{product.name}</b> berhasil dihapus.", "success", self)
             except ValueError as e:
-                # Foreign key constraint - produk masih ada referensi
                 Toast.show_toast(str(e), "error", self)
             except TypeError as e:
                 Toast.show_toast(str(e), "error", self)
@@ -2689,7 +2596,6 @@ class ProductPage(QWidget):
             return
 
         try:
-            # Convert Product namedtuples to dicts for export
             products_data = [
                 {
                     'id': p.id,
@@ -2703,7 +2609,6 @@ class ProductPage(QWidget):
                 for p in self._products
             ]
 
-            # Show custom dialog
             dialog = ImportExportDialog(
                 dialog_type="export", products_data=products_data, parent=self)
             result = dialog.exec()
@@ -2724,14 +2629,11 @@ class ProductPage(QWidget):
                 f"Terjadi kesalahan saat export: {str(e)}", "error", self)
 
     def _on_import_clicked(self):
-        """Handle import button click dengan custom dialog"""
         try:
-            # Show custom dialog
             dialog = ImportExportDialog(dialog_type="import", parent=self)
             result = dialog.exec()
 
             if result == QDialog.DialogCode.Accepted and dialog.imported_data:
-                # Show confirmation
                 msg_box = QMessageBox(self)
                 msg_box.setWindowTitle("Konfirmasi Import")
                 msg_box.setText(
@@ -2750,7 +2652,6 @@ class ProductPage(QWidget):
                 f"Terjadi kesalahan saat import: {str(e)}", "error", self)
 
     def _import_products(self, products_data: list):
-        """Process imported products"""
         try:
             import_count = 0
             skip_count = 0
@@ -2760,7 +2661,6 @@ class ProductPage(QWidget):
 
             for idx, product_dict in enumerate(products_data, 1):
                 try:
-                    # Check if SKU already exists
                     existing_products = ProductController.fetch()
                     sku_exists = any(p.sku == product_dict.get('sku')
                                      for p in existing_products)
@@ -2784,10 +2684,8 @@ class ProductPage(QWidget):
                     error_count += 1
                     errors.append(f"Produk #{idx} - {str(e)}")
 
-            # Reload products
             self._products = self._load_products()
 
-            # Emit signal untuk setiap produk yang diimport
             if import_count > 0:
                 imported_products = [p for p in self._products if any(
                     p.sku == product_dict.get('sku') for product_dict in products_data
@@ -2798,7 +2696,6 @@ class ProductPage(QWidget):
             self._refresh_stats()
             self._refresh_view()
 
-            # Show result
             result_msg = f"✓ Berhasil import: {import_count} produk"
             if skip_count > 0:
                 result_msg += f"\n⊘ Skip: {skip_count} produk (SKU duplikat)"
@@ -2833,12 +2730,9 @@ class ProductPage(QWidget):
         self._refresh_stats()
         self._refresh_view()
 
-    # ── Signal handlers untuk sinkronisasi real-time dengan halaman lain ──────
     def _on_product_stock_changed_signal(self, product_id: int, new_stock: int):
-        """Handle ketika stok produk berubah dari halaman Kasir"""
         for i, p in enumerate(self._products):
             if p.id == product_id:
-                # Update stock di list
                 from controllers.product import Product as ProductClass
                 self._products[i] = ProductClass(
                     id=p.id,
@@ -2855,14 +2749,12 @@ class ProductPage(QWidget):
         self._refresh_view()
 
     def _on_product_added_signal(self, product: Product):
-        """Handle ketika produk baru ditambahkan dari halaman lain"""
         if product not in self._products:
             self._products.append(product)
             self._refresh_stats()
             self._refresh_view()
 
     def _on_product_deleted_signal(self, product_id: int):
-        """Handle ketika produk dihapus dari halaman lain"""
         original_count = len(self._products)
         self._products = [p for p in self._products if p.id != product_id]
         if len(self._products) < original_count:

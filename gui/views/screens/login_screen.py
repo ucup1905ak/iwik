@@ -19,11 +19,11 @@ from controllers.user import UserController
 PIN_LENGTH = 6
 
 class LoginScreen(QWidget):
-    def __init__(self, user: dict, on_back=None, on_success=None):  # ← tambah on_success
+    def __init__(self, user: dict, on_back=None, on_success=None):
         super().__init__()
         self.user = user
         self.on_back = on_back
-        self.on_success = on_success                                 # ← simpan callback
+        self.on_success = on_success
         self.pin_digits: list[str] = []
         self.locked = False
 
@@ -197,7 +197,6 @@ class LoginScreen(QWidget):
         self.setFocus()
 
     def _on_success(self):
-        # Panggil callback on_success dengan data user, bukan QMessageBox lagi
         if self.on_success:
             self.on_success(self.user)
 

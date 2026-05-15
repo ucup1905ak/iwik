@@ -1,5 +1,3 @@
-# views/screens/splash_screen.py
-
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QGraphicsOpacityEffect
 from PyQt6.QtCore import (
     Qt,
@@ -7,8 +5,6 @@ from PyQt6.QtCore import (
     QPropertyAnimation,
     QEasingCurve,
     pyqtSignal,
-    QRect,
-    QPoint,
 )
 from PyQt6.QtGui import (
     QPainter,
@@ -24,28 +20,20 @@ from PyQt6.QtGui import (
 )
 import math
 
-SPLASH_DURATION   = 2400   # ms tahan setelah fade-in selesai
-FADE_IN_DURATION  = 700    # ms fade-in konten
-FADE_OUT_DURATION = 450    # ms fade-out sebelum ke app
+SPLASH_DURATION   = 2400
+FADE_IN_DURATION  = 700
+FADE_OUT_DURATION = 450
 
-# ── Palette warna — disamakan dengan select_user_screen.py ───────────────────
-CLR_BG_TOP      = QColor("#F5F3EF")   # off-white hangat (turunan #FAFAF8)
-CLR_BG_BTM      = QColor("#E8E5E0")   # sedikit lebih gelap
-CLR_BORDER      = QColor("#DDD9D2")   # border card
-CLR_BRAND       = QColor("#4F6EF7")   # biru-ungu brand (sama persis)
-CLR_TEXT        = QColor("#1B1B1B")   # teks utama
-CLR_MUTED       = QColor("#888780")   # teks subtitle/muted
-CLR_FOOTER      = QColor("#B4B2A9")   # footer sangat muted (turunan #5F5E5A)
+CLR_BG_TOP      = QColor("#F5F3EF")
+CLR_BG_BTM      = QColor("#E8E5E0")
+CLR_BORDER      = QColor("#DDD9D2")
+CLR_BRAND       = QColor("#4F6EF7")
+CLR_TEXT        = QColor("#1B1B1B")
+CLR_MUTED       = QColor("#888780")
+CLR_FOOTER      = QColor("#B4B2A9")
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Splash Screen Utama
-# ─────────────────────────────────────────────────────────────────────────────
 class SplashScreen(QWidget):
-    """
-    Full-screen splash screen dengan desain premium.
-    Emit `finished` saat animasi selesai dan app siap dilanjutkan.
-    """
 
     finished = pyqtSignal()
 
@@ -53,7 +41,7 @@ class SplashScreen(QWidget):
         super().__init__(parent)
 
         self._bg_pixmap = QPixmap("assets/bg_auth.png")
-        self._time = 0  # untuk animasi shimmer pada background
+        self._time = 0
 
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
@@ -61,21 +49,16 @@ class SplashScreen(QWidget):
         self._build_ui()
         self._start_animation()
 
-        # Subtle pulse timer untuk background
         self._bg_timer = QTimer()
         self._bg_timer.setInterval(40)
         self._bg_timer.timeout.connect(self._tick_background)
         self._bg_timer.start()
 
-    # ──────────────────────────────────────────────────────────────────────────
-    # UI Build
-    # ──────────────────────────────────────────────────────────────────────────
     def _build_ui(self):
         root = QVBoxLayout(self)
         root.setContentsMargins(0, 0, 0, 0)
         root.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        # ── Container tengah ──────────────────────────────────────────────────
         self._container = QWidget()
         self._container.setStyleSheet("background: transparent;")
         container_layout = QVBoxLayout(self._container)
@@ -83,22 +66,18 @@ class SplashScreen(QWidget):
         container_layout.setSpacing(0)
         container_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        # ── Badge / pill atas ─────────────────────────────────────────────────
         self._badge = BadgePill("POINT OF SALE")
         container_layout.addWidget(self._badge, alignment=Qt.AlignmentFlag.AlignCenter)
         container_layout.addSpacing(20)
 
-        # ── Nama aplikasi ─────────────────────────────────────────────────────
         self._lbl_name = AppNameLabel()
         container_layout.addWidget(self._lbl_name, alignment=Qt.AlignmentFlag.AlignCenter)
         container_layout.addSpacing(10)
 
-        # ── Divider line ──────────────────────────────────────────────────────
         self._divider = DividerWidget()
         container_layout.addWidget(self._divider, alignment=Qt.AlignmentFlag.AlignCenter)
         container_layout.addSpacing(10)
 
-        # ── Tagline ───────────────────────────────────────────────────────────
         self._lbl_tagline = QLabel("Kelola warungmu dengan mudah & cepat")
         self._lbl_tagline.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self._lbl_tagline.setStyleSheet("""
@@ -114,7 +93,6 @@ class SplashScreen(QWidget):
         container_layout.addWidget(self._lbl_tagline)
         container_layout.addSpacing(48)
 
-        # ── Loading dots ──────────────────────────────────────────────────────
         self._dots_widget = DotsLoader()
         container_layout.addWidget(self._dots_widget, alignment=Qt.AlignmentFlag.AlignCenter)
 
@@ -131,19 +109,14 @@ class SplashScreen(QWidget):
 
         root.addWidget(bottom_widget)
 
-        # ── Opacity effect pada seluruh container ─────────────────────────────
         self._opacity_effect = QGraphicsOpacityEffect(self._container)
         self._opacity_effect.setOpacity(0.0)
         self._container.setGraphicsEffect(self._opacity_effect)
 
-        # ── Opacity effect terpisah untuk bottom bar ──────────────────────────
         self._bottom_effect = QGraphicsOpacityEffect(bottom_widget)
         self._bottom_effect.setOpacity(0.0)
         bottom_widget.setGraphicsEffect(self._bottom_effect)
 
-    # ──────────────────────────────────────────────────────────────────────────
-    # Background Painting
-    # ──────────────────────────────────────────────────────────────────────────
     def _tick_background(self):
         self._time += 1
         self.update()
@@ -155,7 +128,6 @@ class SplashScreen(QWidget):
 
         w, h = self.width(), self.height()
 
-        # ── 1. Background image (atau fallback off-white gradient) ────────────
         if not self._bg_pixmap.isNull():
             scaled = self._bg_pixmap.scaled(
                 self.size(),
@@ -166,20 +138,17 @@ class SplashScreen(QWidget):
             y = (scaled.height() - h) // 2
             painter.drawPixmap(-x, -y, scaled)
 
-            # Scrim off-white agar teks gelap terbaca di atas foto apapun
             scrim = QLinearGradient(0, 0, 0, h)
             scrim.setColorAt(0.0, QColor(245, 243, 239, 200))
             scrim.setColorAt(0.5, QColor(239, 236, 234, 185))
             scrim.setColorAt(1.0, QColor(232, 229, 224, 205))
             painter.fillRect(self.rect(), scrim)
         else:
-            # Fallback: off-white warm gradient
             bg_grad = QLinearGradient(0, 0, w * 0.4, h)
             bg_grad.setColorAt(0.0, CLR_BG_TOP)
             bg_grad.setColorAt(1.0, CLR_BG_BTM)
             painter.fillRect(self.rect(), bg_grad)
 
-        # ── 2. Dot pattern halus (#5F5E5A sangat transparan) ─────────────────
         painter.setPen(Qt.PenStyle.NoPen)
         painter.setBrush(QColor(95, 94, 90, 20))
         spacing = 28
@@ -187,7 +156,6 @@ class SplashScreen(QWidget):
             for gy in range(0, h + spacing, spacing):
                 painter.drawEllipse(gx - 1, gy - 1, 3, 3)
 
-        # ── 3. Brand radial glow (#4F6EF7, sangat halus) ─────────────────────
         cx, cy = w / 2, h * 0.45
         glow = QRadialGradient(cx, cy, min(w, h) * 0.42)
         glow.setColorAt(0.0, QColor(79, 110, 247, 35))
@@ -195,14 +163,12 @@ class SplashScreen(QWidget):
         glow.setColorAt(1.0, QColor(255, 255, 255, 0))
         painter.fillRect(self.rect(), glow)
 
-        # ── 4. Soft vignette tepi (netral) ───────────────────────────────────
         vignette = QRadialGradient(cx, cy, max(w, h) * 0.72)
         vignette.setColorAt(0.0,  QColor(255, 255, 255, 0))
         vignette.setColorAt(0.65, QColor(180, 178, 169, 18))
         vignette.setColorAt(1.0,  QColor(95, 94, 90, 40))
         painter.fillRect(self.rect(), vignette)
 
-        # ── 5. Decorative rings (warna border #DDD9D2) ───────────────────────
         painter.setBrush(Qt.BrushStyle.NoBrush)
         painter.setPen(QPen(QColor(221, 217, 210, 120), 1))
         ring_r = int(min(w, h) * 0.30)
@@ -214,25 +180,19 @@ class SplashScreen(QWidget):
 
         painter.end()
 
-    # ──────────────────────────────────────────────────────────────────────────
-    # Animation Sequence
-    # ──────────────────────────────────────────────────────────────────────────
     def _start_animation(self):
-        # 1) Fade-in konten utama
         fade_in = QPropertyAnimation(self._opacity_effect, b"opacity")
         fade_in.setDuration(FADE_IN_DURATION)
         fade_in.setStartValue(0.0)
         fade_in.setEndValue(1.0)
         fade_in.setEasingCurve(QEasingCurve.Type.OutCubic)
 
-        # 2) Fade-in bottom bar sedikit lebih lambat
         fade_in_bottom = QPropertyAnimation(self._bottom_effect, b"opacity")
         fade_in_bottom.setDuration(FADE_IN_DURATION + 200)
         fade_in_bottom.setStartValue(0.0)
         fade_in_bottom.setEndValue(1.0)
         fade_in_bottom.setEasingCurve(QEasingCurve.Type.OutCubic)
 
-        # Mulai dots & timer setelah fade-in selesai
         fade_in.finished.connect(self._dots_widget.start)
 
         self._hold_timer = QTimer(singleShot=True)
@@ -241,7 +201,7 @@ class SplashScreen(QWidget):
         fade_in.finished.connect(self._hold_timer.start)
 
         fade_in.start()
-        QTimer.singleShot(120, fade_in_bottom.start)  # slight stagger
+        QTimer.singleShot(120, fade_in_bottom.start)
 
         self._fade_in_anim = fade_in
         self._fade_in_bottom_anim = fade_in_bottom
@@ -269,9 +229,6 @@ class SplashScreen(QWidget):
         self._fade_out_bottom_anim = fade_out_bottom
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Badge / Pill Label
-# ─────────────────────────────────────────────────────────────────────────────
 class BadgePill(QWidget):
     """Pill kecil berisi teks kategori aplikasi."""
 
@@ -294,26 +251,17 @@ class BadgePill(QWidget):
 
         r = self.rect()
 
-        # Pill border amber
         painter.setPen(QPen(QColor(79, 110, 247, 130), 1))
         painter.setBrush(QBrush(QColor(79, 110, 247, 22)))
         painter.drawRoundedRect(r.adjusted(0, 0, -1, -1), r.height() / 2, r.height() / 2)
 
-        # Text
         painter.setPen(QColor(79, 110, 247, 210))
         painter.setFont(self._font)
         painter.drawText(r, Qt.AlignmentFlag.AlignCenter, self._text)
         painter.end()
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# App Name Label (custom paint untuk kontrol penuh)
-# ─────────────────────────────────────────────────────────────────────────────
 class AppNameLabel(QWidget):
-    """
-    Render nama 'Warung+' dengan tipografi besar, kontras tinggi,
-    dan tanda '+' berwarna biru brand.
-    """
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -339,17 +287,14 @@ class AppNameLabel(QWidget):
         fm = QFontMetrics(self._font_main)
         baseline = fm.ascent() + 4
 
-        # "Warung" — hitam hangat, shadow sangat tipis
         painter.setFont(self._font_main)
         painter.setPen(QColor(27, 27, 27, 35))
         painter.drawText(1, baseline + 2, "Warung")
         painter.setPen(QColor("#1B1B1B"))
         painter.drawText(0, baseline, "Warung")
 
-        # "+" — biru brand
         x_plus = self._w_warung + 4
 
-        # Subtle blue glow behind +
         glow_grad = QRadialGradient(x_plus + self._w_plus / 2, baseline - fm.ascent() / 2,
                                      self._w_plus * 2.2)
         glow_grad.setColorAt(0.0, QColor(79, 110, 247, 55))
@@ -371,11 +316,7 @@ class AppNameLabel(QWidget):
         painter.end()
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Divider Widget
-# ─────────────────────────────────────────────────────────────────────────────
 class DividerWidget(QWidget):
-    """Garis tipis dengan gradient fade di kedua sisi."""
 
     def __init__(self, width=220, parent=None):
         super().__init__(parent)
@@ -397,22 +338,15 @@ class DividerWidget(QWidget):
         painter.end()
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Animated Loading Dots
-# ─────────────────────────────────────────────────────────────────────────────
 class DotsLoader(QWidget):
-    """
-    Tiga titik animasi wave bounce dengan warna biru brand.
-    Ukuran dan warna diperhalus untuk kesan premium.
-    """
 
     DOT_COUNT     = 3
     DOT_SIZE      = 8
     DOT_SPACING   = 12
-    BOUNCE_DELAY  = 150    # ms antar dot
+    BOUNCE_DELAY  = 150
     BOUNCE_STEPS  = 32
-    STEP_MS       = 14     # ≈ 60 fps per half-cycle
-    BOUNCE_OFFSET = 9      # px ke atas
+    STEP_MS       = 14
+    BOUNCE_OFFSET = 9
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -422,7 +356,7 @@ class DotsLoader(QWidget):
         self.setFixedSize(total_w, self.DOT_SIZE + self.BOUNCE_OFFSET + 6)
 
         self._offsets  = [0.0] * self.DOT_COUNT
-        self._alphas   = [180] * self.DOT_COUNT  # opacity tiap dot
+        self._alphas   = [180] * self.DOT_COUNT
         self._running  = False
 
     def _dot_x(self, i):
@@ -437,10 +371,9 @@ class DotsLoader(QWidget):
         painter.setPen(Qt.PenStyle.NoPen)
 
         for i in range(self.DOT_COUNT):
-            t = abs(self._offsets[i]) / self.BOUNCE_OFFSET  # 0..1 saat naik
-            # Saat naik: brand penuh #4F6EF7, saat diam: lebih muted
-            r = int(79  + 20 * t)    # 79 → 99
-            g = int(110 + 15 * t)    # 110 → 125
+            t = abs(self._offsets[i]) / self.BOUNCE_OFFSET
+            r = int(79  + 20 * t)
+            g = int(110 + 15 * t)
             b = int(247)
             a = int(120 + 135 * t)
             painter.setBrush(QColor(r, g, b, a))
@@ -481,7 +414,6 @@ class DotsLoader(QWidget):
                 self.update()
                 return
             progress = s / half
-            # Easing: smooth sine
             eased = (1 - math.cos(progress * math.pi)) / 2
             if going_up:
                 self._offsets[idx] = -self.BOUNCE_OFFSET * eased
@@ -492,7 +424,6 @@ class DotsLoader(QWidget):
             if s < half:
                 QTimer.singleShot(self.STEP_MS, lambda: step(s + 1, going_up))
             elif going_up:
-                # Mulai turun
                 QTimer.singleShot(self.STEP_MS, lambda: step(0, False))
             else:
                 self._offsets[idx] = 0.0

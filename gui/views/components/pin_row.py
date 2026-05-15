@@ -59,7 +59,7 @@ class PinRow(QWidget):
         self._err_lbl.setStyleSheet(
             "font-size:11px; color:#E05252; font-family:'Segoe UI'; border:none;"
         )
-        self._err_lbl.setVisible(False)  # ← sama persis dengan NameInput
+        self._err_lbl.setVisible(False)
         outer.addWidget(self._err_lbl)
 
         self._input.textChanged.connect(self._on_text_changed)
@@ -85,14 +85,14 @@ class PinRow(QWidget):
             d.set_error(True)
         if msg:
             self._err_lbl.setText(msg)
-            self._err_lbl.setVisible(True)  # ← sama persis dengan NameInput
+            self._err_lbl.setVisible(True)
         self._shake()
 
     def clearError(self):
         self._error = False
         for d in self._dots:
             d.set_error(False)
-        self._err_lbl.setVisible(False)  # ← sama persis dengan NameInput
+        self._err_lbl.setVisible(False)
 
     def _shake(self):
         orig = self._dot_frame.geometry()

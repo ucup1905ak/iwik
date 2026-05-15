@@ -1,5 +1,3 @@
-# views/main_shell.py
-
 from PyQt6.QtWidgets import (
     QWidget,
     QHBoxLayout,
@@ -26,11 +24,9 @@ ANIM_DURATION = 160
 INITIAL_PAGE_KEY_ADMIN = "dashboard"
 INITIAL_PAGE_KEY_CASHIER = "cashier"
 
-# Halaman yang boleh diakses oleh kasir
 CASHIER_ALLOWED_PAGES = {"cashier", "transactions", "receivables"}
 
 
-# ── Placeholder page untuk menu lain ─────────────────────────────────────────
 class PlaceholderPage(QWidget):
     def __init__(self, title: str, emoji: str = "🚧"):
         super().__init__()
@@ -68,9 +64,6 @@ class PlaceholderPage(QWidget):
         layout.addWidget(sub_lbl)
 
 
-# ═════════════════════════════════════════════════════════════════════════════
-# Main Shell
-# ═════════════════════════════════════════════════════════════════════════════
 class MainShell(QWidget):
     logout_requested = pyqtSignal()
 
@@ -81,7 +74,6 @@ class MainShell(QWidget):
         self._animating = False
         self._pending_key: str | None = None
 
-        # Tentukan halaman awal berdasarkan role
         if self._role == "Admin":
             self._current_key = INITIAL_PAGE_KEY_ADMIN
         else:
@@ -97,8 +89,6 @@ class MainShell(QWidget):
         root.setContentsMargins(0, 0, 0, 0)
         root.setSpacing(0)
 
-        # ── Sidebar ───────────────────────────────────────────────────────────
-        # Active key sidebar harus sama dengan page awal stack.
         self._sidebar = SidebarWidget(
             user=self._user,
             active_key=self._current_key,
@@ -107,13 +97,11 @@ class MainShell(QWidget):
         self._sidebar.logout_requested.connect(self.logout_requested.emit)
         root.addWidget(self._sidebar)
 
-        # ── Content area ──────────────────────────────────────────────────────
         self._stack = QStackedWidget()
         self._stack.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
         self._stack.setStyleSheet("background: #F4F5F9;")
         root.addWidget(self._stack, stretch=1)
 
-        # ── Lazy-loaded pages ─────────────────────────────────────────────────
         self._pages: dict[str, QWidget] = {}
         self._page_config = {
             "dashboard":  (None, None, "dashboard"),
@@ -136,8 +124,6 @@ class MainShell(QWidget):
         self._pages[key] = widget
         widget.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
 
-        # Jangan pasang QGraphicsOpacityEffect permanen di page.
-        # Effect hanya dibuat sementara saat transisi di _navigate_to().
         self._stack.addWidget(widget)
 
     def _get_or_create_page(self, key: str) -> QWidget | None:
@@ -175,7 +161,6 @@ class MainShell(QWidget):
         return widget
 
     def _navigate_to(self, key: str):
-        # Guard: kasir hanya boleh akses halaman yang diizinkan
         if self._role != "Admin" and key not in CASHIER_ALLOWED_PAGES:
             return
 
@@ -202,7 +187,6 @@ class MainShell(QWidget):
         self._current_key = key
         self._sidebar.set_active(key)
 
-        # Force repaint setelah page benar-benar masuk ke QStackedWidget.
         new_widget.update()
         self._stack.update()
 
@@ -213,8 +197,6 @@ class MainShell(QWidget):
         anim_in.setEasingCurve(QEasingCurve.Type.OutCubic)
 
         def on_done():
-            # Penting: lepas effect setelah animasi.
-            # Effect permanen di container/page besar sering membuat child repaint terlambat.
             new_widget.setGraphicsEffect(None)
             new_widget.update()
             self._stack.update()

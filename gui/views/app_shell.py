@@ -1,5 +1,3 @@
-# views/app_shell.py
-
 from PyQt6.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -13,27 +11,21 @@ from PyQt6.QtCore import (
     Qt,
 )
 from PyQt6.QtGui import QPainter, QPixmap
-
-# Screens
 from gui.views.screens.select_user_screen import SelectUserScreen
 from gui.views.screens.login_screen import LoginScreen
 from gui.views.screens.add_admin_screen import AddAdminScreen
 from gui.views.screens.splash_screen import SplashScreen
 from gui.views.main_shell import MainShell
-
-# Database
 from controllers.user import UserController
 
 
 ANIM_DURATION = 180
-
 
 class AppShell(QWidget):
     def _skip_to_main(self):
         """Langsung masuk ke MainShell tanpa auth (DEV MODE)"""
         self._in_main_shell = True
 
-        # fake user (biar MainShell tetap jalan)
         user = {
             "id": 1,
             "name": "Developer",
@@ -85,9 +77,6 @@ class AppShell(QWidget):
             painter.drawPixmap(-x, -y, scaled)
         painter.end()
 
-    # ────────────────────────────────────────────────────────────────────────
-    # Splash
-    # ────────────────────────────────────────────────────────────────────────
     def _show_splash(self):
         self._splash = SplashScreen()
         self._splash.finished.connect(self._on_splash_finished)
@@ -98,16 +87,11 @@ class AppShell(QWidget):
         """Setelah splash, check database dan arahkan ke flow yang sesuai"""
         self.users = self._load_users_from_db()
 
-        # Jika database kosong, tampilkan form tambah admin pertama kali
         if len(self.users) == 0:
             self._go_add_admin(initial=True)
-        # Jika ada user, tampilkan pilih user untuk login
         else:
             self._go_select(initial=True)
 
-    # ────────────────────────────────────────────────────────────────────────
-    # Database
-    # ────────────────────────────────────────────────────────────────────────
     def _load_users_from_db(self) -> list[dict]:
         db_users = UserController.fetch()
         users = []
@@ -128,9 +112,6 @@ class AppShell(QWidget):
 
         return users
 
-    # ────────────────────────────────────────────────────────────────────────
-    # Auth Navigation
-    # ────────────────────────────────────────────────────────────────────────
     def _go_select(self, initial: bool = False):
         self._in_main_shell = False
         self.update()
@@ -142,8 +123,6 @@ class AppShell(QWidget):
         )
         wrapper = self._make_wrapper(screen)
 
-        # _transition sudah menambahkan widget ke stack.
-        # Jangan addWidget dua kali saat initial transition dari splash.
         self._transition(wrapper)
 
     def _go_login(self, user: dict):
@@ -161,17 +140,9 @@ class AppShell(QWidget):
         )
         wrapper = self._make_wrapper(screen)
 
-        # _transition sudah menambahkan widget ke stack.
         self._transition(wrapper)
 
-    # ────────────────────────────────────────────────────────────────────────
-    # Main Shell (post-login)
-    # ────────────────────────────────────────────────────────────────────────
     def _go_main(self, user: dict):
-        """
-        Masuk ke main app (sidebar + konten) setelah login berhasil.
-        MainShell tidak dibungkus wrapper transparan karena punya background sendiri.
-        """
         self._in_main_shell = True
 
         main = MainShell(user=user)
@@ -193,7 +164,6 @@ class AppShell(QWidget):
         anim.setEasingCurve(QEasingCurve.Type.OutCubic)
 
         def done():
-            # Penting: jangan biarkan opacity effect menempel di MainShell.
             main.setGraphicsEffect(None)
 
             if old:
@@ -208,24 +178,16 @@ class AppShell(QWidget):
         self._anim_to_main = anim
 
     def _handle_logout(self):
-        """Kembali ke select user screen setelah logout."""
         self._in_main_shell = False
         self.users = self._load_users_from_db()
         self._go_select()
         self.update()
 
-    # ────────────────────────────────────────────────────────────────────────
-    # State handling
-    # ────────────────────────────────────────────────────────────────────────
     def _handle_admin_saved(self, data: dict):
         UserController.add(name=data["name"], pin=data["pin"], role=1)
         self.users = self._load_users_from_db()
-        print(f"[AppShell] Admin baru: {data['name']}")
         self._go_select()
 
-    # ────────────────────────────────────────────────────────────────────────
-    # Helpers
-    # ────────────────────────────────────────────────────────────────────────
     def _generate_initials(self, name: str) -> str:
         parts = name.strip().split()
         if len(parts) >= 2:

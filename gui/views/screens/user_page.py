@@ -24,7 +24,6 @@ from gui.views.components.toast import Toast
 from gui.views.components import PinRow
 from gui.views.components import Avatar
 
-# ── Color palette ──────────────────────────────────────────────────────────────
 C_BG       = "#F4F5F9"
 C_WHITE    = "#FFFFFF"
 C_ACCENT   = "#4F6EF7"
@@ -64,7 +63,6 @@ SAMPLE_USERS = [
 ]
 
 
-# ── Helpers ────────────────────────────────────────────────────────────────────
 def _role_theme(role: int) -> dict:
     return ROLE_THEME.get(role, {"bg": "#F1F3F8", "text": "#6C757D", "emoji": "👤"})
 
@@ -72,9 +70,6 @@ def _role_label(role: int) -> str:
     return ROLE_LABELS.get(role, "Unknown")
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# User Card
-# ═══════════════════════════════════════════════════════════════════════════════
 class UserCard(QFrame):
     edit_clicked   = pyqtSignal(object)
     delete_clicked = pyqtSignal(object)
@@ -105,11 +100,9 @@ class UserCard(QFrame):
         layout.setContentsMargins(16, 14, 16, 14)
         layout.setSpacing(10)
 
-        # ── Top row: Avatar + Nama + Role tag ────────────────────────────────
         top = QHBoxLayout()
         top.setSpacing(12)
 
-        # Avatar
         parts = name.strip().split()
         initials = (parts[0][0] + parts[1][0]).upper() if len(parts) >= 2 else name[:2].upper()
         palettes = [
@@ -122,7 +115,6 @@ class UserCard(QFrame):
         avatar = Avatar(initials, bg_color=bg, text_color=fg, size=38)
         top.addWidget(avatar)
 
-        # Nama + role badge
         info = QVBoxLayout()
         info.setSpacing(4)
         info.setContentsMargins(0, 0, 0, 0)
@@ -150,7 +142,6 @@ class UserCard(QFrame):
 
         layout.addStretch()
 
-        # ── Bottom row: tombol aksi ───────────────────────────────────────────
         bottom = QHBoxLayout()
         bottom.setSpacing(8)
         bottom.addStretch()
@@ -187,9 +178,6 @@ class UserCard(QFrame):
         layout.addLayout(bottom)
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# User Table View
-# ═══════════════════════════════════════════════════════════════════════════════
 class UserTableView(QTableWidget):
     edit_clicked   = pyqtSignal(object)
     delete_clicked = pyqtSignal(object)
@@ -471,16 +459,13 @@ class UserTableView(QTableWidget):
         return w
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# Add User Dialog
-# ═══════════════════════════════════════════════════════════════════════════════
 class UserDialog(QDialog):
     saved = pyqtSignal(dict)
 
     def __init__(self, parent=None, user: tuple = None): 
         super().__init__(parent)
-        self._user = user  # (id, name, role) atau None jika mode tambah
-        self._is_edit = user is not None  # ← flag mode
+        self._user = user
+        self._is_edit = user is not None
         self.setWindowTitle("Edit Pengguna" if self._is_edit else "Tambah Pengguna")
         self.setModal(True)
         self.setFixedWidth(440)
@@ -544,11 +529,9 @@ class UserDialog(QDialog):
         combo.addItem("Admin")
         combo.addItem("Kasir")
 
-        # stylesheet di sini...
 
         wl.addWidget(combo)
 
-        # ── Overlay huruf v di kanan ──────────────────────────────
         arrow_lbl = QLabel("⌄", combo)
         arrow_lbl.setStyleSheet(f"""
             font-family: 'Segoe UI'; font-size: 18px; font-weight: 600;
@@ -557,7 +540,6 @@ class UserDialog(QDialog):
         arrow_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
         arrow_lbl.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
 
-        # Posisi setelah layout diset — pakai QTimer agar width sudah terhitung
         QTimer.singleShot(0, lambda: arrow_lbl.setGeometry(combo.width() - 28, -4, 24, 40))
         combo.setStyleSheet(f"""
             QComboBox {{
@@ -647,7 +629,6 @@ class UserDialog(QDialog):
         cl.addWidget(self._pin_confirm)
         cl.addSpacing(10)
 
-        # ← Isi nilai awal untuk mode edit
         if self._is_edit:
             _, name, role = self._user
             self._name_field.setText(name)
@@ -760,9 +741,6 @@ class UserDialog(QDialog):
         self.accept()
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# Delete User Dialog
-# ═══════════════════════════════════════════════════════════════════════════════
 class DeleteUserDialog(QDialog):
     confirmed = pyqtSignal()
 
@@ -888,9 +866,6 @@ class DeleteUserDialog(QDialog):
         self.accept()
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# View Toggle
-# ═══════════════════════════════════════════════════════════════════════════════
 class ViewToggle(QWidget):
     VIEW_TABLE = "table"
     VIEW_CARD  = "card"
@@ -960,9 +935,6 @@ class ViewToggle(QWidget):
         return self._current
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# User Page
-# ═══════════════════════════════════════════════════════════════════════════════
 class UserPage(QWidget):
     def __init__(self, user: dict = None, parent=None):
         super().__init__(parent)
@@ -982,15 +954,13 @@ class UserPage(QWidget):
 
     def _load_users(self) -> list:
         # return SAMPLE_USERS.copy()
-        return UserController.fetch()  # returns list of (id, name, role)
+        return UserController.fetch()
 
-    # ── Build UI ──────────────────────────────────────────────────────────────
     def _build_ui(self):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(32, 17, 32, 28)
         layout.setSpacing(0)
 
-        # ── Header ────────────────────────────────────────────────────────────
         header = QHBoxLayout()
         title_col = QVBoxLayout()
         title_col.setSpacing(2)
@@ -1032,7 +1002,6 @@ class UserPage(QWidget):
         layout.addLayout(self._build_stats_row())
         layout.addSpacing(20)
 
-        # ── Filter bar + view toggle ──────────────────────────────────────────
         filter_and_toggle = QHBoxLayout()
         filter_and_toggle.setSpacing(10)
 
@@ -1072,11 +1041,9 @@ class UserPage(QWidget):
         layout.addLayout(filter_and_toggle)
         layout.addSpacing(16)
 
-        # ── Content stack ─────────────────────────────────────────────────────
         self._content_stack = QStackedWidget()
         self._content_stack.setStyleSheet("background: transparent;")
 
-        # Page 0: Card grid
         self._card_page = QWidget()
         self._card_page.setStyleSheet("background: transparent;")
         card_layout = QVBoxLayout(self._card_page)
@@ -1128,7 +1095,6 @@ class UserPage(QWidget):
         self._scroll.setWidget(self._grid_container)
         card_layout.addWidget(self._scroll)
 
-        # Page 1: Table
         self._table_page = QWidget()
         self._table_page.setStyleSheet("background: transparent;")
         table_layout = QVBoxLayout(self._table_page)
@@ -1146,7 +1112,6 @@ class UserPage(QWidget):
 
         layout.addWidget(self._content_stack, stretch=1)
 
-    # ── Stats ──────────────────────────────────────────────────────────────────
     def _calc_stats(self) -> dict:
         return {
             "total": str(len(self._users)),
@@ -1230,7 +1195,6 @@ class UserPage(QWidget):
                 dot.setText(value)
                 val_lbl.setText(value)
 
-    # ── Filter buttons ────────────────────────────────────────────────────────
     def _filter_btn(self, label: str) -> QPushButton:
         is_active = label == self._active_filter
         btn = QPushButton(label)
@@ -1264,7 +1228,6 @@ class UserPage(QWidget):
                 }}
             """)
 
-    # ── Data / filter ──────────────────────────────────────────────────────────
     def _filtered_users(self) -> list:
         result = self._users
         if self._active_filter == "Admin":
@@ -1276,7 +1239,6 @@ class UserPage(QWidget):
             result = [u for u in result if q in u[1].lower()]
         return result
 
-    # ── Refresh ────────────────────────────────────────────────────────────────
     def _refresh_view(self):
         if self._view_mode == ViewToggle.VIEW_CARD:
             self._refresh_grid()
@@ -1462,7 +1424,6 @@ class UserPage(QWidget):
         super().resizeEvent(event)
         QTimer.singleShot(0, self._refresh_grid)
 
-    # ── Event handlers ─────────────────────────────────────────────────────────
     def _on_view_mode_changed(self, mode: str):
         self._view_mode = mode
         if mode == ViewToggle.VIEW_TABLE:
@@ -1491,7 +1452,7 @@ class UserPage(QWidget):
         dlg.exec()
 
     def _open_edit_dialog(self, user: tuple):
-        dlg = UserDialog(parent=self, user=user)  # ← pakai UserDialog biasa
+        dlg = UserDialog(parent=self, user=user)
         dlg.saved.connect(self._edit_user)
         dlg.exec()
 
@@ -1518,7 +1479,7 @@ class UserPage(QWidget):
     def _delete_user(self, user: tuple):
         def do_delete():
             try:
-                UserController.remove(user[0])  # ← panggil fungsinya
+                UserController.remove(user[0])
                 self._users = self._load_users()
                 self._refresh_stats()
                 self._refresh_view()

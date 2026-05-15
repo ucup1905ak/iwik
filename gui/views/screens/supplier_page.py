@@ -45,7 +45,6 @@ SAMPLE_SUPPLIERS = [
     Supplier(id=20, name="CV Global Niaga", phone="083334445556", address="Jl. Kabupaten KM 3, Sleman")
 ]
 
-# ── Color palette ──────────────────────────────────────────────────────────────
 C_BG       = "#F4F5F9"
 C_WHITE    = "#FFFFFF"
 C_ACCENT   = "#4F6EF7"
@@ -64,7 +63,6 @@ C_HEADER_TEXT = "#9EA3B8"
 C_DIVIDER    = "#F0F1F7"
 
 
-# ── Helpers ────────────────────────────────────────────────────────────────────
 _PALETTES = [
     ("#EEF0FD", "#3B52C4"),
     ("#FDF0EC", "#B04A28"),
@@ -81,9 +79,6 @@ def _supplier_palette(name: str):
     return _PALETTES[idx], initials
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# Supplier Card
-# ═══════════════════════════════════════════════════════════════════════════════
 class SupplierCard(QFrame):
     edit_clicked   = pyqtSignal(object)
     delete_clicked = pyqtSignal(object)
@@ -111,7 +106,6 @@ class SupplierCard(QFrame):
         layout.setContentsMargins(16, 14, 16, 14)
         layout.setSpacing(8)
 
-        # ── Top row: Avatar + Nama ────────────────────────────────────────────
         top = QHBoxLayout()
         top.setSpacing(12)
 
@@ -142,7 +136,6 @@ class SupplierCard(QFrame):
         top.addStretch()
         layout.addLayout(top)
 
-        # ── Address ───────────────────────────────────────────────────────────
         addr_text = self._supplier.address or "Alamat belum diisi"
         addr_lbl = QLabel(f"📍  {addr_text}")
         addr_lbl.setStyleSheet(f"""
@@ -154,7 +147,6 @@ class SupplierCard(QFrame):
 
         layout.addStretch()
 
-        # ── Bottom row: action buttons ────────────────────────────────────────
         bottom = QHBoxLayout()
         bottom.setSpacing(8)
         bottom.addStretch()
@@ -190,9 +182,6 @@ class SupplierCard(QFrame):
         layout.addLayout(bottom)
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# Supplier Table View
-# ═══════════════════════════════════════════════════════════════════════════════
 class SupplierTableView(QTableWidget):
     edit_clicked   = pyqtSignal(object)
     delete_clicked = pyqtSignal(object)
@@ -455,9 +444,6 @@ class SupplierTableView(QTableWidget):
         return w
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# Supplier Dialog (Add / Edit)
-# ═══════════════════════════════════════════════════════════════════════════════
 class SupplierDialog(QDialog):
     saved = pyqtSignal(dict)
 
@@ -680,9 +666,6 @@ class SupplierDialog(QDialog):
         self.accept()
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# Delete Supplier Dialog
-# ═══════════════════════════════════════════════════════════════════════════════
 class DeleteSupplierDialog(QDialog):
     confirmed = pyqtSignal()
 
@@ -806,9 +789,6 @@ class DeleteSupplierDialog(QDialog):
         self.accept()
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# View Toggle
-# ═══════════════════════════════════════════════════════════════════════════════
 class ViewToggle(QWidget):
     VIEW_TABLE = "table"
     VIEW_CARD  = "card"
@@ -878,9 +858,6 @@ class ViewToggle(QWidget):
         return self._current
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# Supplier Page
-# ═══════════════════════════════════════════════════════════════════════════════
 class SupplierPage(QWidget):
     def __init__(self, user: dict = None, parent=None):
         super().__init__(parent)
@@ -898,16 +875,13 @@ class SupplierPage(QWidget):
         self._build_ui()
 
     def _load_suppliers(self) -> list[Supplier]:
-        # return SAMPLE_SUPPLIERS.copy()
         return SupplierController.fetch()
 
-    # ── Build UI ──────────────────────────────────────────────────────────────
     def _build_ui(self):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(32, 17, 32, 28)
         layout.setSpacing(0)
 
-        # ── Header ────────────────────────────────────────────────────────────
         header = QHBoxLayout()
         title_col = QVBoxLayout()
         title_col.setSpacing(2)
@@ -949,7 +923,6 @@ class SupplierPage(QWidget):
         layout.addLayout(self._build_stats_row())
         layout.addSpacing(20)
 
-        # ── Search bar + view toggle ──────────────────────────────────────────
         filter_and_toggle = QHBoxLayout()
         filter_and_toggle.setSpacing(10)
 
@@ -974,11 +947,9 @@ class SupplierPage(QWidget):
         layout.addLayout(filter_and_toggle)
         layout.addSpacing(16)
 
-        # ── Content stack ─────────────────────────────────────────────────────
         self._content_stack = QStackedWidget()
         self._content_stack.setStyleSheet("background: transparent;")
 
-        # Page 0: Card grid
         self._card_page = QWidget()
         self._card_page.setStyleSheet("background: transparent;")
         card_layout = QVBoxLayout(self._card_page)
@@ -1027,7 +998,6 @@ class SupplierPage(QWidget):
         self._scroll.setWidget(self._grid_container)
         card_layout.addWidget(self._scroll)
 
-        # Page 1: Table
         self._table_page = QWidget()
         self._table_page.setStyleSheet("background: transparent;")
         table_layout = QVBoxLayout(self._table_page)
@@ -1039,13 +1009,12 @@ class SupplierPage(QWidget):
         self._table_view.delete_clicked.connect(self._delete_supplier)
         table_layout.addWidget(self._table_view)
 
-        self._content_stack.addWidget(self._card_page)   # index 0
-        self._content_stack.addWidget(self._table_page)  # index 1
+        self._content_stack.addWidget(self._card_page)
+        self._content_stack.addWidget(self._table_page)
         self._content_stack.setCurrentIndex(1)
 
         layout.addWidget(self._content_stack, stretch=1)
 
-    # ── Stats ──────────────────────────────────────────────────────────────────
     def _calc_stats(self) -> dict:
         total = len(self._suppliers)
         with_phone   = sum(1 for s in self._suppliers if s.phone)
@@ -1132,7 +1101,6 @@ class SupplierPage(QWidget):
                 dot.setText(value)
                 val_lbl.setText(value)
 
-    # ── Data / filter ──────────────────────────────────────────────────────────
     def _filtered_suppliers(self) -> list[Supplier]:
         result = self._suppliers
         if self._search_query:
@@ -1142,7 +1110,6 @@ class SupplierPage(QWidget):
                       or (s.address and q in s.address.lower())]
         return result
 
-    # ── Refresh ────────────────────────────────────────────────────────────────
     def _refresh_view(self):
         if self._view_mode == ViewToggle.VIEW_CARD:
             self._refresh_grid()
@@ -1248,11 +1215,9 @@ class SupplierPage(QWidget):
 
         cols = self._get_column_count()
 
-        # reset stretch
         for c in range(10):
             self._grid_layout.setColumnStretch(c, 0)
 
-        # apply stretch
         for c in range(cols):
             self._grid_layout.setColumnStretch(c, 1)
 
@@ -1344,7 +1309,6 @@ class SupplierPage(QWidget):
         super().resizeEvent(event)
         QTimer.singleShot(0, self._refresh_grid)
 
-    # ── Event handlers ─────────────────────────────────────────────────────────
     def _on_view_mode_changed(self, mode: str):
         self._view_mode = mode
         if mode == ViewToggle.VIEW_TABLE:

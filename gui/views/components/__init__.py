@@ -1,16 +1,3 @@
-# views/components/__init__.py
-"""
-Komponen UI reusable untuk Warung+.
-
-Tujuan:
-- Centralized import
-- Shortcut import
-- Mempermudah scaling project
-
-Contoh:
-from gui.views.components import Avatar, Divider
-"""
-
 from .avatar import Avatar
 from .badge import Badge
 from .divider import Divider

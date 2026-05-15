@@ -1,11 +1,3 @@
-# views/screens/select_user_screen.py
-"""
-Select User Screen
-==================
-Layar awal untuk memilih akun dari database
-atau menambahkan admin baru.
-"""
-
 from PyQt6.QtWidgets import (
     QWidget,
     QLabel,
