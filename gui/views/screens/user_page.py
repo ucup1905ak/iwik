@@ -24,30 +24,30 @@ from gui.views.components.toast import Toast
 from gui.views.components import PinRow
 from gui.views.components import Avatar
 
-C_BG       = "#F4F5F9"
-C_WHITE    = "#FFFFFF"
-C_ACCENT   = "#4F6EF7"
+C_BG = "#F4F5F9"
+C_WHITE = "#FFFFFF"
+C_ACCENT = "#4F6EF7"
 C_ACCENT_H = "#3A57E8"
 C_TEXT_PRI = "#1A1D2E"
 C_TEXT_SEC = "#6B6F80"
-C_BORDER   = "#E4E6EE"
-C_DANGER   = "#E05252"
-C_TAG_BG   = "#EEF1FE"
+C_BORDER = "#E4E6EE"
+C_DANGER = "#E05252"
+C_TAG_BG = "#EEF1FE"
 
 RADIUS = 14
 
 ROLE_LABELS = {1: "Admin", 2: "Kasir"}
-ROLE_THEME  = {
+ROLE_THEME = {
     1: {"bg": "#EEF1FE", "text": "#4F6EF7", "emoji": "🛡️"},
     2: {"bg": "#EEFCEF", "text": "#27AE60", "emoji": "🧾"},
 }
 
 FILTER_ROLES = ["Semua", "Admin", "Kasir"]
 
-C_ROW_ALT    = "#FAFBFF"
-C_HEADER_BG  = "#FFFFFF"
+C_ROW_ALT = "#FAFBFF"
+C_HEADER_BG = "#FFFFFF"
 C_HEADER_TEXT = "#9EA3B8"
-C_DIVIDER    = "#F0F1F7"
+C_DIVIDER = "#F0F1F7"
 
 SAMPLE_USERS = [
     (1, "Budi Santoso",    1),
@@ -66,12 +66,13 @@ SAMPLE_USERS = [
 def _role_theme(role: int) -> dict:
     return ROLE_THEME.get(role, {"bg": "#F1F3F8", "text": "#6C757D", "emoji": "👤"})
 
+
 def _role_label(role: int) -> str:
     return ROLE_LABELS.get(role, "Unknown")
 
 
 class UserCard(QFrame):
-    edit_clicked   = pyqtSignal(object)
+    edit_clicked = pyqtSignal(object)
     delete_clicked = pyqtSignal(object)
 
     CARD_WIDTH = 300
@@ -87,7 +88,8 @@ class UserCard(QFrame):
 
         self.setObjectName("UserCard")
         self.setFixedHeight(130)
-        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        self.setSizePolicy(QSizePolicy.Policy.Expanding,
+                           QSizePolicy.Policy.Fixed)
         self.setStyleSheet(f"""
             QFrame#UserCard {{
                 background:    {C_WHITE};
@@ -104,7 +106,8 @@ class UserCard(QFrame):
         top.setSpacing(12)
 
         parts = name.strip().split()
-        initials = (parts[0][0] + parts[1][0]).upper() if len(parts) >= 2 else name[:2].upper()
+        initials = (parts[0][0] + parts[1][0]
+                    ).upper() if len(parts) >= 2 else name[:2].upper()
         palettes = [
             ("#EEF0FD", "#3B52C4"),
             ("#FDF0EC", "#B04A28"),
@@ -172,22 +175,23 @@ class UserCard(QFrame):
                 }}
                 QPushButton:hover {{ background: {C_DANGER}; color: #FFFFFF; }}
             """)
-            del_btn.clicked.connect(lambda: self.delete_clicked.emit(self._user))
+            del_btn.clicked.connect(
+                lambda: self.delete_clicked.emit(self._user))
             bottom.addWidget(del_btn)
 
         layout.addLayout(bottom)
 
 
 class UserTableView(QTableWidget):
-    edit_clicked   = pyqtSignal(object)
+    edit_clicked = pyqtSignal(object)
     delete_clicked = pyqtSignal(object)
 
-    COLUMNS    = ["      #", "Nama", "Role", "Aksi"]
-    COL_NO     = 0
-    COL_NAME   = 1
-    COL_ROLE   = 2
+    COLUMNS = ["      #", "Nama", "Role", "Aksi"]
+    COL_NO = 0
+    COL_NAME = 1
+    COL_ROLE = 2
     COL_ACTION = 3
-    ROW_H      = 52
+    ROW_H = 52
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -218,7 +222,8 @@ class UserTableView(QTableWidget):
         self.setAlternatingRowColors(True)
         self.setShowGrid(True)
         self.setGridStyle(Qt.PenStyle.SolidLine)
-        self.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        self.setSelectionBehavior(
+            QAbstractItemView.SelectionBehavior.SelectRows)
         self.setSelectionMode(QAbstractItemView.SelectionMode.NoSelection)
         self.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
@@ -230,14 +235,19 @@ class UserTableView(QTableWidget):
 
         header = self.horizontalHeader()
         header.setHighlightSections(False)
-        header.setDefaultAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        header.setDefaultAlignment(
+            Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
         header.setStretchLastSection(False)
         header.setFixedHeight(42)
 
-        header.setSectionResizeMode(self.COL_NO,     QHeaderView.ResizeMode.Fixed)
-        header.setSectionResizeMode(self.COL_NAME,   QHeaderView.ResizeMode.Stretch)
-        header.setSectionResizeMode(self.COL_ROLE,   QHeaderView.ResizeMode.Fixed)
-        header.setSectionResizeMode(self.COL_ACTION, QHeaderView.ResizeMode.Fixed)
+        header.setSectionResizeMode(
+            self.COL_NO,     QHeaderView.ResizeMode.Fixed)
+        header.setSectionResizeMode(
+            self.COL_NAME,   QHeaderView.ResizeMode.Stretch)
+        header.setSectionResizeMode(
+            self.COL_ROLE,   QHeaderView.ResizeMode.Fixed)
+        header.setSectionResizeMode(
+            self.COL_ACTION, QHeaderView.ResizeMode.Fixed)
 
         self.setColumnWidth(self.COL_NO,     44)
         self.setColumnWidth(self.COL_ROLE,   160)
@@ -318,10 +328,13 @@ class UserTableView(QTableWidget):
         icon.setStyleSheet("font-size: 46px;")
         title = QLabel("Tidak ada pengguna ditemukan")
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        title.setStyleSheet(f"font-family:'Segoe UI';font-size:16px;font-weight:700;color:{C_TEXT_PRI};")
-        sub = QLabel("Coba ubah filter, kata kunci pencarian,\natau tambahkan pengguna baru.")
+        title.setStyleSheet(
+            f"font-family:'Segoe UI';font-size:16px;font-weight:700;color:{C_TEXT_PRI};")
+        sub = QLabel(
+            "Coba ubah filter, kata kunci pencarian,\natau tambahkan pengguna baru.")
         sub.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        sub.setStyleSheet(f"font-family:'Segoe UI';font-size:12px;color:{C_TEXT_SEC};")
+        sub.setStyleSheet(
+            f"font-family:'Segoe UI';font-size:12px;color:{C_TEXT_SEC};")
 
         lay.addWidget(icon)
         lay.addWidget(title)
@@ -353,9 +366,12 @@ class UserTableView(QTableWidget):
 
             is_first = uid == first_admin_id
             self.setCellWidget(row, self.COL_NO,     self._make_no_cell(i + 1))
-            self.setCellWidget(row, self.COL_NAME,   self._make_name_cell(name))
-            self.setCellWidget(row, self.COL_ROLE,   self._make_role_badge(role))
-            self.setCellWidget(row, self.COL_ACTION, self._make_action_buttons(user, is_first_admin=is_first))
+            self.setCellWidget(row, self.COL_NAME,
+                               self._make_name_cell(name))
+            self.setCellWidget(row, self.COL_ROLE,
+                               self._make_role_badge(role))
+            self.setCellWidget(row, self.COL_ACTION, self._make_action_buttons(
+                user, is_first_admin=is_first))
 
         QTimer.singleShot(0, self._apply_viewport_clip)
 
@@ -376,7 +392,8 @@ class UserTableView(QTableWidget):
         lay.setAlignment(Qt.AlignmentFlag.AlignCenter)
         lbl = QLabel(str(number))
         lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        lbl.setStyleSheet(f"font-family:'Segoe UI';font-size:12px;color:{C_TEXT_SEC};background:transparent;")
+        lbl.setStyleSheet(
+            f"font-family:'Segoe UI';font-size:12px;color:{C_TEXT_SEC};background:transparent;")
         lay.addWidget(lbl)
         return w
 
@@ -403,7 +420,8 @@ class UserTableView(QTableWidget):
         lay.setSpacing(8)
 
         lbl = QLabel(name)
-        lbl.setStyleSheet(f"font-family:'Segoe UI';font-size:13px;font-weight:600;color:{C_TEXT_PRI};background:transparent;")
+        lbl.setStyleSheet(
+            f"font-family:'Segoe UI';font-size:13px;font-weight:600;color:{C_TEXT_PRI};background:transparent;")
         lay.addWidget(lbl)
         return w
 
@@ -425,7 +443,8 @@ class UserTableView(QTableWidget):
         lay = QHBoxLayout(w)
         lay.setContentsMargins(5, 0, 0, 0)
         lay.setSpacing(8)
-        lay.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        lay.setAlignment(Qt.AlignmentFlag.AlignLeft |
+                         Qt.AlignmentFlag.AlignVCenter)
 
         edit_btn = QPushButton("Edit")
         edit_btn.setFixedSize(54, 28)
@@ -462,17 +481,20 @@ class UserTableView(QTableWidget):
 class UserDialog(QDialog):
     saved = pyqtSignal(dict)
 
-    def __init__(self, parent=None, user: tuple = None): 
+    def __init__(self, parent=None, user: tuple = None):
         super().__init__(parent)
         self._user = user
         self._is_edit = user is not None
-        self.setWindowTitle("Edit Pengguna" if self._is_edit else "Tambah Pengguna")
+        self.setWindowTitle(
+            "Edit Pengguna" if self._is_edit else "Tambah Pengguna")
         self.setModal(True)
         self.setFixedWidth(440)
         self.setWindowFlag(Qt.WindowType.MSWindowsFixedSizeDialogHint)
-        self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Minimum)
+        self.setSizePolicy(QSizePolicy.Policy.Fixed,
+                           QSizePolicy.Policy.Minimum)
         self.setSizeGripEnabled(False)
-        self.setStyleSheet(f"QDialog {{ background: {C_WHITE}; font-family: 'Segoe UI'; }}")
+        self.setStyleSheet(
+            f"QDialog {{ background: {C_WHITE}; font-family: 'Segoe UI'; }}")
         self._build_ui()
         self.adjustSize()
         self.setMaximumSize(440, self.height())
@@ -485,7 +507,8 @@ class UserDialog(QDialog):
         wl.setSpacing(5)
 
         lbl = QLabel(label_text)
-        lbl.setStyleSheet("font-size:12px;font-weight:500;color:#5F5E5A;border:none;")
+        lbl.setStyleSheet(
+            "font-size:12px;font-weight:500;color:#5F5E5A;border:none;")
         wl.addWidget(lbl)
 
         field = QLineEdit()
@@ -505,7 +528,8 @@ class UserDialog(QDialog):
         wl.addWidget(field)
 
         err = QLabel("")
-        err.setStyleSheet("font-size:11px;color:#E05252;font-family:'Segoe UI';border:none;")
+        err.setStyleSheet(
+            "font-size:11px;color:#E05252;font-family:'Segoe UI';border:none;")
         err.setVisible(False)
         wl.addWidget(err)
 
@@ -521,14 +545,14 @@ class UserDialog(QDialog):
         wl.setSpacing(5)
 
         lbl = QLabel(label_text)
-        lbl.setStyleSheet("font-size:12px;font-weight:500;color:#5F5E5A;border:none;")
+        lbl.setStyleSheet(
+            "font-size:12px;font-weight:500;color:#5F5E5A;border:none;")
         wl.addWidget(lbl)
 
         combo = QComboBox()
         combo.setFixedHeight(40)
         combo.addItem("Admin")
         combo.addItem("Kasir")
-
 
         wl.addWidget(combo)
 
@@ -540,7 +564,8 @@ class UserDialog(QDialog):
         arrow_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
         arrow_lbl.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
 
-        QTimer.singleShot(0, lambda: arrow_lbl.setGeometry(combo.width() - 28, -4, 24, 40))
+        QTimer.singleShot(0, lambda: arrow_lbl.setGeometry(
+            combo.width() - 28, -4, 24, 40))
         combo.setStyleSheet(f"""
             QComboBox {{
                 background: #FFFFFF; border: 1px solid #DDD9D2;
@@ -586,19 +611,23 @@ class UserDialog(QDialog):
         root.setSpacing(0)
 
         card = QFrame()
-        card.setStyleSheet("QFrame { background-color: #FAFAF8; border: 1px solid #DDD9D2; }")
+        card.setStyleSheet(
+            "QFrame { background-color: #FAFAF8; border: 1px solid #DDD9D2; }")
         cl = QVBoxLayout(card)
         cl.setContentsMargins(36, 30, 36, 30)
         cl.setSpacing(0)
 
         logo = QLabel("Warung<span style='color:#4F6EF7'>+</span>")
         logo.setTextFormat(Qt.TextFormat.RichText)
-        logo.setStyleSheet("font-size:14px;color:#5F5E5A;font-weight:500;letter-spacing:1px;border:none;")
+        logo.setStyleSheet(
+            "font-size:14px;color:#5F5E5A;font-weight:500;letter-spacing:1px;border:none;")
         cl.addWidget(logo)
         cl.addSpacing(15)
 
-        title = QLabel("Edit Pengguna" if self._is_edit else "Tambah Pengguna Baru")
-        title.setStyleSheet("font-size:20px;font-weight:600;color:#1b1b1b;border:none;")
+        title = QLabel(
+            "Edit Pengguna" if self._is_edit else "Tambah Pengguna Baru")
+        title.setStyleSheet(
+            "font-size:20px;font-weight:600;color:#1b1b1b;border:none;")
         cl.addWidget(title)
         cl.addSpacing(5)
 
@@ -619,13 +648,15 @@ class UserDialog(QDialog):
         cl.addSpacing(18)
 
         self._role_combo = self._make_combo(cl, "Role")
-        self._name_field, self._name_err = self._make_field(cl, "Nama", "Budi Santoso")
+        self._name_field, self._name_err = self._make_field(
+            cl, "Nama", "Budi Santoso")
 
         self._pin_input = PinRow("PIN Baru" if self._is_edit else "PIN")
         cl.addWidget(self._pin_input)
         cl.addSpacing(10)
 
-        self._pin_confirm = PinRow("Konfirmasi PIN Baru" if self._is_edit else "Konfirmasi PIN")
+        self._pin_confirm = PinRow(
+            "Konfirmasi PIN Baru" if self._is_edit else "Konfirmasi PIN")
         cl.addWidget(self._pin_confirm)
         cl.addSpacing(10)
 
@@ -652,7 +683,8 @@ class UserDialog(QDialog):
         """)
         cancel_btn.clicked.connect(self.reject)
 
-        save_btn = QPushButton("Simpan Perubahan" if self._is_edit else "Tambah Pengguna")
+        save_btn = QPushButton(
+            "Simpan Perubahan" if self._is_edit else "Tambah Pengguna")
         save_btn.setFixedHeight(40)
         save_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         save_btn.setStyleSheet(f"""
@@ -703,10 +735,11 @@ class UserDialog(QDialog):
         valid = True
         name = self._name_field.text().strip()
         if not name:
-            self._show_error(self._name_field, self._name_err, "Nama tidak boleh kosong.")
+            self._show_error(self._name_field, self._name_err,
+                             "Nama tidak boleh kosong.")
             valid = False
 
-        pin         = self._pin_input.value().strip()
+        pin = self._pin_input.value().strip()
         pin_confirm = self._pin_confirm.value().strip()
 
         if not self._is_edit:
@@ -751,9 +784,11 @@ class DeleteUserDialog(QDialog):
         self.setModal(True)
         self.setFixedWidth(420)
         self.setWindowFlag(Qt.WindowType.MSWindowsFixedSizeDialogHint)
-        self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Minimum)
+        self.setSizePolicy(QSizePolicy.Policy.Fixed,
+                           QSizePolicy.Policy.Minimum)
         self.setSizeGripEnabled(False)
-        self.setStyleSheet(f"QDialog {{ background: {C_WHITE}; font-family: 'Segoe UI'; }}")
+        self.setStyleSheet(
+            f"QDialog {{ background: {C_WHITE}; font-family: 'Segoe UI'; }}")
         self._build_ui()
         self.adjustSize()
         self.setMaximumSize(420, self.height())
@@ -765,19 +800,22 @@ class DeleteUserDialog(QDialog):
         root.setSpacing(0)
 
         card = QFrame()
-        card.setStyleSheet("QFrame { background-color: #FAFAF8; border: 1px solid #DDD9D2; }")
+        card.setStyleSheet(
+            "QFrame { background-color: #FAFAF8; border: 1px solid #DDD9D2; }")
         cl = QVBoxLayout(card)
         cl.setContentsMargins(36, 30, 36, 30)
         cl.setSpacing(0)
 
         logo = QLabel("Warung<span style='color:#4F6EF7'>+</span>")
         logo.setTextFormat(Qt.TextFormat.RichText)
-        logo.setStyleSheet("font-size:14px;color:#5F5E5A;font-weight:500;letter-spacing:1px;border:none;")
+        logo.setStyleSheet(
+            "font-size:14px;color:#5F5E5A;font-weight:500;letter-spacing:1px;border:none;")
         cl.addWidget(logo)
         cl.setSpacing(0)
 
         title = QLabel("Hapus Pengguna?")
-        title.setStyleSheet("font-size:20px;font-weight:600;color:#1b1b1b;border:none;")
+        title.setStyleSheet(
+            "font-size:20px;font-weight:600;color:#1b1b1b;border:none;")
         cl.addWidget(title)
         cl.setSpacing(0)
 
@@ -810,12 +848,14 @@ class DeleteUserDialog(QDialog):
         icon_lbl = QLabel(rt["emoji"])
         icon_lbl.setFixedSize(36, 36)
         icon_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        icon_lbl.setStyleSheet(f"font-size:18px;background:{rt['bg']};border-radius:8px;")
+        icon_lbl.setStyleSheet(
+            f"font-size:18px;background:{rt['bg']};border-radius:8px;")
 
         detail = QVBoxLayout()
         detail.setSpacing(2)
         name_lbl = QLabel(name)
-        name_lbl.setStyleSheet(f"font-size:13px;font-weight:600;color:{C_TEXT_PRI};")
+        name_lbl.setStyleSheet(
+            f"font-size:13px;font-weight:600;color:{C_TEXT_PRI};")
         role_lbl = QLabel(_role_label(role))
         role_lbl.setStyleSheet(f"font-size:11px;color:{C_TEXT_SEC};")
         detail.addWidget(name_lbl)
@@ -868,8 +908,8 @@ class DeleteUserDialog(QDialog):
 
 class ViewToggle(QWidget):
     VIEW_TABLE = "table"
-    VIEW_CARD  = "card"
-    toggled    = pyqtSignal(str)
+    VIEW_CARD = "card"
+    toggled = pyqtSignal(str)
 
     def __init__(self, initial: str = VIEW_TABLE, parent=None):
         super().__init__(parent)
@@ -938,14 +978,14 @@ class ViewToggle(QWidget):
 class UserPage(QWidget):
     def __init__(self, user: dict = None, parent=None):
         super().__init__(parent)
-        self._user             = user or {}
-        self._users            = self._load_users()
-        self._active_filter    = "Semua"
-        self._search_query     = ""
-        self._view_mode        = ViewToggle.VIEW_TABLE
+        self._user = user or {}
+        self._users = self._load_users()
+        self._active_filter = "Semua"
+        self._search_query = ""
+        self._view_mode = ViewToggle.VIEW_TABLE
         self._grid_initialized = False
-        self._render_token     = 0
-        self._pending_refresh  = False
+        self._render_token = 0
+        self._pending_refresh = False
         self._stat_value_labels: dict[str, tuple] = {}
 
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
@@ -1053,7 +1093,8 @@ class UserPage(QWidget):
         self._scroll = QScrollArea()
         self._scroll.setWidgetResizable(True)
         self._scroll.setFrameShape(QFrame.Shape.NoFrame)
-        self._scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self._scroll.setHorizontalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self._scroll.setStyleSheet(f"""
             QScrollArea {{ background: transparent; border: none; }}
             QScrollArea > QWidget > QWidget {{ background: transparent; }}
@@ -1090,7 +1131,8 @@ class UserPage(QWidget):
         self._grid_layout.setColumnStretch(1, 1)
         self._grid_layout.setColumnStretch(2, 1)
         self._grid_layout.setColumnStretch(3, 1)
-        self._grid_layout.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
+        self._grid_layout.setAlignment(
+            Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
 
         self._scroll.setWidget(self._grid_container)
         card_layout.addWidget(self._scroll)
@@ -1145,7 +1187,8 @@ class UserPage(QWidget):
 
         indicator = QFrame()
         indicator.setFixedSize(40, 40)
-        indicator.setStyleSheet(f"background: {bg}; border-radius: 10px; border: none;")
+        indicator.setStyleSheet(
+            f"background: {bg}; border-radius: 10px; border: none;")
 
         dot = QLabel(value)
         dot.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -1204,7 +1247,8 @@ class UserPage(QWidget):
         font.setWeight(600)
         btn.setFont(font)
         self._style_filter_btn(btn, label, is_active)
-        btn.clicked.connect(lambda checked=False, s=label: self._on_filter_changed(s))
+        btn.clicked.connect(lambda checked=False,
+                            s=label: self._on_filter_changed(s))
         return btn
 
     def _style_filter_btn(self, btn: QPushButton, label: str, active: bool):
@@ -1247,7 +1291,8 @@ class UserPage(QWidget):
 
     def _refresh_table(self):
         first_admin_id = UserController.get_first_admin_id()
-        self._table_view.populate(self._filtered_users(), first_admin_id=first_admin_id)
+        self._table_view.populate(
+            self._filtered_users(), first_admin_id=first_admin_id)
 
     def _refresh_grid(self):
         self._render_token += 1
@@ -1283,7 +1328,7 @@ class UserPage(QWidget):
         self._grid_container.adjustSize()
         self._grid_container.update()
         self._scroll.viewport().update()
-        
+
     def _render_all_cards(self, users: list, token: int):
         cols = self._get_column_count()
 
@@ -1303,7 +1348,7 @@ class UserPage(QWidget):
                 i // cols,
                 i % cols
             )
-            
+
     def _render_batch_cards(self, users, start: int, batch_size: int, token: int):
         if token != self._render_token:
             return
@@ -1334,14 +1379,15 @@ class UserPage(QWidget):
                 0,
                 lambda: self._render_batch_cards(users, end, batch_size, token)
             )
-        
+
     def _render_empty_state(self):
         empty_wrap = QWidget()
         empty_wrap.setStyleSheet("background: transparent; border: none;")
 
         outer = QVBoxLayout(empty_wrap)
         outer.setContentsMargins(0, 36, 0, 40)
-        outer.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter)
+        outer.setAlignment(Qt.AlignmentFlag.AlignTop |
+                           Qt.AlignmentFlag.AlignHCenter)
 
         empty_card = QFrame()
         empty_card.setFixedHeight(260)
@@ -1378,7 +1424,8 @@ class UserPage(QWidget):
             color:{C_TEXT_PRI};
         """)
 
-        subtitle = QLabel("Coba ubah filter atau tambahkan user baru.")
+        subtitle = QLabel(
+            "Coba ubah filter, kata kunci pencarian,\natau tambahkan pengguna baru.")
         subtitle.setAlignment(Qt.AlignmentFlag.AlignCenter)
         subtitle.setStyleSheet(f"""
             font-family:'Segoe UI';
@@ -1404,7 +1451,7 @@ class UserPage(QWidget):
         self._grid_container.adjustSize()
         self._grid_container.update()
         self._scroll.viewport().update()
-        
+
     def _get_column_count(self) -> int:
         available = self._scroll.viewport().width()
 
@@ -1458,21 +1505,25 @@ class UserPage(QWidget):
 
     def _edit_user(self, data: dict):
         try:
-            UserController.edit(user_id=data["id"], name=data["name"], pin=data["pin"], role=data["role"])
+            UserController.edit(
+                user_id=data["id"], name=data["name"], pin=data["pin"], role=data["role"])
             self._users = self._load_users()
             self._refresh_stats()
             self._refresh_view()
-            Toast.show_toast(f"Pengguna <b>{data['name']}</b> berhasil diperbarui.", "success", self)
+            Toast.show_toast(
+                f"Pengguna <b>{data['name']}</b> berhasil diperbarui.", "success", self)
         except Exception as e:
             Toast.show_toast(str(e), "error", self)
 
     def _add_user(self, data: dict):
         try:
-            UserController.add(name=data["name"], pin=data["pin"], role=data["role"])
+            UserController.add(name=data["name"],
+                               pin=data["pin"], role=data["role"])
             self._users = self._load_users()
             self._refresh_stats()
             self._refresh_view()
-            Toast.show_toast(f"Pengguna <b>{data['name']}</b> berhasil ditambahkan.", "success", self)
+            Toast.show_toast(
+                f"Pengguna <b>{data['name']}</b> berhasil ditambahkan.", "success", self)
         except Exception as e:
             Toast.show_toast(str(e), "error", self)
 
@@ -1483,7 +1534,8 @@ class UserPage(QWidget):
                 self._users = self._load_users()
                 self._refresh_stats()
                 self._refresh_view()
-                Toast.show_toast(f"Pengguna <b>{user[1]}</b> berhasil dihapus.", "success", self)
+                Toast.show_toast(
+                    f"Pengguna <b>{user[1]}</b> berhasil dihapus.", "success", self)
             except Exception as e:
                 Toast.show_toast(str(e), "error", self)
 
@@ -1495,5 +1547,5 @@ class UserPage(QWidget):
         super().showEvent(event)
         if not self._grid_initialized or self._pending_refresh:
             self._grid_initialized = True
-            self._pending_refresh  = False
+            self._pending_refresh = False
             QTimer.singleShot(0, self._refresh_view)
